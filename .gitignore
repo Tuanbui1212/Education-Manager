@@ -1,0 +1,12 @@
+# Bắt buộc phải có
+node_modules
+.env
+
+# Các thư mục build (tuỳ dự án)
+dist
+build
+.vercel
+
+# File hệ thống
+.DS_Store
+Thumbs.db
