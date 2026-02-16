@@ -1,1 +1,28 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
 @import "tailwindcss";
+
+@theme {
+  --color-primary: #101935;
+  --color-primary-btn: #343b4f;
+  --color-app-bg: #f3f4f6;
+
+  --color-status-assigned-bg: #fef3c7;
+  --color-status-assigned-text: #b45309;
+
+  --color-status-progress-bg: #dcfce7;
+  --color-status-progress-text: #15803d;
+
+  --color-status-completed-bg: #dbeafe;
+  --color-status-completed-text: #1e40af;
+
+  --color-text-main: #1f2937;
+  --color-text-secondary: #6b7280;
+
+  --font-montserrat: "Montserrat", sans-serif;
+}
+
+body {
+  font-family: var(--font-montserrat);
+  background-color: var(--color-background);
+  font-optical-sizing: auto;
+}

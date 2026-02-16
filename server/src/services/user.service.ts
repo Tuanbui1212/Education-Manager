@@ -1,4 +1,3 @@
-// src/services/user.service.ts
 import bcrypt from "bcryptjs";
 import { UserModel } from "../models/user.model";
 import { IUser } from "../types/user.type";
@@ -8,13 +7,11 @@ export class UserService {
   static async createUser(data: Partial<IUser>): Promise<IUser> {
     const { email, password } = data;
 
-    // Logic: Check trùng email
     const existingUser = await UserModel.findOne({ email });
     if (existingUser) {
       throw new Error("Email đã tồn tại trong hệ thống!");
     }
 
-    // Logic: Mã hóa mật khẩu
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password!, salt);
 

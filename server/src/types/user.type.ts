@@ -1,4 +1,3 @@
-// src/types/user.type.ts
 import { Document } from "mongoose";
 
 export enum UserRole {
@@ -6,6 +5,7 @@ export enum UserRole {
   TEACHER = "TEACHER",
   STUDENT = "STUDENT",
   SALE = "SALE",
+  TEACHING_ASSISTANT = "TEACHING_ASSISTANT",
 }
 
 export interface IStudentInfo {

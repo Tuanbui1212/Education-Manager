@@ -1,4 +1,3 @@
-// src/models/user.model.ts
 import mongoose, { Schema } from "mongoose";
 import { IUser, UserRole } from "../types/user.type";
 
@@ -13,13 +12,13 @@ const UserSchema = new Schema<IUser>(
       enum: Object.values(UserRole),
       default: UserRole.STUDENT,
     },
-    // Thông tin riêng cho học viên
+
     student_info: {
       parentsName: { type: String },
       crmHistory: [{ type: String }],
-      consultantId: { type: Schema.Types.ObjectId, ref: "User" }, // Link tới nhân viên Sale
+      consultantId: { type: Schema.Types.ObjectId, ref: "User" },
     },
-    // Thông tin riêng cho giáo viên
+
     teacher_info: {
       hourlyRate: { type: Number },
       degrees: [{ type: String }],
