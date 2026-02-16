@@ -3,9 +3,12 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node dist/app.js",
     "dev": "nodemon src/app.ts",
+    "start": "node dist/app.js",
+    "test:coverage": "dotenv -e .env.test -- vitest run --coverage",
+    "test": "dotenv -e .env.test -- vitest run src/test --watch",
+    "test:integration": "dotenv -e .env.test -- vitest run src/test/integration --watch",
+    "test:unit": "dotenv -e .env.test -- vitest run src/test/unit --watch",
     "build": "tsc"
   },
   "keywords": [],
@@ -27,9 +30,12 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.10",
-    "@types/node": "^22.19.9",
+    "@types/node": "^22.19.11",
+    "@vitest/coverage-v8": "^4.0.18",
+    "dotenv-cli": "^11.0.0",
     "nodemon": "^3.1.11",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
   }
 }

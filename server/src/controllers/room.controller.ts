@@ -25,8 +25,8 @@ export class RoomController {
   // [GET] /api/rooms/:id
   static async getOne(req: Request, res: Response) {
     try {
-      const { id } = req.params as any;
-      const room = await RoomService.getRoomById(id);
+      const { id } = req.params;
+      const room = await RoomService.getRoomById(id as string);
       if (!room)
         return res.status(404).json({ message: "Không tìm thấy phòng" });
       res.status(200).json({ data: room });
@@ -38,9 +38,8 @@ export class RoomController {
   // [PUT] /api/rooms/:id
   static async update(req: Request, res: Response) {
     try {
-      const { id } = req.params as any;
-
-      const room = await RoomService.updateRoom(id, req.body);
+      const { id } = req.params;
+      const room = await RoomService.updateRoom(id as string, req.body);
       if (!room)
         return res.status(404).json({ message: "Không tìm thấy phòng để sửa" });
       res.status(200).json({ message: "Cập nhật thành công", data: room });
@@ -52,8 +51,8 @@ export class RoomController {
   // [DELETE] /api/rooms/:id
   static async delete(req: Request, res: Response) {
     try {
-      const { id } = req.params as any;
-      const room = await RoomService.deleteRoom(id);
+      const { id } = req.params;
+      const room = await RoomService.deleteRoom(id as string);
       if (!room)
         return res.status(404).json({ message: "Không tìm thấy phòng để xóa" });
       res.status(200).json({ message: "Xóa thành công" });

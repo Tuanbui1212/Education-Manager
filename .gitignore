@@ -1,6 +1,7 @@
 # Bắt buộc phải có
 node_modules
 .env
+.env.*
 
 # Các thư mục build (tuỳ dự án)
 dist
@@ -10,3 +11,4 @@ build
 # File hệ thống
 .DS_Store
 Thumbs.db
+.agent

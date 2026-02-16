@@ -19,7 +19,12 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+
+    "paths": {
+      "@/*": ["./src/*"],
+      "@test/*": ["./src/test/*"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules"]
