@@ -1,4 +1,4 @@
-export const API_ROOT = "http://103.149.170.20:3000/api/v1";
+export const API_ROOT = "http://localhost:5000/api";
 
 export const PATHS = {
   HOME: "/",

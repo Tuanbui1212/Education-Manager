@@ -1,10 +1,12 @@
 import { Application } from "express-serve-static-core";
 import userRouter from "./user.routes";
 import roomRouter from "./room.routes";
+import authRouter from "./auth.routes";
 
 function router(app: Application) {
   app.use("/api/users", userRouter);
   app.use("/api/rooms", roomRouter);
+  app.use("/api/login", authRouter);
 }
 
 export default router;

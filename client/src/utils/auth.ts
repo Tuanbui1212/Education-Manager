@@ -7,7 +7,6 @@ export const getDecodedToken = (): DecodedToken | null => {
   if (!token) return null;
 
   try {
-    // Ép kiểu Generic để TypeScript hiểu cấu trúc trả về
     const decoded = jwtDecode<DecodedToken>(token);
     return decoded;
   } catch (error) {

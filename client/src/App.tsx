@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import { publicRoutes, privateRoutes } from "./routes";
 import ScrollToTop from "./hooks/ScrollToTop";
-import PrivateRoute from "./hooks/PrivateRoute";
+// import PrivateRoute from "./hooks/PrivateRoute";
 import DefaultLayout from "./layouts/DefaultLayout";
 
 function App() {
