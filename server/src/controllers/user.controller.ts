@@ -1,14 +1,18 @@
 import { Request, Response } from "express";
 import { UserService } from "../services/user.service";
+import { ZodValidationError } from "../types/error.type";
 
 export class UserController {
   // [POST] /api/users
   static async create(req: Request, res: Response) {
     try {
       const user = await UserService.createUser(req.body);
-      res.status(201).json({ message: "Tạo user thành công", data: user });
+      res.status(201).json({ success: true, message: "Tạo user thành công", data: user });
     } catch (error) {
-      res.status(400).json({ message: (error as Error).message });
+      if (error instanceof ZodValidationError) {
+        return res.status(400).json({ success: false, message: error.errors });
+      }
+      res.status(500).json({ success: false, message: "Lỗi server" });
     }
   }
 

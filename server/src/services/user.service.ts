@@ -1,23 +1,30 @@
 import bcrypt from "bcryptjs";
 import { UserModel } from "../models/user.model";
 import { IUser } from "../types/user.type";
+import { CreateUserSchema, UpdateUserSchema } from "../validations/users.schema";
+import { ZodValidationError } from "../types/error.type";
+import { formatZodError } from "../lib/formatZodError";
 
 export class UserService {
   // 1. Tạo mới User (Create)
   static async createUser(data: Partial<IUser>): Promise<IUser> {
-    const { email, password } = data;
+    const validatedData = CreateUserSchema.safeParse(data);
 
-    const existingUser = await UserModel.findOne({ email });
-    if (existingUser) {
-      throw new Error("Email đã tồn tại trong hệ thống!");
+    if (data.email) {
+      const existingUser = await UserModel.findOne({ email: data.email });
+      if (existingUser) throw new ZodValidationError({ email: "Email đã tồn tại" });
     }
+    formatZodError(validatedData);
+    const { email, password, fullName, phone } = validatedData.data!;
 
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password!, salt);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
     const newUser = new UserModel({
-      ...data,
+      email,
       password: hashedPassword,
+      fullName,
+      phone,
     });
 
     return await newUser.save();
