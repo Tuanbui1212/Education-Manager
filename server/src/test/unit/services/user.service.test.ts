@@ -45,7 +45,7 @@ describe("UserService", () => {
         vi.mocked(UserModel).mockImplementation(function (this: any, data: any) {
             Object.assign(this, data);
             this.save = vi.fn().mockResolvedValue({
-                ...createMockUser({ _id: "mock_id", ...data, password: "hashed_password_123" })
+                ...createMockUser({ _id: "mock_id", ...data, password: "hashed_password_123", role: "STUDENT" })
             });
             return this;
         } as any);
@@ -57,7 +57,8 @@ describe("UserService", () => {
             Thành công Password: Tạo user thành công với mật khẩu 6 ký tự, 
             Thành công Password: Tạo user thành công và trả về hash password, 
             Thành công Phone: Nhập số điện thoại với 10 ký tự
-            Thành công Fullname: Nhập họ tên với 2 ký tự`, async () => {
+            Thành công Fullname: Nhập họ tên với 2 ký tự,
+            Thành công Role: Không nhập trường role`, async () => {
             const result = await UserService.createUser(mockUser);
 
             expect(UserModel.findOne).toHaveBeenCalledWith({ email: mockUser.email });
@@ -68,6 +69,7 @@ describe("UserService", () => {
             expect(result.phone).toBe(mockUser.phone);
             expect(result.fullName).toBe(mockUser.fullName);
             expect(result._id).toBe("mock_id");
+            expect(result.role).toBe("STUDENT")
             expect(result.password).toBe("hashed_password_123");
         });
         it("Trả về lỗi Email: Tạo User với email tồn tại", async () => {
@@ -112,8 +114,18 @@ describe("UserService", () => {
 
             await expect(result).rejects.toThrow(ZodValidationError);
             await result.catch((err) => {
-                expect(err.errors).toEqual({ email: "Email không hợp lệ, Email không được để trống" });
+                expect(err.errors).toEqual({ email: "Email không hợp lệ" });
             });
+        })
+        it("Trả về lỗi Email: Không nhập trường email", async () => {
+            const {email, ...user} = mockUser
+            const result = UserService.createUser(user);
+
+            await expect(result).rejects.toThrow(ZodValidationError);
+            await result.catch((err) => {
+                expect(err.errors).toEqual({ email: "Email là bắt buộc" });
+            });
+            
         })
         it("Trả về lỗi Password: Nhập password với 5 ký tự", async () => {
             const invalidPassword = "12345";
@@ -139,7 +151,16 @@ describe("UserService", () => {
 
             await expect(result).rejects.toThrow(ZodValidationError);
             await result.catch((err) => {
-                expect(err.errors).toEqual({ password: "Mật khẩu không được để trống" });
+                expect(err.errors).toEqual({ password: "Mật khẩu phải có ít nhất 6 ký tự" });
+            });
+        })
+        it("Trả về lỗi Password: Không nhập trường password", async () => {
+            const {password, ...user} = mockUser
+            const result = UserService.createUser(user);
+
+            await expect(result).rejects.toThrow(ZodValidationError);
+            await result.catch((err) => {
+                expect(err.errors).toEqual({ password: "Mật khẩu là bắt buộc" });
             });
         })
         it("Thành công Password: Tạo user thành công với mật khẩu 50 ký tự", async () => {
@@ -173,7 +194,16 @@ describe("UserService", () => {
 
             await expect(result).rejects.toThrow(ZodValidationError);
             await result.catch((err) => {
-                expect(err.errors).toEqual({ fullName: "Họ tên không được để trống" });
+                expect(err.errors).toEqual({ fullName: "Họ tên phải có ít nhất 2 ký tự" });
+            });
+        })
+        it("Trả về lỗi Fullname: Không nhập trường fullName", async () => {
+            const {fullName, ...user} = mockUser
+            const result = UserService.createUser(user);
+
+            await expect(result).rejects.toThrow(ZodValidationError);
+            await result.catch((err) => {
+                expect(err.errors).toEqual({ fullName: "Họ tên là bắt buộc" });
             });
         })
         it("Thành công Fullname: Nhập họ tên với 50 ký tự", async () => {
@@ -207,7 +237,25 @@ describe("UserService", () => {
 
             await expect(result).rejects.toThrow(ZodValidationError);
             await result.catch((err) => {
-                expect(err.errors).toEqual({ phone: "Số điện thoại phải có 10 số, Số điện thoại không được để trống" });
+                expect(err.errors).toEqual({ phone: "Số điện thoại phải có 10 số" });
+            });
+        })
+        it("Trả về lỗi Phone: Không nhập trường phone", async () => {
+            const {phone, ...user} = mockUser
+            const result = UserService.createUser(user);
+
+            await expect(result).rejects.toThrow(ZodValidationError);
+            await result.catch((err) => {
+                expect(err.errors).toEqual({ phone: "Số điện thoại là bắt buộc" });
+            });
+        })
+        it("Trả về lỗi Role: Nhập sai role", async () => {
+            const user = createMockUser({role: "Abc"});
+            const result = UserService.createUser(user);
+
+            await expect(result).rejects.toThrow(ZodValidationError);
+            await result.catch((err) => {
+                expect(err.errors).toEqual({ role: "Role không hợp lệ" });
             });
         })
         it("Mongoose trả lỗi khi mất kết nỗi mạng hoặc timeout", async () => {
@@ -257,11 +305,11 @@ describe("UserService", () => {
         it(`Tìm user theo id khi database có bản ghi,
              Kiểm trả khi dữ liệu trả về không nhận về password,
              Database function gọi đúng thứ tự findById -> select`, async () => {
-            delete mockUser.password
-            const mockSelect = vi.fn().mockReturnValue(mockUser)
+            const {password, ...user} = mockUser
+            const mockSelect = vi.fn().mockReturnValue(user)
             const mockFindById = vi.spyOn(UserModel, 'findById').mockReturnValue({ select: mockSelect })
             const result = await UserService.getUserById("69981dfa6a264a99712a404d")
-            expect(result).toEqual(mockUser)
+            expect(result).toEqual(user)
             expect(mockFindById).toHaveBeenCalledTimes(1)
             expect(mockFindById).toHaveBeenCalledWith("69981dfa6a264a99712a404d")
             expect(mockSelect).toHaveBeenCalledTimes(1)

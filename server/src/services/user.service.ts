@@ -1,10 +1,13 @@
 import bcrypt from "bcryptjs";
 import { UserModel } from "../models/user.model";
 import { IUser } from "../types/user.type";
-import { CreateUserSchema, UpdateUserSchema } from "../validations/users.schema";
+import {
+  CreateUserSchema,
+  UpdateUserSchema,
+} from "../validations/users.schema";
 import { ZodValidationError } from "../types/error.type";
 import { formatZodError } from "../lib/formatZodError";
-import { ObjectId } from 'mongodb'
+import { ObjectId } from "mongodb";
 
 export class UserService {
   // 1. Tạo mới User (Create)
@@ -13,10 +16,11 @@ export class UserService {
 
     if (data.email) {
       const existingUser = await UserModel.findOne({ email: data.email });
-      if (existingUser) throw new ZodValidationError({ email: "Email đã tồn tại" });
+      if (existingUser)
+        throw new ZodValidationError({ email: "Email đã tồn tại" });
     }
     formatZodError(validatedData);
-    const { email, password, fullName, phone } = validatedData.data!;
+    const { email, password, fullName, phone, role } = validatedData.data!;
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -38,8 +42,8 @@ export class UserService {
 
   // 3. Lấy chi tiết 1 User (Read One)
   static async getUserById(id: string): Promise<IUser | null> {
-    if (!id.trim()) throw new Error("ID không được để trống")
-    if (!ObjectId.isValid(id)) throw new Error("ID không hợp lệ")
+    if (!id.trim()) throw new Error("ID không được để trống");
+    if (!ObjectId.isValid(id)) throw new Error("ID không hợp lệ");
     return await UserModel.findById(id).select("-password");
   }
 
@@ -48,6 +52,9 @@ export class UserService {
     id: string,
     data: Partial<IUser>,
   ): Promise<IUser | null> {
+    const validatedData = UpdateUserSchema.safeParse(data);
+    formatZodError(validatedData);
+    data = validatedData.data!;
     if (data.password) {
       const salt = await bcrypt.genSalt(10);
       data.password = await bcrypt.hash(data.password, salt);
@@ -60,8 +67,8 @@ export class UserService {
 
   // 5. Xóa User (Delete)
   static async deleteUser(id: string): Promise<IUser | null> {
-    if (!id.trim()) throw new Error("ID không được để trống")
-    if (!ObjectId.isValid(id)) throw new Error("ID không hợp lệ")
+    if (!id.trim()) throw new Error("ID không được để trống");
+    if (!ObjectId.isValid(id)) throw new Error("ID không hợp lệ");
     return await UserModel.findByIdAndDelete(id);
   }
 }

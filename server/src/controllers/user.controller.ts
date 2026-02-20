@@ -49,6 +49,9 @@ export class UserController {
         return res.status(404).json({ success: false, message: "Không tìm thấy user để sửa" });
       res.status(200).json({ success: true, message: "Cập nhật thành công", data: user });
     } catch (error) {
+      if (error instanceof ZodValidationError) {
+        return res.status(400).json({ success: false, message: error.errors });
+      }
       res.status(500).json({ success: false, message: "Lỗi server" });
     }
   }

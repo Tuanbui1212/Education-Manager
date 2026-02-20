@@ -1,17 +1,18 @@
 import { z } from "zod";
-
+import { UserRole } from "../types/user.type";
 export const CreateUserSchema = z.object({
-    email: z.email("Email không hợp lệ").max(50, "Email tối đa 50 ký tự").trim().nonempty("Email không được để trống"),
-    password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự").max(50, "Mật khẩu tối đa 50 ký tự").trim().nonempty("Mật khẩu không được để trống"),
-    fullName: z.string().min(2, "Họ tên phải có ít nhất 2 ký tự").max(50, "Họ tên tối đa 50 ký tự").trim().nonempty("Họ tên không được để trống"),
-    phone: z.string().length(10, "Số điện thoại phải có 10 số").trim().nonempty("Số điện thoại không được để trống"),
+    email: z.string({error: "Email là bắt buộc"}).email("Email không hợp lệ").trim().max(50, "Email tối đa 50 ký tự"),
+    password: z.string({ error: "Mật khẩu là bắt buộc" }).trim().min(6, "Mật khẩu phải có ít nhất 6 ký tự").max(50, "Mật khẩu tối đa 50 ký tự"),
+    fullName: z.string({ error: "Họ tên là bắt buộc" }).trim().min(2, "Họ tên phải có ít nhất 2 ký tự").max(50, "Họ tên tối đa 50 ký tự"),
+    phone: z.string({ error: "Số điện thoại là bắt buộc" }).trim().length(10, "Số điện thoại phải có 10 số"),
+    role: z.preprocess(val => (typeof val === 'string' ? val.toUpperCase() : val), z.enum(UserRole, { message: "Role không hợp lệ" })).default(UserRole.STUDENT)
 });
 
 export const UpdateUserSchema = z.object({
-    email: z.email("Email không hợp lệ").max(50, "Email tối đa 50 ký tự").trim().optional(),
-    fullName: z.string().min(2, "Họ tên phải có ít nhất 2 ký tự").max(50, "Họ tên tối đa 50 ký tự").trim().optional(),
-    phone: z.string().length(10, "Số điện thoại phải có 10 số").trim().optional(),
-    password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự").max(50, "Mật khẩu tối đa 50 ký tự").trim().optional(),
+    fullName: z.string({ error: "Họ tên là bắt buộc" }).trim().min(2, "Họ tên phải có ít nhất 2 ký tự").max(50, "Họ tên tối đa 50 ký tự").optional(),
+    phone: z.string({ error: "Số điện thoại là bắt buộc" }).trim().length(10, "Số điện thoại phải có 10 số").optional(),
+    password: z.string({ error: "Mật khẩu là bắt buộc" }).trim().min(6, "Mật khẩu phải có ít nhất 6 ký tự").max(50, "Mật khẩu tối đa 50 ký tự").optional(),
+    role: z.preprocess(val => (typeof val === 'string' ? val.toUpperCase() : val), z.enum(UserRole, { message: "Role không hợp lệ" })).optional()
 });
 
 export type CreateUserSchema = z.infer<typeof CreateUserSchema>;
