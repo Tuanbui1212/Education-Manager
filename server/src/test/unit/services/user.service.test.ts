@@ -70,7 +70,6 @@ describe("UserService", () => {
             expect(result._id).toBe("mock_id");
             expect(result.password).toBe("hashed_password_123");
         });
-
         it("Trả về lỗi Email: Tạo User với email tồn tại", async () => {
             vi.mocked(UserModel.findOne).mockResolvedValue({ email: mockUser.email } as any);
 
@@ -81,7 +80,6 @@ describe("UserService", () => {
             expect(bcrypt.hash).not.toHaveBeenCalled();
             expect(UserModel).not.toHaveBeenCalled();
         });
-
         it("Trả về lỗi Email: Tạo User với email 51 ký tự", async () => {
             const invalidEmail = "test@gmail.loremipsumdolorsitametconsectetueradipis";
             const result = UserService.createUser({ ...mockUser, email: invalidEmail });
@@ -91,7 +89,6 @@ describe("UserService", () => {
                 expect(err.errors).toEqual({ email: "Email tối đa 50 ký tự" });
             });
         })
-
         it("Trả về lỗi Email: Tạo User với email 50 ký tự", async () => {
             const validEmail = "test@gmail.loremipsumdolorsitametconsectetueradipi";
             const result = await UserService.createUser({ ...mockUser, email: validEmail });
@@ -100,7 +97,6 @@ describe("UserService", () => {
             expect(result._id).toBe("mock_id");
             expect(result.password).toBe("hashed_password_123");
         })
-
         it("Trả về lỗi Email: Định dạng sai (thiếu @)", async () => {
             const invalidEmail = "testgmail.com";
             const result = UserService.createUser({ ...mockUser, email: invalidEmail });
@@ -110,7 +106,6 @@ describe("UserService", () => {
                 expect(err.errors).toEqual({ email: "Email không hợp lệ" });
             });
         })
-
         it("Trả về lỗi Email: Rỗng hoặc Null hoặc toàn khoảng trắng", async () => {
             const invalidEmail = "       ";
             const result = UserService.createUser({ ...mockUser, email: invalidEmail });
@@ -120,7 +115,6 @@ describe("UserService", () => {
                 expect(err.errors).toEqual({ email: "Email không hợp lệ, Email không được để trống" });
             });
         })
-
         it("Trả về lỗi Password: Nhập password với 5 ký tự", async () => {
             const invalidPassword = "12345";
             const result = UserService.createUser({ ...mockUser, password: invalidPassword });
@@ -130,7 +124,6 @@ describe("UserService", () => {
                 expect(err.errors).toEqual({ password: "Mật khẩu phải có ít nhất 6 ký tự" });
             });
         })
-
         it("Trả về lỗi Password: Nhập password với 51 ký tự", async () => {
             const invalidPassword = "123456789012345678901234567890123456789012345678901";
             const result = UserService.createUser({ ...mockUser, password: invalidPassword });
@@ -140,7 +133,6 @@ describe("UserService", () => {
                 expect(err.errors).toEqual({ password: "Mật khẩu tối đa 50 ký tự" });
             });
         })
-
         it("Trả về lỗi Password: Rỗng hoặc Null hoặc toàn khoảng trắng", async () => {
             const invalidPassword = "       ";
             const result = UserService.createUser({ ...mockUser, password: invalidPassword });
@@ -150,7 +142,6 @@ describe("UserService", () => {
                 expect(err.errors).toEqual({ password: "Mật khẩu không được để trống" });
             });
         })
-
         it("Thành công Password: Tạo user thành công với mật khẩu 50 ký tự", async () => {
             const validPassword = "12345678901234567890123456789012345678901234567890";
             const result = await UserService.createUser({ ...mockUser, password: validPassword });
@@ -158,7 +149,6 @@ describe("UserService", () => {
             expect(result.password).toBe("hashed_password_123");
             expect(result._id).toBe("mock_id");
         })
-
         it("Trả về lỗi Fullname: Nhập họ tên với 1 ký tự", async () => {
             const invalidFullName = "A";
             const result = UserService.createUser({ ...mockUser, fullName: invalidFullName });
@@ -168,7 +158,6 @@ describe("UserService", () => {
                 expect(err.errors).toEqual({ fullName: "Họ tên phải có ít nhất 2 ký tự" });
             });
         })
-
         it("Trả về lỗi Fullname: Nhập họ tên với 51 ký tự", async () => {
             const invalidFullName = "The quick, brown fox jumps over a lazy dog. DJs fle";
             const result = UserService.createUser({ ...mockUser, fullName: invalidFullName });
@@ -178,7 +167,6 @@ describe("UserService", () => {
                 expect(err.errors).toEqual({ fullName: "Họ tên tối đa 50 ký tự" });
             });
         })
-
         it("Trả về lỗi Fullname: Rỗng hoặc Null hoặc toàn khoảng trắng", async () => {
             const invalidFullName = "       ";
             const result = UserService.createUser({ ...mockUser, fullName: invalidFullName });
@@ -188,7 +176,6 @@ describe("UserService", () => {
                 expect(err.errors).toEqual({ fullName: "Họ tên không được để trống" });
             });
         })
-
         it("Thành công Fullname: Nhập họ tên với 50 ký tự", async () => {
             const validFullName = "The quick, brown fox jumps over a lazy dog. DJs fl";
             const result = await UserService.createUser({ ...mockUser, fullName: validFullName });
@@ -196,7 +183,6 @@ describe("UserService", () => {
             expect(result.fullName).toBe(validFullName);
             expect(result._id).toBe("mock_id");
         })
-
         it("Trả về lỗi Phone: Nhập số điện thoại với 9 ký tự", async () => {
             const invalidPhone = "123456789";
             const result = UserService.createUser({ ...mockUser, phone: invalidPhone });
@@ -206,7 +192,6 @@ describe("UserService", () => {
                 expect(err.errors).toEqual({ phone: "Số điện thoại phải có 10 số" });
             });
         })
-
         it("Trả về lỗi Phone: Nhập số điện thoại với 11 ký tự", async () => {
             const invalidPhone = "12345678901";
             const result = UserService.createUser({ ...mockUser, phone: invalidPhone });
@@ -216,7 +201,6 @@ describe("UserService", () => {
                 expect(err.errors).toEqual({ phone: "Số điện thoại phải có 10 số" });
             });
         })
-
         it("Trả về lỗi Phone: Rỗng hoặc Null hoặc toàn khoảng trắng", async () => {
             const invalidPhone = "       ";
             const result = UserService.createUser({ ...mockUser, phone: invalidPhone });
@@ -226,7 +210,6 @@ describe("UserService", () => {
                 expect(err.errors).toEqual({ phone: "Số điện thoại phải có 10 số, Số điện thoại không được để trống" });
             });
         })
-
         it("Mongoose trả lỗi khi mất kết nỗi mạng hoặc timeout", async () => {
             vi.spyOn(UserModel, 'findOne').mockRejectedValue(databaseConnectionError)
             await expect(UserService.createUser({ ...mockUser })).rejects.toThrow(databaseConnectionError)
@@ -235,15 +218,30 @@ describe("UserService", () => {
     });
 
     describe("getAllUser", () => {
-        it.todo("Tìm tất cả user khi database có bản ghi", async () => {
-
+        it(`Tìm tất cả user khi database có bản ghi,
+            Kiểm trả khi dữ liệu trả về không nhận về password,
+            Kiểm tra sắp xếp khi dữ liệu trả về,
+            Database function gọi đúng thứ tự find -> select -> sort`, async () => {
+            const mockSort = vi.fn().mockReturnValue(mockUsers)
+            const mockSelect = vi.fn().mockReturnValue({ sort: mockSort })
+            const mockFind = vi.spyOn(UserModel, 'find').mockReturnValue({ select: mockSelect })
+            const result = await UserService.getAllUsers();
+            expect(result).toEqual(mockUsers)
+            expect(mockFind).toHaveBeenCalledTimes(1)
+            expect(mockFind).toHaveBeenCalledWith()
+            expect(mockSort).toHaveBeenCalledWith({ createdAt: -1 })
+            expect(mockSort).toHaveBeenCalledTimes(1)
+            expect(mockSelect).toHaveBeenCalledTimes(1)
+            expect(mockSelect).toHaveBeenCalledWith("-password")
         })
-
-        it.todo("Tìm tất cả user khi database không có bản ghi")
-        it.todo("Kiểm trả khi dữ liệu trả về không nhận về password")
-        it.todo("Kiểm tra sắp xếp khi dữ liệu trả về")
-
-
+        it("Tìm tất cả user khi database không có bản ghi", async () => {
+            const mockSort = vi.fn().mockReturnValue([])
+            const mockSelect = vi.fn().mockReturnValue({ sort: mockSort })
+            const mockFind = vi.spyOn(UserModel, 'find').mockReturnValue({ select: mockSelect })
+            const result = await UserService.getAllUsers();
+            expect(result).toEqual([])
+            expect(mockFind).toHaveBeenCalledTimes(1)
+        })
         it("Mongoose trả lỗi khi mất kết nỗi mạng hoặc timeout", async () => {
             const mockSort = vi.fn().mockRejectedValue(databaseConnectionError);
             const mockSelect = vi.fn().mockReturnValue({ sort: mockSort });
@@ -253,34 +251,45 @@ describe("UserService", () => {
             expect(mockSelect).toHaveBeenCalledWith("-password")
             expect(mockSort).toHaveBeenCalledWith({ createdAt: -1 });
         })
-
-        it("Database function gọi đúng thứ tự find -> select -> sort", async () => {
-            const mockSort = vi.fn().mockReturnValue(mockUsers)
-            const mockSelect = vi.fn().mockReturnValue({ sort: mockSort });
-            const mockFind = vi.spyOn(UserModel, 'find').mockReturnValue({ select: mockSelect })
-            const result = await UserService.getAllUsers();
-            expect(result).toEqual(mockUsers)
-            expect(mockFind).toHaveBeenCalledTimes(1)
-            expect(mockSelect).toHaveBeenCalledTimes(1)
-            expect(mockSelect).toHaveBeenCalledWith('-password')
-            expect(mockSort).toHaveBeenCalledTimes(1)
-            expect(mockSort).toHaveBeenCalledWith({ createdAt: -1 })
-
-        })
     })
 
     describe("getUserById", () => {
-        it("Tìm user theo id khi database có bản ghi, Kiểm trả khi dữ liệu trả về không nhận về password, Database function gọi đúng thứ tự findById -> select", async () => {
+        it(`Tìm user theo id khi database có bản ghi,
+             Kiểm trả khi dữ liệu trả về không nhận về password,
+             Database function gọi đúng thứ tự findById -> select`, async () => {
             delete mockUser.password
             const mockSelect = vi.fn().mockReturnValue(mockUser)
             const mockFindById = vi.spyOn(UserModel, 'findById').mockReturnValue({ select: mockSelect })
-            const result = await UserService.getUserById(mockUser._id)
+            const result = await UserService.getUserById("69981dfa6a264a99712a404d")
             expect(result).toEqual(mockUser)
             expect(mockFindById).toHaveBeenCalledTimes(1)
-            expect(mockFindById).toHaveBeenCalledWith(mockUser._id)
+            expect(mockFindById).toHaveBeenCalledWith("69981dfa6a264a99712a404d")
             expect(mockSelect).toHaveBeenCalledTimes(1)
             expect(mockSelect).toHaveBeenCalledWith('-password')
             expect(result).not.toHaveProperty('password')
+        })
+        it("Tìm user theo id khi database không có bản ghi", async () => {
+            const mockSelect = vi.fn().mockReturnValue(null)
+            const mockFindById = vi.spyOn(UserModel, 'findById').mockReturnValue({ select: mockSelect })
+            const result = await UserService.getUserById("69981dfa6a264a99712a40ee")
+            expect(result).toBeNull()
+            expect(mockFindById).toHaveBeenCalledTimes(1)
+            expect(mockFindById).toHaveBeenCalledWith("69981dfa6a264a99712a40ee")
+            expect(mockSelect).toHaveBeenCalledTimes(1)
+            expect(mockSelect).toHaveBeenCalledWith('-password')
+        })
+        it("Không truyền vào id hoặc id toàn khoảng trắng khi tìm user", async () => {
+            await expect(UserService.getUserById("     ")).rejects.toThrow(Error)
+        })
+        it("Tim user theo id khi id không hợp lệ", async () => {
+            await expect(UserService.getUserById("1")).rejects.toThrow(Error)
+        })
+        it("Mongoose trả lỗi khi mất kết nỗi mạng hoặc timeout", async () => {
+            const mockSelect = vi.fn().mockRejectedValue(databaseConnectionError);
+            vi.spyOn(UserModel, 'findById').mockReturnValue({ select: mockSelect });
+            await expect(UserService.getUserById("69981dfa6a264a99712a40ee")).rejects.toThrow(databaseConnectionError)
+            expect(UserModel.findById).toHaveBeenCalled();
+            expect(mockSelect).toHaveBeenCalledWith("-password")
         })
     })
 });

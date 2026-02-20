@@ -4,6 +4,7 @@ import { IUser } from "../types/user.type";
 import { CreateUserSchema, UpdateUserSchema } from "../validations/users.schema";
 import { ZodValidationError } from "../types/error.type";
 import { formatZodError } from "../lib/formatZodError";
+import { ObjectId } from 'mongodb'
 
 export class UserService {
   // 1. Tạo mới User (Create)
@@ -37,6 +38,8 @@ export class UserService {
 
   // 3. Lấy chi tiết 1 User (Read One)
   static async getUserById(id: string): Promise<IUser | null> {
+    if (!id.trim()) throw new Error("ID không được để trống")
+    if (!ObjectId.isValid(id)) throw new Error("ID không hợp lệ")
     return await UserModel.findById(id).select("-password");
   }
 
@@ -57,6 +60,8 @@ export class UserService {
 
   // 5. Xóa User (Delete)
   static async deleteUser(id: string): Promise<IUser | null> {
+    if (!id.trim()) throw new Error("ID không được để trống")
+    if (!ObjectId.isValid(id)) throw new Error("ID không hợp lệ")
     return await UserModel.findByIdAndDelete(id);
   }
 }
