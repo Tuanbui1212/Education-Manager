@@ -29,4 +29,4 @@ export interface IUser extends Document {
   teacher_info?: ITeacherInfo;
   createdAt: Date;
   updatedAt: Date;
-}
+} 
