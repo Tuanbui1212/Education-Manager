@@ -1,12 +1,12 @@
-import { Request, Response } from "express";
-import { RoomService } from "../services/room.service";
+import { Request, Response } from 'express';
+import { RoomService } from '../services/room.service';
 
 export class RoomController {
   // [POST] /api/rooms
   static async create(req: Request, res: Response) {
     try {
       const room = await RoomService.createRoom(req.body);
-      res.status(201).json({ message: "Tạo phòng thành công", data: room });
+      res.status(201).json({ message: 'Tạo phòng thành công', data: room });
     } catch (error) {
       res.status(400).json({ message: (error as Error).message });
     }
@@ -18,7 +18,7 @@ export class RoomController {
       const rooms = await RoomService.getAllRooms();
       res.status(200).json({ data: rooms });
     } catch (error) {
-      res.status(500).json({ message: "Lỗi Server" });
+      res.status(500).json({ message: 'Lỗi Server' });
     }
   }
 
@@ -27,11 +27,10 @@ export class RoomController {
     try {
       const { id } = req.params;
       const room = await RoomService.getRoomById(id as string);
-      if (!room)
-        return res.status(404).json({ message: "Không tìm thấy phòng" });
+      if (!room) return res.status(404).json({ message: 'Không tìm thấy phòng' });
       res.status(200).json({ data: room });
     } catch (error) {
-      res.status(500).json({ message: "Lỗi Server" });
+      res.status(500).json({ message: 'Lỗi Server' });
     }
   }
 
@@ -40,9 +39,8 @@ export class RoomController {
     try {
       const { id } = req.params;
       const room = await RoomService.updateRoom(id as string, req.body);
-      if (!room)
-        return res.status(404).json({ message: "Không tìm thấy phòng để sửa" });
-      res.status(200).json({ message: "Cập nhật thành công", data: room });
+      if (!room) return res.status(404).json({ message: 'Không tìm thấy phòng để sửa' });
+      res.status(200).json({ message: 'Cập nhật thành công', data: room });
     } catch (error) {
       res.status(400).json({ message: (error as Error).message });
     }
@@ -53,11 +51,10 @@ export class RoomController {
     try {
       const { id } = req.params;
       const room = await RoomService.deleteRoom(id as string);
-      if (!room)
-        return res.status(404).json({ message: "Không tìm thấy phòng để xóa" });
-      res.status(200).json({ message: "Xóa thành công" });
+      if (!room) return res.status(404).json({ message: 'Không tìm thấy phòng để xóa' });
+      res.status(200).json({ message: 'Xóa thành công' });
     } catch (error) {
-      res.status(500).json({ message: "Lỗi Server" });
+      res.status(500).json({ message: 'Lỗi Server' });
     }
   }
 }

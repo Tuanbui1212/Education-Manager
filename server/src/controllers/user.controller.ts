@@ -1,69 +1,77 @@
-import { Request, Response } from "express";
-import { UserService } from "../services/user.service";
-import { ZodValidationError } from "../types/error.type";
+import { Request, Response } from 'express';
+import { UserService } from '../services/user.service';
+
 export class UserController {
+  private userService = new UserService();
+
   // [POST] /api/users
-  static async create(req: Request, res: Response) {
+  create = async (req: Request, res: Response) => {
     try {
-      const user = await UserService.createUser(req.body);
-      res.status(201).json({ success: true, message: "Tạo user thành công", data: user });
-    } catch (error) {
-      if (error instanceof ZodValidationError) {
-        return res.status(400).json({ success: false, message: error.errors });
-      }
-      res.status(500).json({ success: false, message: "Lỗi server" });
+      const user = await this.userService.createUser(req.body);
+      res.status(201).json({ success: true, message: 'Tạo user thành công', data: user });
+    } catch (error: any) {
+      console.error('Lỗi tạo user:', error.message);
+      res.status(400).json({ success: false, message: error.message });
     }
-  }
+  };
 
   // [GET] /api/users
-  static async getAll(req: Request, res: Response) {
+  getAll = async (req: Request, res: Response) => {
     try {
-      const users = await UserService.getAllUsers();
+      const users = await this.userService.getAllUsers();
       res.status(200).json({ success: true, data: users });
-    } catch (error) {
-      res.status(500).json({ success: false, message: "Lỗi server" });
+    } catch (error: any) {
+      console.error('Lỗi lấy danh sách user:', error.message);
+      res.status(500).json({ success: false, message: 'Lỗi server' });
     }
-  }
+  };
 
   // [GET] /api/users/:id
-  static async getOne(req: Request, res: Response) {
+  getOne = async (req: Request, res: Response) => {
     try {
       const id = req.params.id as string;
-      const user = await UserService.getUserById(id);
-      if (!user)
-        return res.status(404).json({ success: false, message: "Không tìm thấy user" });
+
+      const user = await this.userService.getUserById(id);
+
+      if (!user) {
+        return res.status(404).json({ success: false, message: 'Không tìm thấy user' });
+      }
       res.status(200).json({ success: true, data: user });
     } catch (error: any) {
-      console.log(error);
-      res.status(500).json({ success: false, message: error?.message || "Lỗi server" });
+      console.error('Lỗi lấy chi tiết user:', error.message);
+      res.status(500).json({ success: false, message: 'Lỗi server' });
     }
-  }
+  };
 
-  //[PUT] /api/users/:id
-  static async update(req: Request, res: Response) {
+  // [PUT] /api/users/:id
+  update = async (req: Request, res: Response) => {
     try {
       const id = req.params.id as string;
+      const user = await this.userService.updateUser(id, req.body);
 
-      const user = await UserService.updateUser(id, req.body);
-      if (!user)
-        return res.status(404).json({ success: false, message: "Không tìm thấy user để sửa" });
-      res.status(200).json({ success: true, message: "Cập nhật thành công", data: user });
-    } catch (error) {
-      res.status(500).json({ success: false, message: "Lỗi server" });
+      if (!user) {
+        return res.status(404).json({ success: false, message: 'Không tìm thấy user để sửa' });
+      }
+      res.status(200).json({ success: true, message: 'Cập nhật thành công', data: user });
+    } catch (error: any) {
+      console.error('Lỗi cập nhật user:', error.message);
+      res.status(400).json({ success: false, message: error.message });
     }
-  }
+  };
 
   // [DELETE] /api/users/:id
-  static async delete(req: Request, res: Response) {
+  delete = async (req: Request, res: Response) => {
     try {
       const id = req.params.id as string;
+      const user = await this.userService.deleteUser(id);
 
-      const user = await UserService.deleteUser(id);
-      if (!user)
-        return res.status(404).json({ success: false, message: "Không tìm thấy user để xóa" });
-      res.status(200).json({ success: true, message: "Xóa thành công" });
-    } catch (error) {
-      res.status(500).json({ success: false, message: "Lỗi server" });
+      if (!user) {
+        return res.status(404).json({ success: false, message: 'Không tìm thấy user để xóa' });
+      }
+      res.status(200).json({ success: true, message: 'Xóa thành công' });
+    } catch (error: any) {
+      console.error('Lỗi xóa user:', error.message);
+      res.status(500).json({ success: false, message: 'Lỗi server' });
     }
-  }
+  };
 }

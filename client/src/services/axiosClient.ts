@@ -7,9 +7,36 @@ const axiosClient = axios.create({
   withCredentials: true,
 });
 
+axiosClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("accessToken");
+
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  },
+);
+
+// axiosClient.interceptors.response.use(
+//   (res) => res,
+//   (err) => Promise.reject(err),
+// );
+
 axiosClient.interceptors.response.use(
   (res) => res,
-  (err) => Promise.reject(err),
+  (err) => {
+    if (err.response?.status === 401) {
+      localStorage.removeItem("accessToken");
+      alert("Phiên làm việc đã hết hạn, vui lòng đăng nhập lại!");
+      window.location.href = "/login";
+    }
+    return Promise.reject(err);
+  },
 );
 
 export default axiosClient;
