@@ -52,6 +52,8 @@ export class UserService {
     id: string,
     data: Partial<IUser>,
   ): Promise<IUser | null> {
+    if (!id.trim()) throw new Error("ID không được để trống");
+    if (!ObjectId.isValid(id)) throw new Error("ID không hợp lệ");
     const validatedData = UpdateUserSchema.safeParse(data);
     formatZodError(validatedData);
     data = validatedData.data!;
