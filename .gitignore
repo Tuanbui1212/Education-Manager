@@ -2,6 +2,7 @@
 node_modules
 .env
 .env.*
+!.env.example
 
 # Các thư mục build (tuỳ dự án)
 dist

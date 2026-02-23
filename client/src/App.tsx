@@ -1,9 +1,9 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
-import { publicRoutes, privateRoutes } from "./routes";
-import ScrollToTop from "./hooks/ScrollToTop";
-// import PrivateRoute from "./hooks/PrivateRoute";
-import DefaultLayout from "./layouts/DefaultLayout";
+import { publicRoutes, privateRoutes } from './routes';
+import ScrollToTop from './hooks/ScrollToTop';
+import PrivateRoute from './hooks/PrivateRoute';
+import DefaultLayout from './layouts/DefaultLayout';
 
 function App() {
   return (
@@ -40,11 +40,11 @@ function App() {
                 key={index}
                 path={route.path}
                 element={
-                  // <PrivateRoute>
-                  <Layout>
-                    <Page />
-                  </Layout>
-                  // </PrivateRoute>
+                  <PrivateRoute>
+                    <Layout>
+                      <Page />
+                    </Layout>
+                  </PrivateRoute>
                 }
               />
             );
