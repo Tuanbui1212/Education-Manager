@@ -1,7 +1,6 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { UserModel } from '../models/user.model';
-import { IUser } from '../types/user.type';
 
 export class AuthService {
   // 1. Đăng nhập (Login)
@@ -19,6 +18,7 @@ export class AuthService {
 
     const payload = {
       id: existingUser._id.toString(),
+      success: true,
       email: existingUser.email,
       role: existingUser.role,
       name: existingUser.fullName,
