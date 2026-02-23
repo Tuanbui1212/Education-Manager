@@ -9,7 +9,7 @@ export default defineConfig({
         coverage: {
             provider: "v8",
             reporter: ["text", "json", "html"],
-            include: ["src/controllers/*.ts", "src/services/*.ts"],
+            include: ["src/controllers/*.ts", "src/services/*.ts", "src/middlewares/*.ts"],
             thresholds: {
                 lines: 80,
                 functions: 80,
