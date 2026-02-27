@@ -11,12 +11,7 @@ export const PATHS = {
   USER: '/dashboard/users',
   USER_ID: '/dashboard/users/:id',
 
-  //Settings
-  SETTINGS: '/settings',
-  SETTINGS_ID: '/settings/:id',
+  SETTINGS_SHIFTS: '/settings/shifts',
 
-  TRAINING: '/training',
-  SCHEDULE: '/schedule',
-  FINANCE: '/finance',
-  REPORTS: '/reports',
+  SETTINGS_EXPENDITURES: '/settings/fixed-costs',
 };

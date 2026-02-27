@@ -152,7 +152,7 @@ const UserList = () => {
         onSubmit={selectedUser?._id ? handleEditUser : handleAddUser}
         initialData={selectedUser || undefined}
       />
-      <PageHeader title="Users" />
+      <PageHeader title="Danh sách tài khoản" />
       <ConfirmModal
         isOpen={confirmConfig.isOpen}
         onClose={() => setConfirmConfig({ ...confirmConfig, isOpen: false })}

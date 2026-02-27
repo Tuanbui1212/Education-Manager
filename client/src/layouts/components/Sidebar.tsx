@@ -5,9 +5,10 @@ import {
   Settings,
   Users,
   BookOpen,
-  CalendarDays,
   Wallet,
-  BarChart3,
+  ChevronDown,
+  ChevronRight,
+  UserCog, // Import thêm icon này cho phần Quản lý tài khoản
 } from 'lucide-react';
 import { useState, memo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -16,9 +17,86 @@ import { PATHS } from '../../utils/constants';
 
 function Sidebar() {
   const [expanded, setExpanded] = useState(true);
+
+  // State quản lý việc mở/đóng của các menu cấp 1
+  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
+    accounts: false, // <-- Thêm state cho Quản lý tài khoản
+    training: false,
+    users: false,
+    finance: false,
+    settings: false,
+  });
+
   const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname;
+
+  const toggleMenu = (menuKey: string) => {
+    if (!expanded) {
+      setExpanded(true);
+      setOpenMenus((prev) => ({ ...prev, [menuKey]: true }));
+      return;
+    }
+    setOpenMenus((prev) => ({ ...prev, [menuKey]: !prev[menuKey] }));
+  };
+
+  // CẤU HÌNH MENU
+  const menuConfig = [
+    {
+      key: 'accounts',
+      label: 'Quản lý tài khoản',
+      icon: <UserCog size={20} />, // Icon bánh răng user
+      subItems: [
+        { label: 'Danh sách tài khoản', path: PATHS.USER || '/accounts/list' }, // Trỏ về trang UserList bạn vừa làm
+        { label: 'Phân quyền (Roles)', path: '/accounts/roles' },
+        { label: 'Lịch sử hoạt động', path: '/accounts/logs' },
+      ],
+    },
+    {
+      key: 'training',
+      label: 'Quản lý đào tạo',
+      icon: <BookOpen size={20} />,
+      subItems: [
+        { label: 'Quản lý khóa học', path: '/training/courses' },
+        { label: 'Quản lý lớp học', path: '/training/classes' },
+        { label: 'Xếp thời khóa biểu', path: '/training/schedule' },
+        { label: 'Điểm danh', path: '/training/attendance' },
+        { label: 'Kỳ thi / Bài kiểm tra', path: '/training/exams' },
+        { label: 'Quản lý tài liệu', path: '/training/documents' },
+        { label: 'Đánh giá & Phản hồi', path: '/training/feedback' },
+      ],
+    },
+    {
+      key: 'users',
+      label: 'Hồ sơ nhân sự/Học viên', // Đổi tên một chút cho đỡ trùng lặp với Tài khoản
+      icon: <Users size={20} />,
+      subItems: [
+        { label: 'Hồ sơ học viên', path: '/users/students' },
+        { label: 'Hồ sơ giáo viên', path: '/users/teachers' },
+      ],
+    },
+    {
+      key: 'finance',
+      label: 'Quản lý Tài chính',
+      icon: <Wallet size={20} />,
+      subItems: [
+        { label: 'Học phí', path: '/finance/tuition' },
+        { label: 'Thu chi', path: '/finance/transactions' },
+        { label: 'Báo cáo', path: '/finance/reports' },
+      ],
+    },
+    {
+      key: 'settings',
+      label: 'Cấu hình hệ thống',
+      icon: <Settings size={20} />,
+      subItems: [
+        { label: 'Ca học', path: '/settings/shifts' },
+        { label: 'Phòng học', path: '/settings/rooms' },
+        { label: 'Các loại chi phí cố định', path: '/settings/fixed-costs' },
+        { label: 'Mẫu thông báo', path: '/settings/templates' },
+      ],
+    },
+  ];
 
   return (
     <aside
@@ -46,7 +124,7 @@ function Sidebar() {
 
       {/* Navigation Links */}
       <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto custom-scrollbar">
-        {/* 1. Tổng quan */}
+        {/* Item tĩnh: Dashboard */}
         <SidebarItem
           icon={<LayoutDashboard size={20} />}
           text="Dashboard"
@@ -55,62 +133,65 @@ function Sidebar() {
           onClick={() => navigate(PATHS.DASHBOARD)}
         />
 
-        {/* 2. Nhánh: Quản lý đào tạo (Khóa học, Lớp học, Điểm danh...) */}
-        <SidebarItem
-          icon={<BookOpen size={20} />}
-          text="Đào tạo"
-          // Tạm thời để string, bạn thêm PATHS.TRAINING vào file constants sau nhé
-          active={currentPath === (PATHS.TRAINING || '/training')}
-          expanded={expanded}
-          onClick={() => navigate(PATHS.TRAINING || '/training')}
-        />
+        {/* Render danh sách Menu Dropdown động từ Config */}
+        {menuConfig.map((menu) => {
+          const isOpen = openMenus[menu.key];
+          const isChildActive = menu.subItems.some((item) => currentPath === item.path);
 
-        {/* Tách riêng Thời khóa biểu vì đây là tính năng dùng rất thường xuyên */}
-        <SidebarItem
-          icon={<CalendarDays size={20} />}
-          text="Thời khóa biểu"
-          active={currentPath === (PATHS.SCHEDULE || '/schedule')}
-          expanded={expanded}
-          onClick={() => navigate(PATHS.SCHEDULE || '/schedule')}
-        />
+          return (
+            <div key={menu.key} className="flex flex-col space-y-1">
+              {/* Nút Parent Menu */}
+              <button
+                onClick={() => toggleMenu(menu.key)}
+                className={`flex items-center justify-between w-full p-2.5 rounded-xl transition-colors ${
+                  isChildActive ? 'bg-gray-800 text-blue-400' : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className={isChildActive ? 'text-blue-400' : 'text-gray-400'}>{menu.icon}</span>
+                  <span
+                    className={`font-medium text-sm whitespace-nowrap transition-all duration-300 ${
+                      expanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'
+                    }`}
+                  >
+                    {menu.label}
+                  </span>
+                </div>
 
-        {/* 3. Nhánh: Quản lý người dùng (Học viên, Giáo viên, Sale...) */}
-        <SidebarItem
-          icon={<Users size={20} />}
-          text="Người dùng"
-          active={currentPath === PATHS.USER}
-          expanded={expanded}
-          onClick={() => navigate(PATHS.USER)}
-        />
+                {/* Mũi tên xổ xuống */}
+                {expanded && (
+                  <span className="text-gray-500">
+                    {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                  </span>
+                )}
+              </button>
 
-        {/* 4. Nhánh: Quản lý Tài chính (Học phí, Thu chi, Lương...) */}
-        <SidebarItem
-          icon={<Wallet size={20} />}
-          text="Tài chính"
-          active={currentPath === (PATHS.FINANCE || '/finance')}
-          expanded={expanded}
-          onClick={() => navigate(PATHS.FINANCE || '/finance')}
-        />
-
-        {/* Tách riêng Báo cáo tài chính/doanh thu ra cho sếp dễ nhìn */}
-        <SidebarItem
-          icon={<BarChart3 size={20} />}
-          text="Báo cáo"
-          active={currentPath === (PATHS.REPORTS || '/reports')}
-          expanded={expanded}
-          onClick={() => navigate(PATHS.REPORTS || '/reports')}
-        />
-
-        <hr className="border-gray-700 my-4" />
-
-        {/* 5. Nhánh: Cấu hình hệ thống */}
-        <SidebarItem
-          icon={<Settings size={20} />}
-          text="Cấu hình"
-          active={currentPath === PATHS.SETTINGS}
-          onClick={() => navigate(PATHS.SETTINGS)}
-          expanded={expanded}
-        />
+              {/* Danh sách Sub-items */}
+              <div
+                className={`flex flex-col overflow-hidden transition-all duration-300 ${
+                  isOpen && expanded ? 'max-h-96 opacity-100 mt-1' : 'max-h-0 opacity-0'
+                }`}
+              >
+                {menu.subItems.map((subItem) => (
+                  <button
+                    key={subItem.path}
+                    onClick={() => navigate(subItem.path)}
+                    className={`flex items-center pl-11 pr-4 py-2 text-sm rounded-lg transition-colors whitespace-nowrap ${
+                      currentPath === subItem.path
+                        ? 'text-white bg-gray-800/50 font-medium'
+                        : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                    }`}
+                  >
+                    <div
+                      className={`w-1.5 h-1.5 rounded-full mr-3 ${currentPath === subItem.path ? 'bg-blue-500' : 'bg-gray-600'}`}
+                    ></div>
+                    {subItem.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </nav>
 
       {/* Footer Sidebar: User Profile */}
