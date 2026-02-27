@@ -14,4 +14,6 @@ export const PATHS = {
   SETTINGS_SHIFTS: '/settings/shifts',
 
   SETTINGS_EXPENDITURES: '/settings/fixed-costs',
+
+  SETTINGS_ROOMS: '/settings/rooms',
 };
