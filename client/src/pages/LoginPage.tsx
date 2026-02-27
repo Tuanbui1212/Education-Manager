@@ -33,7 +33,7 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen w-full bg-primary flex items-center justify-center p-4">
-      <div className="bg-white w-full max-w-6xl rounded-[40px] shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[600px]">
+      <div className="bg-white w-full max-w-5xl rounded-[40px] shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[400px]">
         <div className="w-full md:w-1/2  flex items-center justify-center bg-white relative">
           <img
             src={StudentImage}
@@ -63,7 +63,7 @@ const LoginPage = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Email của bạn"
-                  className="w-full border-b-[3px] border-gray-300 py-2 text-xl text-gray-600 placeholder-gray-400 focus:outline-none focus:border-primary transition-colors"
+                  className="w-full border-b-[3px] border-gray-300 py-2 text-[18px] text-gray-600 placeholder-gray-400 focus:outline-none focus:border-primary transition-colors"
                 />
               </div>
             </div>
@@ -80,7 +80,7 @@ const LoginPage = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Mật khẩu"
-                  className="w-full border-b-[3px] border-gray-300 py-2 text-xl text-gray-600 placeholder-gray-400 focus:outline-none focus:border-primary transition-colors"
+                  className="w-full border-b-[3px] border-gray-300 py-2 text-[18px] text-gray-600 placeholder-gray-400 focus:outline-none focus:border-primary transition-colors"
                 />
               </div>
             </div>

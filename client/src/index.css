@@ -1,28 +1,50 @@
-@import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+@import 'tailwindcss';
 
 @theme {
+  /* Màu chủ đạo của hệ thống (Sidebar, Table Header) */
   --color-primary: #101935;
   --color-primary-btn: #343b4f;
   --color-app-bg: #f3f4f6;
 
-  --color-status-assigned-bg: #fef3c7;
-  --color-status-assigned-text: #b45309;
-
-  --color-status-progress-bg: #dcfce7;
-  --color-status-progress-text: #15803d;
-
-  --color-status-completed-bg: #dbeafe;
-  --color-status-completed-text: #1e40af;
-
+  /* Màu chữ toàn cục */
   --color-text-main: #1f2937;
   --color-text-secondary: #6b7280;
 
-  --font-montserrat: "Montserrat", sans-serif;
+  /* Thêm bộ màu Status (Hệ thống thông báo) */
+  --color-success: #10b981; /* Xanh ngọc */
+  --color-success-bg: #d1fae5; /* Xanh ngọc nhạt */
+
+  --color-danger: #ef4444; /* Đỏ */
+  --color-danger-bg: #fee2e2; /* Đỏ nhạt */
+
+  --color-warning: #f59e0b; /* Vàng cam */
+  --color-warning-bg: #fef3c7; /* Vàng cam nhạt */
+
+  --color-info: #3b82f6; /* Xanh dương */
+  --color-info-bg: #dbeafe; /* Xanh dương nhạt */
+
+  /* Trạng thái: Assigned (Màu vàng/cam) */
+  --color-status-assigned-bg: #fef3c7;
+  --color-status-assigned-text: #b45309;
+
+  /* Trạng thái: In Progress (Màu xanh lá - dùng cho Active) */
+  --color-status-progress-bg: #dcfce7;
+  --color-status-progress-text: #15803d;
+
+  /* Trạng thái: Completed (Màu xanh dương) */
+  --color-status-completed-bg: #dbeafe;
+  --color-status-completed-text: #1e40af;
+
+  /* Font chữ Montserrat */
+  --font-montserrat: 'Montserrat', sans-serif;
 }
 
 body {
   font-family: var(--font-montserrat);
-  background-color: var(--color-background);
+  background-color: var(--color-app-bg);
+  color: var(--color-text-main);
   font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
