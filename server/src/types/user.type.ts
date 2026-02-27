@@ -1,11 +1,16 @@
-import { Document } from "mongoose";
+import { Document } from 'mongoose';
 
 export enum UserRole {
-  ADMIN = "ADMIN",
-  TEACHER = "TEACHER",
-  STUDENT = "STUDENT",
-  SALE = "SALE",
-  TEACHING_ASSISTANT = "TEACHING_ASSISTANT",
+  ADMIN = 'ADMIN',
+  TEACHER = 'TEACHER',
+  STUDENT = 'STUDENT',
+  SALE = 'SALE',
+  TEACHING_ASSISTANT = 'TEACHING_ASSISTANT',
+}
+
+export enum UserStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
 }
 
 export interface IStudentInfo {
@@ -25,8 +30,17 @@ export interface IUser extends Document {
   password?: string;
   fullName: string;
   role: UserRole;
+  date: Date;
+  status: UserStatus;
   student_info?: IStudentInfo;
   teacher_info?: ITeacherInfo;
   createdAt: Date;
   updatedAt: Date;
-} 
+}
+
+export interface GetUsersQuery {
+  page?: number;
+  limit?: number;
+  search?: string;
+  role?: UserRole;
+}

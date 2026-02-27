@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import { ShiftService } from '../services/shift.service';
-import { ZodValidationError } from '../types/error.type';
 
 export class ShiftController {
   private shiftService = new ShiftService();
@@ -44,8 +43,7 @@ export class ShiftController {
       const id = req.params.id as string;
       const shift = await this.shiftService.updateShift(id, req.body);
 
-      if (!shift)
-        return res.status(404).json({ success: false, message: 'Không tìm thấy ca học để sửa' });
+      if (!shift) return res.status(404).json({ success: false, message: 'Không tìm thấy ca học để sửa' });
       res.status(200).json({ success: true, message: 'Cập nhật thành công', data: shift });
     } catch (error) {
       res.status(500).json({ success: false, message: 'Lỗi server' });
@@ -58,8 +56,7 @@ export class ShiftController {
       const id = req.params.id as string;
       const shift = await this.shiftService.deleteShift(id);
 
-      if (!shift)
-        return res.status(404).json({ success: false, message: 'Không tìm thấy ca học để xóa' });
+      if (!shift) return res.status(404).json({ success: false, message: 'Không tìm thấy ca học để xóa' });
       res.status(200).json({ success: true, message: 'Xóa thành công' });
     } catch (error) {
       res.status(500).json({ success: false, message: 'Lỗi server' });

@@ -1,5 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
-import { IUser, UserRole } from '../types/user.type';
+import { IUser, UserRole, UserStatus } from '../types/user.type';
 
 const UserSchema = new Schema<IUser>(
   {
@@ -7,6 +7,13 @@ const UserSchema = new Schema<IUser>(
     phone: { type: String, required: true },
     password: { type: String, required: true },
     fullName: { type: String, required: true },
+    date: { type: Date, required: true },
+    status: {
+      type: String,
+      required: true,
+      enum: Object.values(UserStatus),
+      default: UserStatus.ACTIVE,
+    },
     role: {
       type: String,
       enum: Object.values(UserRole),

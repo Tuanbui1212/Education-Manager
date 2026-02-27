@@ -11,18 +11,18 @@ export class UserController {
       res.status(201).json({ success: true, message: 'Tạo user thành công', data: user });
     } catch (error: any) {
       console.error('Lỗi tạo user:', error.message);
-      res.status(400).json({ success: false, message: error.message });
+      res.status(400).json({ success: false, message: error.message || 'Lỗi server' });
     }
   };
 
   // [GET] /api/users
   getAll = async (req: Request, res: Response) => {
     try {
-      const users = await this.userService.getAllUsers();
-      res.status(200).json({ success: true, data: users });
+      const { users, totalCount } = await this.userService.getAllUsers(req.query as any);
+      res.status(200).json({ success: true, data: users, totalCount: totalCount });
     } catch (error: any) {
       console.error('Lỗi lấy danh sách user:', error.message);
-      res.status(500).json({ success: false, message: 'Lỗi server' });
+      res.status(500).json({ success: false, message: error.message || 'Lỗi server' });
     }
   };
 
@@ -39,7 +39,7 @@ export class UserController {
       res.status(200).json({ success: true, data: user });
     } catch (error: any) {
       console.error('Lỗi lấy chi tiết user:', error.message);
-      res.status(500).json({ success: false, message: 'Lỗi server' });
+      res.status(500).json({ success: false, message: error.message || 'Lỗi server' });
     }
   };
 
@@ -55,7 +55,7 @@ export class UserController {
       res.status(200).json({ success: true, message: 'Cập nhật thành công', data: user });
     } catch (error: any) {
       console.error('Lỗi cập nhật user:', error.message);
-      res.status(400).json({ success: false, message: error.message });
+      res.status(400).json({ success: false, message: error.message || 'Lỗi server' });
     }
   };
 
@@ -71,7 +71,7 @@ export class UserController {
       res.status(200).json({ success: true, message: 'Xóa thành công' });
     } catch (error: any) {
       console.error('Lỗi xóa user:', error.message);
-      res.status(500).json({ success: false, message: 'Lỗi server' });
+      res.status(500).json({ success: false, message: error.message || 'Lỗi server' });
     }
   };
 }

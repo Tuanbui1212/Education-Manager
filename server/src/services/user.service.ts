@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { UserModel } from '../models/user.model';
-import { IUser, UserRole } from '../types/user.type';
+import { IUser, UserRole, GetUsersQuery } from '../types/user.type';
 
 export class UserService {
   // 1. Tạo mới User (Create)
@@ -24,8 +24,28 @@ export class UserService {
   }
 
   // 2. Lấy danh sách Users (Read All)
-  async getAllUsers(): Promise<IUser[]> {
-    return await UserModel.find().select('-password').sort({ createdAt: -1 });
+  async getAllUsers(query: GetUsersQuery): Promise<{ users: IUser[]; totalCount: number }> {
+    const { page = 1, limit = 10, search = '', role = '' } = query;
+    const skip = (page - 1) * limit;
+
+    const filter: any = {};
+    if (search) {
+      filter.$or = [
+        { fullName: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { phone: { $regex: search, $options: 'i' } },
+      ];
+    }
+    if (role) {
+      filter.role = role;
+    }
+
+    const [users, totalCount] = await Promise.all([
+      UserModel.find(filter).select('-password').sort({ createdAt: -1 }).skip(skip).limit(limit),
+      UserModel.countDocuments(filter),
+    ]);
+
+    return { users, totalCount };
   }
 
   // 3. Lấy chi tiết 1 User (Read One)
