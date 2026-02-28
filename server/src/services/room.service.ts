@@ -26,7 +26,7 @@ export class RoomService {
       name: { $regex: search, $options: "i" },
     };
     if (status) {
-      filter.status = status;
+      filter.status = String(status).toUpperCase()
     }
 
     const [total, rooms] = await Promise.all([
@@ -43,7 +43,6 @@ export class RoomService {
 
   // 4. Cập nhật phòng
   async updateRoom(id: string, data: UpdateRoomType): Promise<IRoom | null> {
-    console.log(data);
     if (data.name) {
       const existingRoom = await RoomModel.findOne({
         name: data.name,

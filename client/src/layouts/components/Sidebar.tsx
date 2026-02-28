@@ -93,23 +93,21 @@ function Sidebar() {
         { label: 'Ca học', path: '/settings/shifts' },
         { label: 'Phòng học', path: '/settings/rooms' },
         { label: 'Các loại chi phí cố định', path: '/settings/fixed-costs' },
-        { label: 'Mẫu thông báo', path: '/settings/templates' },
+        { label: 'Mẫu thông báo', path: '/settings/notification-templates' },
       ],
     },
   ];
 
   return (
     <aside
-      className={`h-screen bg-gray-900 text-white flex flex-col transition-all duration-300 ease-in-out top-0 sticky left-0 z-50 ${
-        expanded ? 'w-64' : 'w-20'
-      }`}
+      className={`h-screen bg-gray-900 text-white flex flex-col transition-all duration-300 ease-in-out top-0 sticky left-0 z-50 ${expanded ? 'w-64' : 'w-20'
+        }`}
     >
       {/* Header Sidebar */}
       <div className="p-4 flex justify-between items-center border-b border-gray-700 h-16">
         <div
-          className={`font-bold text-xl overflow-hidden transition-all duration-300 whitespace-nowrap ${
-            expanded ? 'w-32 opacity-100' : 'w-0 opacity-0'
-          }`}
+          className={`font-bold text-xl overflow-hidden transition-all duration-300 whitespace-nowrap ${expanded ? 'w-32 opacity-100' : 'w-0 opacity-0'
+            }`}
         >
           Admin Portal
         </div>
@@ -143,16 +141,14 @@ function Sidebar() {
               {/* Nút Parent Menu */}
               <button
                 onClick={() => toggleMenu(menu.key)}
-                className={`flex items-center justify-between w-full p-2.5 rounded-xl transition-colors ${
-                  isChildActive ? 'bg-gray-800 text-blue-400' : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                }`}
+                className={`flex items-center justify-between w-full p-2.5 rounded-xl transition-colors ${isChildActive ? 'bg-gray-800 text-blue-400' : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                  }`}
               >
                 <div className="flex items-center gap-3">
                   <span className={isChildActive ? 'text-blue-400' : 'text-gray-400'}>{menu.icon}</span>
                   <span
-                    className={`font-medium text-sm whitespace-nowrap transition-all duration-300 ${
-                      expanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'
-                    }`}
+                    className={`font-medium text-sm whitespace-nowrap transition-all duration-300 ${expanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'
+                      }`}
                   >
                     {menu.label}
                   </span>
@@ -168,19 +164,17 @@ function Sidebar() {
 
               {/* Danh sách Sub-items */}
               <div
-                className={`flex flex-col overflow-hidden transition-all duration-300 ${
-                  isOpen && expanded ? 'max-h-96 opacity-100 mt-1' : 'max-h-0 opacity-0'
-                }`}
+                className={`flex flex-col overflow-hidden transition-all duration-300 ${isOpen && expanded ? 'max-h-96 opacity-100 mt-1' : 'max-h-0 opacity-0'
+                  }`}
               >
                 {menu.subItems.map((subItem) => (
                   <button
                     key={subItem.path}
                     onClick={() => navigate(subItem.path)}
-                    className={`flex items-center pl-11 pr-4 py-2 text-sm rounded-lg transition-colors whitespace-nowrap ${
-                      currentPath === subItem.path
+                    className={`flex items-center pl-11 pr-4 py-2 text-sm rounded-lg transition-colors whitespace-nowrap ${currentPath === subItem.path
                         ? 'text-white bg-gray-800/50 font-medium'
                         : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
-                    }`}
+                      }`}
                   >
                     <div
                       className={`w-1.5 h-1.5 rounded-full mr-3 ${currentPath === subItem.path ? 'bg-blue-500' : 'bg-gray-600'}`}
@@ -200,9 +194,8 @@ function Sidebar() {
           AD
         </div>
         <div
-          className={`ml-3 overflow-hidden transition-all duration-300 ${
-            expanded ? 'w-40 opacity-100' : 'w-0 opacity-0'
-          }`}
+          className={`ml-3 overflow-hidden transition-all duration-300 ${expanded ? 'w-40 opacity-100' : 'w-0 opacity-0'
+            }`}
         >
           <p className="text-sm font-medium whitespace-nowrap">Admin User</p>
           <p className="text-xs text-gray-400 whitespace-nowrap">admin@edu.vn</p>
