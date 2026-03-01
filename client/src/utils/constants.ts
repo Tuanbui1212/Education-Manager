@@ -13,6 +13,8 @@ export const PATHS = {
 
   SETTINGS_SHIFTS: '/settings/shifts',
   SETTINGS_EXPENDITURES: '/settings/fixed-costs',
+
   SETTINGS_ROOMS: '/settings/rooms',
-  SETTINGS_TEMPLATES: '/settings/templates',
+
+  SETTINGS_NOTIFICATION_TEMPLATES: '/settings/notification-templates',
 };

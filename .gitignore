@@ -2,7 +2,7 @@
 node_modules
 .env
 .env.*
-
+!.env.example
 # Các thư mục build (tuỳ dự án)
 dist
 build
@@ -12,3 +12,4 @@ build
 .DS_Store
 Thumbs.db
 .agent
+coverage

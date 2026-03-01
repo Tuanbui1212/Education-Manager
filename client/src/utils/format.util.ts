@@ -1,4 +1,6 @@
 import type { UserRole } from '../types/user.type';
+import type { RoomStatus } from '../types/room.type';
+import type { NotificationType } from '../types/notificationTemplate.type';
 
 export const getRoleStyles = (role: UserRole): string => {
   switch (role) {
@@ -17,6 +19,31 @@ export const getRoleStyles = (role: UserRole): string => {
   }
 };
 
+export const getRoomStatusStyles = (status: RoomStatus): string => {
+  switch (status) {
+    case 'ACTIVE':
+      return 'bg-green-100 text-green-700 border-green-200';
+    case 'MAINTENANCE':
+      return 'bg-orange-100 text-orange-700 border-orange-200';
+    case 'INACTIVE':
+      return 'bg-red-100 text-red-700 border-red-200';
+    default:
+      return 'bg-gray-100 text-gray-700 border-gray-200';
+  }
+};
+
+export const getNotificationTypeStyles = (type: NotificationType): string => {
+  switch (type) {
+    case 'EMAIL':
+      return 'bg-blue-100 text-blue-700 border-blue-200';
+    case 'SMS':
+      return 'bg-green-100 text-green-700 border-green-200';
+    default:
+      return 'bg-gray-100 text-gray-700 border-gray-200';
+  }
+};
+
+// Ham dinh dang ngay
 export const formatDate = (dateString?: string | Date) => {
   if (!dateString) return '-';
   return new Date(dateString).toLocaleDateString('vi-VN');
