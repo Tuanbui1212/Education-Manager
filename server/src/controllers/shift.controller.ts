@@ -17,8 +17,10 @@ export class ShiftController {
   // [GET] /api/shifts
   getAll = async (req: Request, res: Response) => {
     try {
-      const shifts = await this.shiftService.getAllShifts();
-      res.status(200).json({ success: true, data: shifts });
+      const { data: shifts, totalCount } = await this.shiftService.getAllShifts(req.query as any);
+      res
+        .status(200)
+        .json({ success: true, data: shifts, message: 'Lấy danh sách ca học thành công', totalCount: totalCount });
     } catch (error) {
       res.status(500).json({ success: false, message: 'Lỗi server' });
     }

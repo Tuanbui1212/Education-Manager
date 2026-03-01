@@ -1,4 +1,4 @@
-import { Plus, Filter, MoreVertical, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Filter, Edit2, Trash2 } from 'lucide-react';
 import { getRoleStyles, formatDate } from '../../../utils/format.util';
 
 import Button from '../../../components/Button';

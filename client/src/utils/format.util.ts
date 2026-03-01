@@ -17,7 +17,6 @@ export const getRoleStyles = (role: UserRole): string => {
   }
 };
 
-// Ham dinh dang ngay
 export const formatDate = (dateString?: string | Date) => {
   if (!dateString) return '-';
   return new Date(dateString).toLocaleDateString('vi-VN');

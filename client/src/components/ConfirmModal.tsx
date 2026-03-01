@@ -83,7 +83,7 @@ const ConfirmModal = ({
           {cancelText && (
             <Button
               variant="outline"
-              className="flex-1 rounded-xl h-11 text-sm font-semibold"
+              className="flex-1 rounded-xl h-11 text-sm font-semibold justify-center"
               onClick={onClose}
               type="button"
               disabled={isLoading}
@@ -92,7 +92,7 @@ const ConfirmModal = ({
             </Button>
           )}
 
-          <button
+          <Button
             className={`flex-1 rounded-xl h-11 text-sm font-semibold shadow-sm transition-all flex justify-center items-center gap-2 ${currentConfig.btnColor} ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-md'}`}
             onClick={onConfirm}
             disabled={isLoading}
@@ -113,7 +113,7 @@ const ConfirmModal = ({
               </svg>
             )}
             {confirmText}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

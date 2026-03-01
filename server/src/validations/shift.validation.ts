@@ -1,18 +1,21 @@
 import { z } from 'zod';
+import { ShiftStatus } from '../types/shift.type';
 
 const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
 
 export const CreateShiftSchema = z.object({
-  name: z.string().min(1, 'Tên ca không được để trống').trim().nonempty('Tên ca là bắt buộc'),
+  name: z
+    .string({ message: 'Tên ca phải là một chuỗi và không được để trống' })
+    .min(1, 'Tên ca không được để trống')
+    .trim(),
   startTime: z
-    .string()
+    .string({ message: 'Thời gian bắt đầu phải là một chuỗi và không được để trống' })
     .regex(timeRegex, 'Định dạng startTime không hợp lệ (HH:mm)')
-    .trim()
-    .nonempty('Thời gian bắt đầu là bắt buộc'),
+    .trim(),
   endTime: z
-    .string()
+    .string({ message: 'Thời gian kết thúc phải là một chuỗi và không được để trống' })
     .regex(timeRegex, 'Định dạng endTime không hợp lệ (HH:mm)')
-    .trim()
-    .nonempty('Thời gian kết thúc là bắt buộc'),
+    .trim(),
+  status: z.enum(Object.values(ShiftStatus)).optional(),
 });
 export const UpdateShiftSchema = CreateShiftSchema.partial();

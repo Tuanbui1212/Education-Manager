@@ -12,8 +12,22 @@ export class ShiftService {
   }
 
   // Lấy danh sách ca làm việc
-  async getAllShifts() {
-    return await ShiftModel.find().sort({ startTime: 1 });
+  async getAllShifts(params?: { search?: string; page?: number; limit?: number }) {
+    const { page = 1, limit = 5, search = '' } = params || {};
+
+    const query: any = {};
+    if (search) {
+      query.name = { $regex: search, $options: 'i' };
+    }
+
+    const data = await ShiftModel.find(query)
+      .sort({ startTime: 1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    const totalCount = await ShiftModel.countDocuments(query);
+
+    return { data, totalCount };
   }
 
   // Lấy chi tiết 1 ca làm việc

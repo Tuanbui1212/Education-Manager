@@ -1,4 +1,4 @@
-import { DecodedToken } from "./user.type"; // Import cái interface DecodedToken của bạn
+import { DecodedToken } from './user.type';
 
 declare global {
   namespace Express {

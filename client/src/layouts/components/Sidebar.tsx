@@ -1,14 +1,15 @@
 import {
-  PanelLeftClose,
-  PanelRightClose,
   LayoutDashboard,
   Settings,
-  Users,
+  ShieldCheck,
+  Briefcase,
+  GraduationCap,
   BookOpen,
-  Wallet,
+  BadgeDollarSign,
+  PanelLeftClose,
+  PanelRightClose,
   ChevronDown,
   ChevronRight,
-  UserCog, // Import thêm icon này cho phần Quản lý tài khoản
 } from 'lucide-react';
 import { useState, memo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -18,11 +19,11 @@ import { PATHS } from '../../utils/constants';
 function Sidebar() {
   const [expanded, setExpanded] = useState(true);
 
-  // State quản lý việc mở/đóng của các menu cấp 1
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
-    accounts: false, // <-- Thêm state cho Quản lý tài khoản
+    accounts: false,
+    hr: false,
+    students: false,
     training: false,
-    users: false,
     finance: false,
     settings: false,
   });
@@ -40,16 +41,37 @@ function Sidebar() {
     setOpenMenus((prev) => ({ ...prev, [menuKey]: !prev[menuKey] }));
   };
 
-  // CẤU HÌNH MENU
   const menuConfig = [
     {
       key: 'accounts',
       label: 'Quản lý tài khoản',
-      icon: <UserCog size={20} />, // Icon bánh răng user
+      icon: <ShieldCheck size={20} />,
       subItems: [
-        { label: 'Danh sách tài khoản', path: PATHS.USER || '/accounts/list' }, // Trỏ về trang UserList bạn vừa làm
+        { label: 'Danh sách tài khoản', path: PATHS.USER || '/accounts/list' },
         { label: 'Phân quyền (Roles)', path: '/accounts/roles' },
         { label: 'Lịch sử hoạt động', path: '/accounts/logs' },
+      ],
+    },
+    {
+      key: 'hr',
+      label: 'Quản lý Nhân sự (HR)',
+      icon: <Briefcase size={20} />,
+      subItems: [
+        { label: 'Đội ngũ giáo viên', path: '/hr/teachers' },
+        { label: 'Đội ngũ trợ giảng', path: '/hr/tutors' },
+        { label: 'Nhân viên văn phòng', path: '/hr/staffs' },
+        { label: 'Hợp đồng & Lương', path: '/hr/contracts' },
+      ],
+    },
+    {
+      key: 'students',
+      label: 'Học viên & Tuyển sinh',
+      icon: <GraduationCap size={20} />,
+      subItems: [
+        { label: 'Data khách hàng', path: '/students/leads' },
+        { label: 'Danh sách học viên', path: '/students/list' },
+        { label: 'Kết quả học tập', path: '/students/results' },
+        { label: 'Bảo lưu / Nghỉ học', path: '/students/status' },
       ],
     },
     {
@@ -67,22 +89,14 @@ function Sidebar() {
       ],
     },
     {
-      key: 'users',
-      label: 'Hồ sơ nhân sự/Học viên', // Đổi tên một chút cho đỡ trùng lặp với Tài khoản
-      icon: <Users size={20} />,
-      subItems: [
-        { label: 'Hồ sơ học viên', path: '/users/students' },
-        { label: 'Hồ sơ giáo viên', path: '/users/teachers' },
-      ],
-    },
-    {
       key: 'finance',
       label: 'Quản lý Tài chính',
-      icon: <Wallet size={20} />,
+      icon: <BadgeDollarSign size={20} />,
       subItems: [
-        { label: 'Học phí', path: '/finance/tuition' },
-        { label: 'Thu chi', path: '/finance/transactions' },
-        { label: 'Báo cáo', path: '/finance/reports' },
+        { label: 'Học phí học viên', path: '/finance/tuition' },
+        { label: 'Chi trả lương/thù lao', path: '/finance/payroll' },
+        { label: 'Thu chi tổng quát', path: '/finance/transactions' },
+        { label: 'Báo cáo tài chính', path: '/finance/reports' },
       ],
     },
     {
@@ -90,10 +104,10 @@ function Sidebar() {
       label: 'Cấu hình hệ thống',
       icon: <Settings size={20} />,
       subItems: [
-        { label: 'Ca học', path: '/settings/shifts' },
-        { label: 'Phòng học', path: '/settings/rooms' },
-        { label: 'Các loại chi phí cố định', path: '/settings/fixed-costs' },
-        { label: 'Mẫu thông báo', path: '/settings/templates' },
+        { label: 'Ca học', path: PATHS.SETTINGS_SHIFTS },
+        { label: 'Phòng học', path: PATHS.SETTINGS_ROOMS },
+        { label: 'Các loại chi phí cố định', path: PATHS.SETTINGS_EXPENDITURES },
+        { label: 'Mẫu thông báo', path: PATHS.SETTINGS_TEMPLATES },
       ],
     },
   ];
@@ -104,7 +118,6 @@ function Sidebar() {
         expanded ? 'w-64' : 'w-20'
       }`}
     >
-      {/* Header Sidebar */}
       <div className="p-4 flex justify-between items-center border-b border-gray-700 h-16">
         <div
           className={`font-bold text-xl overflow-hidden transition-all duration-300 whitespace-nowrap ${
@@ -122,9 +135,7 @@ function Sidebar() {
         </button>
       </div>
 
-      {/* Navigation Links */}
       <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto custom-scrollbar">
-        {/* Item tĩnh: Dashboard */}
         <SidebarItem
           icon={<LayoutDashboard size={20} />}
           text="Dashboard"
@@ -133,14 +144,12 @@ function Sidebar() {
           onClick={() => navigate(PATHS.DASHBOARD)}
         />
 
-        {/* Render danh sách Menu Dropdown động từ Config */}
         {menuConfig.map((menu) => {
           const isOpen = openMenus[menu.key];
           const isChildActive = menu.subItems.some((item) => currentPath === item.path);
 
           return (
             <div key={menu.key} className="flex flex-col space-y-1">
-              {/* Nút Parent Menu */}
               <button
                 onClick={() => toggleMenu(menu.key)}
                 className={`flex items-center justify-between w-full p-2.5 rounded-xl transition-colors ${
@@ -158,7 +167,6 @@ function Sidebar() {
                   </span>
                 </div>
 
-                {/* Mũi tên xổ xuống */}
                 {expanded && (
                   <span className="text-gray-500">
                     {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
@@ -166,10 +174,9 @@ function Sidebar() {
                 )}
               </button>
 
-              {/* Danh sách Sub-items */}
               <div
                 className={`flex flex-col overflow-hidden transition-all duration-300 ${
-                  isOpen && expanded ? 'max-h-96 opacity-100 mt-1' : 'max-h-0 opacity-0'
+                  isOpen && expanded ? 'max-h-[500px] opacity-100 mt-1' : 'max-h-0 opacity-0'
                 }`}
               >
                 {menu.subItems.map((subItem) => (
@@ -182,9 +189,6 @@ function Sidebar() {
                         : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
                     }`}
                   >
-                    <div
-                      className={`w-1.5 h-1.5 rounded-full mr-3 ${currentPath === subItem.path ? 'bg-blue-500' : 'bg-gray-600'}`}
-                    ></div>
                     {subItem.label}
                   </button>
                 ))}
@@ -194,7 +198,6 @@ function Sidebar() {
         })}
       </nav>
 
-      {/* Footer Sidebar: User Profile */}
       <div className="border-t border-gray-700 p-3 flex items-center">
         <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center font-bold flex-shrink-0">
           AD
