@@ -17,4 +17,7 @@ export const PATHS = {
   SETTINGS_ROOMS: '/settings/rooms',
 
   SETTINGS_NOTIFICATION_TEMPLATES: '/settings/notification-templates',
+
+  //Training
+  TRAINING_COURSES: '/training/courses',
 };

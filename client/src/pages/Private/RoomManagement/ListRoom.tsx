@@ -6,6 +6,7 @@ import PageHeader from '../../../components/PageHeader';
 import TablePagination from '../../../components/TablePagination';
 import SearchInput from '../../../components/SearchInput';
 import ConfirmModal from '../../../components/ConfirmModal';
+import TableSkeleton from '../../../components/TableSkeleton';
 
 import RoomModal from './RoomModal';
 
@@ -174,7 +175,7 @@ const ListRoom = () => {
                 cancelText={confirmConfig.type === 'warning' ? 'Hủy' : ''}
             />
             <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
-                <div className="flex gap-4 items-center flex-1 max-w-2xl">
+                <div className="flex gap-4 items-center flex-1 max-w-lg">
                     <SearchInput
                         type="text"
                         placeholder="Tìm kiếm tên phòng..."
@@ -271,12 +272,9 @@ const ListRoom = () => {
                                 </td>
                             </tr>
                         ) : (
-                            Array.from({ length: limit }).map((_, i) => (
-                                <tr key={i} className="animate-pulse">
-                                    <td colSpan={5} className="p-8 bg-gray-50/50"></td>
-                                </tr>
-                            ))
+                            <TableSkeleton columns={5} rows={limit} />
                         )}
+
                     </tbody>
                 </table>
 

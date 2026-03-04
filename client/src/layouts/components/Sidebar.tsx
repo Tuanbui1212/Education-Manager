@@ -79,7 +79,7 @@ function Sidebar() {
       label: 'Quản lý đào tạo',
       icon: <BookOpen size={20} />,
       subItems: [
-        { label: 'Quản lý khóa học', path: '/training/courses' },
+        { label: 'Quản lý khóa học', path: PATHS.TRAINING_COURSES },
         { label: 'Quản lý lớp học', path: '/training/classes' },
         { label: 'Xếp thời khóa biểu', path: '/training/schedule' },
         { label: 'Điểm danh', path: '/training/attendance' },
@@ -107,7 +107,7 @@ function Sidebar() {
         { label: 'Ca học', path: PATHS.SETTINGS_SHIFTS },
         { label: 'Phòng học', path: PATHS.SETTINGS_ROOMS },
         { label: 'Các loại chi phí cố định', path: PATHS.SETTINGS_EXPENDITURES },
-        { label: 'Mẫu thông báo', path: PATHS.SETTINGS_TEMPLATES },
+        { label: 'Mẫu thông báo', path: PATHS.SETTINGS_NOTIFICATION_TEMPLATES },
       ],
     },
   ];
@@ -171,17 +171,16 @@ function Sidebar() {
               </button>
 
               <div
-                className={`flex flex-col overflow-hidden transition-all duration-300 ${
-                  isOpen && expanded ? 'max-h-[500px] opacity-100 mt-1' : 'max-h-0 opacity-0'
-                }`}
+                className={`flex flex-col overflow-hidden transition-all duration-300 ${isOpen && expanded ? 'max-h-[500px] opacity-100 mt-1' : 'max-h-0 opacity-0'
+                  }`}
               >
                 {menu.subItems.map((subItem) => (
                   <button
                     key={subItem.path}
                     onClick={() => navigate(subItem.path)}
                     className={`flex items-center pl-11 pr-4 py-2 text-sm rounded-lg transition-colors whitespace-nowrap ${currentPath === subItem.path
-                        ? 'text-white bg-gray-800/50 font-medium'
-                        : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                      ? 'text-white bg-gray-800/50 font-medium'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
                       }`}
                   >
                     {subItem.label}
