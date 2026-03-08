@@ -6,7 +6,7 @@ import shiftRouter from './shift.routes';
 import expenditureRouter from './expenditure.routes';
 import notificationTemplateRouter from './notificationTemplate.routes';
 import courseRouter from './course.routes';
-
+import classRouter from './class.routes';
 
 function router(app: Application) {
   app.use('/api/users', userRouter);
@@ -16,7 +16,7 @@ function router(app: Application) {
   app.use('/api/expenditures', expenditureRouter);
   app.use('/api/notification-templates', notificationTemplateRouter);
   app.use('/api/courses', courseRouter);
-
+  app.use('/api/classes', classRouter);
 }
 
 export default router;
