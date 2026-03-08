@@ -1,12 +1,5 @@
-import { Document } from 'mongoose';
-
-export enum UserRole {
-  ADMIN = 'ADMIN',
-  TEACHER = 'TEACHER',
-  STUDENT = 'STUDENT',
-  SALE = 'SALE',
-  TEACHING_ASSISTANT = 'TEACHING_ASSISTANT',
-}
+import { Document, Types } from 'mongoose';
+import { IRole } from './role.type';
 
 export enum UserStatus {
   ACTIVE = 'ACTIVE',
@@ -16,7 +9,7 @@ export enum UserStatus {
 export interface IStudentInfo {
   parentsName?: string;
   crmHistory?: string[];
-  consultantId?: string;
+  consultantId?: Types.ObjectId | string;
 }
 
 export interface ITeacherInfo {
@@ -29,7 +22,7 @@ export interface IUser extends Document {
   phone: string;
   password?: string;
   fullName: string;
-  role: UserRole;
+  roleId: Types.ObjectId | IRole;
   date: Date;
   status: UserStatus;
   student_info?: IStudentInfo;
@@ -42,5 +35,5 @@ export interface GetUsersQuery {
   page?: number;
   limit?: number;
   search?: string;
-  role?: UserRole;
+  roleId?: string;
 }

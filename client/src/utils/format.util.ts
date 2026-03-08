@@ -1,8 +1,7 @@
-import type { UserRole } from '../types/user.type';
 import type { RoomStatus } from '../types/room.type';
 import type { NotificationType } from '../types/notificationTemplate.type';
 
-export const getRoleStyles = (role: UserRole): string => {
+export const getRoleStyles = (role: string): string => {
   switch (role) {
     case 'ADMIN':
       return 'bg-orange-100 text-orange-700 border-orange-200';
@@ -47,4 +46,34 @@ export const getNotificationTypeStyles = (type: NotificationType): string => {
 export const formatDate = (dateString?: string | Date) => {
   if (!dateString) return '-';
   return new Date(dateString).toLocaleDateString('vi-VN');
+};
+
+// Hàm format tiền tệ VNĐ
+export const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+};
+
+// Hàm format ngày tháng (DD/MM/YYYY)
+export const formatDateA = (dateString: string | null) => {
+  if (!dateString) return 'Hiện tại';
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(date);
+};
+
+// Hàm dịch chu kỳ sang Tiếng Việt
+export const translateCycle = (cycle: string) => {
+  switch (cycle) {
+    case 'MONTHLY':
+      return 'Hàng tháng';
+    case 'QUARTERLY':
+      return 'Hàng quý';
+    case 'YEARLY':
+      return 'Hàng năm';
+    default:
+      return cycle;
+  }
 };

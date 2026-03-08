@@ -1,17 +1,23 @@
 import axios from './axiosClient';
-
 import type { IUser, GetUsersParams } from '../types/user.type';
 
 export const userService = {
   getUsers: async (
     params?: GetUsersParams,
-  ): Promise<{ success: boolean; message: string; data?: IUser[]; totalCount: number }> => {
+  ): Promise<{ success: boolean; message: string; data: IUser[]; totalCount: number }> => {
     const response = await axios.get('/users', { params });
+
     return response.data;
   },
 
   getUserById: async (id: string): Promise<{ success: boolean; message: string; data?: IUser }> => {
     const response = await axios.get(`/users/${id}`);
+    const user = response.data.data;
+
+    if (user) {
+      user.role = user.roleId?.name || user.role;
+    }
+
     return response.data;
   },
 

@@ -1,12 +1,12 @@
 import mongoose, { Schema } from 'mongoose';
-import { IUser, UserRole, UserStatus } from '../types/user.type';
+import { IUser, UserStatus } from '../types/user.type';
 
 const UserSchema = new Schema<IUser>(
   {
-    email: { type: String, required: true, unique: true },
-    phone: { type: String, required: true },
+    email: { type: String, required: true, unique: true, trim: true },
+    phone: { type: String, required: true, trim: true },
     password: { type: String, required: true },
-    fullName: { type: String, required: true },
+    fullName: { type: String, required: true, trim: true },
     date: { type: Date, required: true },
     status: {
       type: String,
@@ -14,10 +14,11 @@ const UserSchema = new Schema<IUser>(
       enum: Object.values(UserStatus),
       default: UserStatus.ACTIVE,
     },
-    role: {
-      type: String,
-      enum: Object.values(UserRole),
-      default: UserRole.STUDENT,
+
+    roleId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Role',
+      required: true,
     },
 
     student_info: {
@@ -31,7 +32,10 @@ const UserSchema = new Schema<IUser>(
       degrees: [{ type: String }],
     },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+    versionKey: false,
+  },
 );
 
 export const UserModel = mongoose.model<IUser>('User', UserSchema);

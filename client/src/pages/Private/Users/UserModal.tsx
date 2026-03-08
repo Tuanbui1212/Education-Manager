@@ -16,53 +16,33 @@ import Button from '../../../components/Button';
 import InputField from '../../../components/InputField';
 import SelectField from '../../../components/SelectField';
 
-import type { IUser, UserRole, UserModalProps, UserStatus } from '../../../types/user.type';
+import type { IUser, UserModalProps, UserStatus } from '../../../types/user.type';
 
-const UserModal = ({ isOpen, onClose, onSubmit, initialData }: UserModalProps) => {
-  const [formData, setFormData] = useState<Partial<IUser>>(
-    initialData
-      ? { ...initialData, password: '' }
-      : {
-          fullName: '',
-          email: '',
-          phone: '',
-          password: '',
-          date: undefined,
-          role: 'STUDENT' as UserRole,
-          status: 'ACTIVE',
-          student_info: { parentsName: '' },
-          teacher_info: { hourlyRate: 0, degrees: [] },
-        },
-  );
+const UserModal = ({ roles = [], isOpen, onClose, onSubmit, initialData }: UserModalProps) => {
+  const [formData, setFormData] = useState<Partial<IUser>>(() => {
+    if (initialData) {
+      return {
+        ...initialData,
+        password: '',
+        roleId: typeof initialData.roleId === 'object' ? (initialData.roleId as any)._id : initialData.roleId,
+      };
+    }
+    return {
+      fullName: '',
+      email: '',
+      phone: '',
+      password: '',
+      date: undefined,
+      roleId: roles.find((r: any) => r.name === 'Student')?._id || '',
+      status: 'ACTIVE',
+      student_info: { parentsName: '' },
+      teacher_info: { hourlyRate: 0, degrees: [] },
+    };
+  });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
-  const [prevInitialData, setPrevInitialData] = useState(initialData);
-
-  if (isOpen !== prevIsOpen || initialData !== prevInitialData) {
-    setPrevIsOpen(isOpen);
-    setPrevInitialData(initialData);
-
-    if (isOpen) {
-      setFormData(
-        initialData
-          ? { ...initialData, password: '' }
-          : {
-              fullName: '',
-              email: '',
-              phone: '',
-              password: '',
-              date: undefined,
-              role: 'STUDENT' as UserRole,
-              status: 'ACTIVE',
-              student_info: { parentsName: '' },
-              teacher_info: { hourlyRate: 0, degrees: [] },
-            },
-      );
-      setErrors({});
-    }
-  }
+  const selectedRoleName = roles.find((r: any) => r._id === formData.roleId)?.name;
 
   if (!isOpen) return null;
 
@@ -77,22 +57,17 @@ const UserModal = ({ isOpen, onClose, onSubmit, initialData }: UserModalProps) =
     }
     if (!formData.phone?.trim()) {
       newErrors.phone = 'Vui lòng nhập số điện thoại';
-    } else if (formData.phone.length < 10) {
-      newErrors.phone = 'Số điện thoại không hợp lệ';
-      if (!formData.phone?.trim()) {
-        newErrors.phone = 'Vui lòng nhập số điện thoại';
-      } else {
-        const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
-        if (!phoneRegex.test(formData.phone)) {
-          newErrors.phone = 'Số điện thoại không hợp lệ (Ví dụ: 0987654321)';
-        }
+    } else {
+      const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
+      if (!phoneRegex.test(formData.phone)) {
+        newErrors.phone = 'Số điện thoại không hợp lệ (Ví dụ: 0987654321)';
       }
     }
     if (!formData.date) newErrors.date = 'Vui lòng chọn ngày sinh';
 
     if (!initialData && !formData.password?.trim()) {
       newErrors.password = 'Vui lòng nhập mật khẩu';
-    } else if (!initialData && (formData.password?.length || 0) < 6) {
+    } else if (formData.password && formData.password.length < 6) {
       newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
     }
 
@@ -147,7 +122,7 @@ const UserModal = ({ isOpen, onClose, onSubmit, initialData }: UserModalProps) =
               icon={<Calendar size={16} />}
               type="date"
               className="bg-white"
-              value={formData.date ? new Date(formData.date).toISOString().split('T')[0] : ''}
+              value={formData.date ? String(formData.date).split('T')[0] : ''}
               onChange={(e) => handleChange('date', e.target.value)}
               error={errors.date}
             />
@@ -163,6 +138,7 @@ const UserModal = ({ isOpen, onClose, onSubmit, initialData }: UserModalProps) =
               onChange={(e) => handleChange('email', e.target.value)}
               error={errors.email}
               className={!initialData ? '' : 'bg-stone-200 cursor-not-allowed'}
+              autoComplete="off"
             />
 
             <InputField
@@ -173,6 +149,7 @@ const UserModal = ({ isOpen, onClose, onSubmit, initialData }: UserModalProps) =
               value={formData.password || ''}
               onChange={(e) => handleChange('password', e.target.value)}
               error={errors.password}
+              autoComplete="new-password"
             />
           </div>
 
@@ -192,17 +169,17 @@ const UserModal = ({ isOpen, onClose, onSubmit, initialData }: UserModalProps) =
             <SelectField
               label="Vai trò"
               icon={<ShieldCheck size={16} />}
-              value={formData.role}
-              onChange={(e) => handleChange('role', e.target.value as UserRole)}
+              value={formData.roleId as string}
+              onChange={(e) => handleChange('roleId', e.target.value)}
             >
-              <option value="ADMIN">Quản trị viên (Admin)</option>
-              <option value="TEACHER">Giáo viên (Teacher)</option>
-              <option value="STUDENT">Học sinh (Student)</option>
-              <option value="SALE">Tư vấn viên (Sale)</option>
+              {roles.map((role: any) => (
+                <option key={role._id} value={role._id}>
+                  {role.name}
+                </option>
+              ))}
             </SelectField>
           </div>
 
-          {/* Hàng 4: Trạng thái */}
           <div className="grid grid-cols-2 gap-4">
             <SelectField
               label="Trạng thái"
@@ -217,8 +194,7 @@ const UserModal = ({ isOpen, onClose, onSubmit, initialData }: UserModalProps) =
 
           <hr className="border-gray-100" />
 
-          {/* Thông tin cho Giáo viên */}
-          {formData.role === 'TEACHER' && (
+          {selectedRoleName == 'Teacher' && (
             <div className="grid grid-cols-2 gap-4 animate-in slide-in-from-top-2 text-blue-600">
               <InputField
                 label="Lương mỗi giờ"
@@ -254,8 +230,7 @@ const UserModal = ({ isOpen, onClose, onSubmit, initialData }: UserModalProps) =
             </div>
           )}
 
-          {/* Thông tin cho Học sinh */}
-          {formData.role === 'STUDENT' && (
+          {selectedRoleName == 'Student' && (
             <div className="animate-in slide-in-from-top-2 text-green-600">
               <InputField
                 label="Tên phụ huynh"

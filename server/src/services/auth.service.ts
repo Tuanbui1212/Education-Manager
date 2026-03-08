@@ -7,20 +7,24 @@ export class AuthService {
   async login(email: string, password: string) {
     console.log(email, password);
 
-    const existingUser = await UserModel.findOne({ email });
+    const existingUser = await UserModel.findOne({ email }).populate('roleId');
+
     if (!existingUser) {
       throw new Error('Email không tồn tại trong hệ thống!');
     }
+
     const isPasswordValid = await bcrypt.compare(password, existingUser.password as string);
     if (!isPasswordValid) {
       throw new Error('Mật khẩu không đúng!');
     }
 
+    const userRole = existingUser.roleId as any;
+
     const payload = {
       id: existingUser._id.toString(),
       success: true,
       email: existingUser.email,
-      role: existingUser.role,
+      role: userRole,
       name: existingUser.fullName,
       phone: existingUser.phone,
     };
@@ -28,6 +32,7 @@ export class AuthService {
     const accessToken = jwt.sign(payload, process.env.JWT_SECRET_KEY as string, {
       expiresIn: process.env.JWT_EXPIRES_IN as any,
     });
+
     return accessToken;
   }
 }

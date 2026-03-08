@@ -1,8 +1,15 @@
 export interface DecodedToken {
+  _id: string;
+  email: string;
+  name: string;
   success: boolean;
-  id: string;
   user: string;
-  role: string;
+  role: {
+    _id: string;
+    name: string;
+    description: string;
+    permissions: string[];
+  };
   iat: number;
   exp: number;
 }

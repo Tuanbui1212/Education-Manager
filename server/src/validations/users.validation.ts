@@ -9,7 +9,10 @@ const TeacherInfoSchema = z.object({
 const StudentInfoSchema = z.object({
   parentsName: z.string().optional(),
   crmHistory: z.array(z.string()).optional(),
-  consultantId: z.string().optional(),
+  consultantId: z
+    .string()
+    .regex(/^[0-9a-fA-F]{24}$/, 'ID Tư vấn viên không hợp lệ')
+    .optional(),
 });
 
 export const CreateUserSchema = z.object({
@@ -25,11 +28,17 @@ export const CreateUserSchema = z.object({
     .min(2, 'Họ tên phải có ít nhất 2 ký tự')
     .max(50, 'Họ tên tối đa 50 ký tự'),
   phone: z.string({ message: 'Số điện thoại là bắt buộc' }).trim().length(10, 'Số điện thoại phải có chính xác 10 số'),
-  date: z.coerce.date({ message: 'Ngày sinh không hợp lệ' }).optional(),
-  status: z.nativeEnum(UserStatus, {
-    error: 'Trạng thái không hợp lệ',
-  }),
-  role: z.string({ message: 'Vai trò là bắt buộc' }).trim().optional(),
+  date: z.coerce.date({ message: 'Ngày sinh không hợp lệ' }),
+  status: z
+    .nativeEnum(UserStatus, {
+      message: 'Trạng thái không hợp lệ',
+    })
+    .optional(),
+
+  roleId: z
+    .string({ message: 'Vai trò là bắt buộc' })
+    .regex(/^[0-9a-fA-F]{24}$/, 'ID Vai trò không hợp lệ (Phải là ObjectId 24 ký tự)'),
+
   teacher_info: TeacherInfoSchema.optional(),
   student_info: StudentInfoSchema.optional(),
 });
