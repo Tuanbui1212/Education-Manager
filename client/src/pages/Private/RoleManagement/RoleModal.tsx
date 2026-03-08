@@ -57,8 +57,8 @@ const RoleModal = ({ isOpen, onClose, onSubmit, initialData }: RoleModalProps) =
       const hasPermission = currentPermissions.includes(permissionCode);
 
       const newPermissions = hasPermission
-        ? currentPermissions.filter((code) => code !== permissionCode) // Bỏ check
-        : [...currentPermissions, permissionCode]; // Thêm check
+        ? currentPermissions.filter((code) => code !== permissionCode)
+        : [...currentPermissions, permissionCode];
 
       return { ...prev, permissions: newPermissions };
     });
