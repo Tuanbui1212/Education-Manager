@@ -13,6 +13,7 @@ import useFetch from '../../../hooks/useFetch';
 import useDebounce from '../../../hooks/useDebounce';
 
 import { userService } from '../../../services/user.service';
+import { roleService } from '../../../services/role.service';
 
 import { useState } from 'react';
 import type { IUser } from '../../../types/user.type';
@@ -35,11 +36,12 @@ const UserList = () => {
     message: '',
     type: 'success' as 'success' | 'danger' | 'warning' | 'info',
   });
+
   const queryParams = {
     page,
     limit,
     search: debouncedSearch,
-    role,
+    roleId: role,
   };
 
   const {
@@ -50,9 +52,12 @@ const UserList = () => {
     refetch: fetchUsers,
   } = useFetch(userService.getUsers, queryParams, [page, debouncedSearch, role, limit]);
 
+  const { data: rolesData } = useFetch(roleService.getRoles, {}, []);
+  const roles = Array.isArray(rolesData) ? rolesData : (rolesData as any)?.data || [];
+
   const handleAddUser = async (formData: Partial<IUser>) => {
     try {
-      const data: { success: boolean; message: string; data?: IUser } = await userService.createUser(formData);
+      const data: any = await userService.createUser(formData);
       if (data.success) {
         setConfirmConfig({
           isOpen: true,
@@ -83,16 +88,18 @@ const UserList = () => {
         fullName: formData.fullName,
         phone: formData.phone,
         status: formData.status,
-        role: formData.role,
+        roleId: formData.roleId,
         date: formData.date,
       };
 
-      if (formData.role === 'TEACHER' && formData.teacher_info) {
+      const roleName = roles?.find((r: any) => r._id === formData.roleId)?.name;
+
+      if (roleName === 'TEACHER' && formData.teacher_info) {
         updateData.teacher_info = {
           hourlyRate: Number(formData.teacher_info.hourlyRate),
           degrees: Array.isArray(formData.teacher_info.degrees) ? formData.teacher_info.degrees : [],
         };
-      } else if (formData.role === 'STUDENT' && formData.student_info) {
+      } else if (roleName === 'STUDENT' && formData.student_info) {
         updateData.student_info = {
           parentsName: formData.student_info.parentsName,
         };
@@ -143,16 +150,21 @@ const UserList = () => {
 
   return (
     <div className="p-8 w-full ">
-      <UserModal
-        isOpen={showModalAdd}
-        onClose={() => {
-          setShowModalAdd(false);
-          setSelectedUser(null);
-        }}
-        onSubmit={selectedUser?._id ? handleEditUser : handleAddUser}
-        initialData={selectedUser || undefined}
-      />
+      {showModalAdd && (
+        <UserModal
+          roles={roles}
+          isOpen={showModalAdd}
+          onClose={() => {
+            setShowModalAdd(false);
+            setSelectedUser(null);
+          }}
+          onSubmit={selectedUser?._id ? handleEditUser : handleAddUser}
+          initialData={selectedUser || undefined}
+        />
+      )}
+
       <PageHeader title="Danh sách tài khoản" />
+
       <ConfirmModal
         isOpen={confirmConfig.isOpen}
         onClose={() => setConfirmConfig({ ...confirmConfig, isOpen: false })}
@@ -163,6 +175,7 @@ const UserList = () => {
         confirmText="Đóng"
         cancelText=""
       />
+
       <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
         <div className="flex gap-4 items-center flex-1 max-w-2xl">
           <SearchInput
@@ -180,25 +193,27 @@ const UserList = () => {
 
             {open && (
               <div className="absolute mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                {[
-                  { label: 'All Roles', value: '' },
-                  { label: 'Admin', value: 'ADMIN' },
-                  { label: 'Teacher', value: 'TEACHER' },
-                  { label: 'Student', value: 'STUDENT' },
-                  { label: 'Sale', value: 'SALE' },
-                  { label: 'Teaching Assistant', value: 'TEACHING_ASSISTANT' },
-                ].map((item) => (
+                <div
+                  onClick={() => {
+                    setRole('');
+                    setPage(1);
+                    setOpen(false);
+                  }}
+                  className={`px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm ${role === '' ? 'bg-blue-50 font-semibold' : ''}`}
+                >
+                  All Roles
+                </div>
+                {roles.map((item: any) => (
                   <div
-                    key={item.value}
+                    key={item._id}
                     onClick={() => {
-                      setRole(item.value);
+                      setRole(item._id);
                       setPage(1);
-                      fetchUsers();
                       setOpen(false);
                     }}
-                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                    className={`px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm ${role === item._id ? 'bg-blue-50 font-semibold' : ''}`}
                   >
-                    {item.label}
+                    {item.name}
                   </div>
                 ))}
               </div>
@@ -206,7 +221,14 @@ const UserList = () => {
           </div>
         </div>
 
-        <Button variant="primary" icon={<Plus size={18} />} onClick={() => setShowModalAdd((e) => !e)}>
+        <Button
+          variant="primary"
+          icon={<Plus size={18} />}
+          onClick={() => {
+            setSelectedUser(null);
+            setShowModalAdd(true);
+          }}
+        >
           Thêm User
         </Button>
       </div>
@@ -227,7 +249,7 @@ const UserList = () => {
           </thead>
           <tbody className="divide-y divide-gray-100">
             {users && users.length > 0 ? (
-              users?.map((user, index) => (
+              users?.map((user: any, index: number) => (
                 <tr key={user._id} className="hover:bg-blue-50/50 transition-colors group">
                   <td className="p-4 text-text-secondary font-medium text-center">{index + 1 + (page - 1) * limit}</td>
                   <td className="p-4 font-semibold text-blue-600 group-hover:underline cursor-pointer">
@@ -235,10 +257,12 @@ const UserList = () => {
                   </td>
                   <td className="p-4 text-text-main">{user.email}</td>
                   <td className="p-4 text-text-main">{user.phone}</td>
-                  <td className="p-4 text-text-main">{formatDate(user.date)}</td>
+                  <td className="p-4 text-text-main">{formatDate(user.date as string)}</td>
                   <td className="p-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold shadow-sm ${getRoleStyles(user.role)}`}>
-                      {user.role}
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-bold shadow-sm ${getRoleStyles((user.roleId as any)?.name || '')}`}
+                    >
+                      {(user.roleId as any)?.name || 'N/A'}
                     </span>
                   </td>
                   <td className="p-4">

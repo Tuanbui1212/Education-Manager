@@ -5,11 +5,20 @@ import { shiftRoutes } from './shift.routes';
 import { expenditureRoutes } from './expenditure.routes';
 import { roomRoutes } from './room.routes';
 import { notificationTemplateRoutes } from './notificationTemplate.routes';
-import { courseRoutes } from './course.routes';
-
+import { fixedCostRoutes } from './fixedCost.routes';
+import { roleRoutes } from './role.routes';
 
 const publicRoutes = [...authRoutes];
 
-const privateRoutes = [...dashboardRoutes, ...userRoutes, ...shiftRoutes, ...expenditureRoutes, ...roomRoutes, ...notificationTemplateRoutes, ...courseRoutes];
+const privateRoutes = [
+  ...dashboardRoutes,
+  ...userRoutes,
+  ...shiftRoutes,
+  ...expenditureRoutes,
+  ...roomRoutes,
+  ...notificationTemplateRoutes,
+  ...fixedCostRoutes,
+  ...roleRoutes,
+];
 
 export { publicRoutes, privateRoutes };

@@ -1,21 +1,31 @@
-import type { UserRole } from '../types/user.type';
 import type { RoomStatus } from '../types/room.type';
 import type { NotificationType } from '../types/notificationTemplate.type';
 
-export const getRoleStyles = (role: UserRole): string => {
-  switch (role) {
-    case 'ADMIN':
-      return 'bg-orange-100 text-orange-700 border-orange-200';
-    case 'TEACHER':
-      return 'bg-blue-100 text-blue-700 border-blue-200';
-    case 'STUDENT':
-      return 'bg-green-100 text-green-700 border-green-200';
-    case 'SALE':
-      return 'bg-purple-100 text-purple-700 border-purple-200';
-    case 'TEACHING_ASSISTANT':
-      return 'bg-pink-100 text-pink-700 border-pink-200';
+export const getRoleStyles = (role: string): string => {
+  // Chuẩn hóa tên role (đề phòng có khoảng trắng thừa)
+  const normalizedRole = role?.trim();
+
+  switch (normalizedRole) {
+    case 'Super Admin':
+      return 'bg-rose-50 text-rose-600 border-rose-200 border';
+
+    case 'Manager':
+      return 'bg-indigo-50 text-indigo-600 border-indigo-200 border';
+
+    case 'Teacher':
+      return 'bg-sky-50 text-sky-600 border-sky-200 border';
+
+    case 'Accountant':
+      return 'bg-emerald-50 text-emerald-600 border-emerald-200 border';
+
+    case 'Consultant':
+      return 'bg-violet-50 text-violet-600 border-violet-200 border';
+
+    case 'Student':
+      return 'bg-teal-50 text-teal-600 border-teal-200 border';
+
     default:
-      return 'bg-gray-100 text-gray-700 border-gray-200';
+      return 'bg-slate-50 text-slate-600 border-slate-200 border';
   }
 };
 
@@ -47,4 +57,34 @@ export const getNotificationTypeStyles = (type: NotificationType): string => {
 export const formatDate = (dateString?: string | Date) => {
   if (!dateString) return '-';
   return new Date(dateString).toLocaleDateString('vi-VN');
+};
+
+// Hàm format tiền tệ VNĐ
+export const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+};
+
+// Hàm format ngày tháng (DD/MM/YYYY)
+export const formatDateA = (dateString: string | null) => {
+  if (!dateString) return 'Hiện tại';
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(date);
+};
+
+// Hàm dịch chu kỳ sang Tiếng Việt
+export const translateCycle = (cycle: string) => {
+  switch (cycle) {
+    case 'MONTHLY':
+      return 'Hàng tháng';
+    case 'QUARTERLY':
+      return 'Hàng quý';
+    case 'YEARLY':
+      return 'Hàng năm';
+    default:
+      return cycle;
+  }
 };

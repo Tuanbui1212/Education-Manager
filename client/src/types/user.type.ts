@@ -1,12 +1,15 @@
-export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT' | 'SALE' | 'TEACHING_ASSISTANT';
-
 export type UserStatus = 'ACTIVE' | 'INACTIVE';
+export interface IRole {
+  _id: string;
+  name: string;
+  permissions: string[];
+}
 
 export interface GetUsersParams {
   page?: number;
   limit?: number;
   search?: string;
-  role?: string;
+  roleId?: string;
 }
 
 export interface IStudentInfo {
@@ -26,24 +29,26 @@ export interface IUser {
   phone: string;
   password?: string;
   fullName: string;
-  role: UserRole;
-  date: Date;
-  status: 'ACTIVE' | 'INACTIVE';
+  roleId: IRole | string;
+  date: string | Date;
+  status: UserStatus;
   student_info?: IStudentInfo;
   teacher_info?: ITeacherInfo;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 export interface UserResponse {
   success: boolean;
   message: string;
   data: IUser[];
+  totalCount: number;
 }
 
 export interface UserModalProps {
+  roles: IRole[];
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: Partial<IUser>) => void;
+  onSubmit: (data: any) => void;
   initialData?: IUser | null;
   loading?: boolean;
 }

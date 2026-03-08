@@ -3,7 +3,6 @@ import {
   Settings,
   ShieldCheck,
   Briefcase,
-  GraduationCap,
   BookOpen,
   BadgeDollarSign,
   PanelLeftClose,
@@ -11,14 +10,16 @@ import {
   ChevronDown,
   ChevronRight,
 } from 'lucide-react';
-import { useState, memo } from 'react';
+import { useState, memo, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import SidebarItem from '../../components/SidebarItem';
+import RequirePermission from '../../components/RequirePermission';
 import { PATHS } from '../../utils/constants';
+import { PERMISSIONS } from '../../utils/permission.constant';
+import { getDecodedToken } from '../../utils/auth';
 
 function Sidebar() {
   const [expanded, setExpanded] = useState(true);
-
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
     accounts: false,
     hr: false,
@@ -30,6 +31,11 @@ function Sidebar() {
 
   const navigate = useNavigate();
   const location = useLocation();
+
+  const currentUser = getDecodedToken();
+  const userName = currentUser?.name;
+  const userEmail = currentUser?.email;
+
   const currentPath = location.pathname;
 
   const toggleMenu = (menuKey: string) => {
@@ -46,68 +52,65 @@ function Sidebar() {
       key: 'accounts',
       label: 'Quản lý tài khoản',
       icon: <ShieldCheck size={20} />,
+      permission: PERMISSIONS.USER.VIEW,
       subItems: [
-        { label: 'Danh sách tài khoản', path: PATHS.USER || '/accounts/list' },
-        { label: 'Phân quyền (Roles)', path: '/accounts/roles' },
-        { label: 'Lịch sử hoạt động', path: '/accounts/logs' },
+        { label: 'Danh sách tài khoản', path: PATHS.USER || '/accounts/list', permission: PERMISSIONS.USER.VIEW },
+        { label: 'Phân quyền (Roles)', path: '/accounts/roles', permission: PERMISSIONS.ROLE.VIEW },
+        { label: 'Lịch sử hoạt động', path: '/accounts/logs', permission: PERMISSIONS.USER.VIEW },
       ],
     },
     {
       key: 'hr',
       label: 'Quản lý Nhân sự (HR)',
       icon: <Briefcase size={20} />,
+      permission: PERMISSIONS.USER.VIEW,
       subItems: [
-        { label: 'Đội ngũ giáo viên', path: '/hr/teachers' },
-        { label: 'Đội ngũ trợ giảng', path: '/hr/tutors' },
-        { label: 'Nhân viên văn phòng', path: '/hr/staffs' },
-        { label: 'Hợp đồng & Lương', path: '/hr/contracts' },
-      ],
-    },
-    {
-      key: 'students',
-      label: 'Học viên & Tuyển sinh',
-      icon: <GraduationCap size={20} />,
-      subItems: [
-        { label: 'Data khách hàng', path: '/students/leads' },
-        { label: 'Danh sách học viên', path: '/students/list' },
-        { label: 'Kết quả học tập', path: '/students/results' },
-        { label: 'Bảo lưu / Nghỉ học', path: '/students/status' },
+        { label: 'Đội ngũ giáo viên', path: '/hr/teachers', permission: PERMISSIONS.USER.VIEW },
+        { label: 'Đội ngũ trợ giảng', path: '/hr/tutors', permission: PERMISSIONS.USER.VIEW },
+        { label: 'Nhân viên văn phòng', path: '/hr/staffs', permission: PERMISSIONS.USER.VIEW },
+        { label: 'Hợp đồng & Lương', path: '/hr/contracts', permission: PERMISSIONS.USER.VIEW },
       ],
     },
     {
       key: 'training',
       label: 'Quản lý đào tạo',
       icon: <BookOpen size={20} />,
+      permission: PERMISSIONS.ROOM.VIEW,
       subItems: [
-        { label: 'Quản lý khóa học', path: PATHS.TRAINING_COURSES },
-        { label: 'Quản lý lớp học', path: '/training/classes' },
-        { label: 'Xếp thời khóa biểu', path: '/training/schedule' },
-        { label: 'Điểm danh', path: '/training/attendance' },
-        { label: 'Kỳ thi / Bài kiểm tra', path: '/training/exams' },
-        { label: 'Quản lý tài liệu', path: '/training/documents' },
-        { label: 'Đánh giá & Phản hồi', path: '/training/feedback' },
+        { label: 'Quản lý khóa học', path: '/training/courses', permission: PERMISSIONS.ROOM.VIEW },
+        { label: 'Quản lý lớp học', path: '/training/classes', permission: PERMISSIONS.ROOM.VIEW },
+        { label: 'Xếp thời khóa biểu', path: '/training/schedule', permission: PERMISSIONS.ROOM.VIEW },
       ],
     },
     {
       key: 'finance',
       label: 'Quản lý Tài chính',
       icon: <BadgeDollarSign size={20} />,
+      permission: PERMISSIONS.EXPENDITURE.VIEW,
       subItems: [
-        { label: 'Học phí học viên', path: '/finance/tuition' },
-        { label: 'Chi trả lương/thù lao', path: '/finance/payroll' },
-        { label: 'Thu chi tổng quát', path: '/finance/transactions' },
-        { label: 'Báo cáo tài chính', path: '/finance/reports' },
+        { label: 'Học phí học viên', path: '/finance/tuition', permission: PERMISSIONS.EXPENDITURE.VIEW },
+        { label: 'Thu chi tổng quát', path: '/finance/transactions', permission: PERMISSIONS.EXPENDITURE.VIEW },
+        { label: 'Báo cáo tài chính', path: '/finance/reports', permission: PERMISSIONS.EXPENDITURE.VIEW },
       ],
     },
     {
       key: 'settings',
       label: 'Cấu hình hệ thống',
       icon: <Settings size={20} />,
+      permission: PERMISSIONS.ROOM.VIEW,
       subItems: [
-        { label: 'Ca học', path: PATHS.SETTINGS_SHIFTS },
-        { label: 'Phòng học', path: PATHS.SETTINGS_ROOMS },
-        { label: 'Các loại chi phí cố định', path: PATHS.SETTINGS_EXPENDITURES },
-        { label: 'Mẫu thông báo', path: PATHS.SETTINGS_NOTIFICATION_TEMPLATES },
+        { label: 'Ca học', path: PATHS.SETTINGS_SHIFTS, permission: PERMISSIONS.ROOM.VIEW },
+        { label: 'Phòng học', path: PATHS.SETTINGS_ROOMS, permission: PERMISSIONS.ROOM.VIEW },
+        {
+          label: 'Các loại chi phí cố định',
+          path: PATHS.SETTINGS_FIXED_COSTS,
+          permission: PERMISSIONS.FIXED_COST.VIEW,
+        },
+        {
+          label: 'Mẫu thông báo',
+          path: PATHS.SETTINGS_NOTIFICATION_TEMPLATES,
+          permission: PERMISSIONS.NOTIFICATION_TEMPLATE.VIEW,
+        },
       ],
     },
   ];
@@ -147,47 +150,50 @@ function Sidebar() {
           const isChildActive = menu.subItems.some((item) => currentPath === item.path);
 
           return (
-            <div key={menu.key} className="flex flex-col space-y-1">
-              <button
-                onClick={() => toggleMenu(menu.key)}
-                className={`flex items-center justify-between w-full p-2.5 rounded-xl transition-colors ${isChildActive ? 'bg-gray-800 text-blue-400' : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                  }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className={isChildActive ? 'text-blue-400' : 'text-gray-400'}>{menu.icon}</span>
-                  <span
-                    className={`font-medium text-sm whitespace-nowrap transition-all duration-300 ${expanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'
-                      }`}
-                  >
-                    {menu.label}
-                  </span>
+            <RequirePermission key={menu.key} required={menu.permission}>
+              <div className="flex flex-col space-y-1">
+                <button
+                  onClick={() => toggleMenu(menu.key)}
+                  className={`flex items-center justify-between w-full p-2.5 rounded-xl transition-colors ${isChildActive ? 'bg-gray-800 text-blue-400' : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                    }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className={isChildActive ? 'text-blue-400' : 'text-gray-400'}>{menu.icon}</span>
+                    <span
+                      className={`font-medium text-sm whitespace-nowrap transition-all duration-300 ${expanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'
+                        }`}
+                    >
+                      {menu.label}
+                    </span>
+                  </div>
+
+                  {expanded && (
+                    <span className="text-gray-500">
+                      {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                    </span>
+                  )}
+                </button>
+
+                <div
+                  className={`flex flex-col overflow-hidden transition-all duration-300 ${isOpen && expanded ? 'max-h-[500px] opacity-100 mt-1' : 'max-h-0 opacity-0'
+                    }`}
+                >
+                  {menu.subItems.map((subItem) => (
+                    <RequirePermission key={subItem.path} required={subItem.permission}>
+                      <button
+                        onClick={() => navigate(subItem.path)}
+                        className={`flex items-center pl-11 pr-4 py-2 text-sm rounded-lg transition-colors whitespace-nowrap ${currentPath === subItem.path
+                            ? 'text-white bg-gray-800/50 font-medium'
+                            : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                          }`}
+                      >
+                        {subItem.label}
+                      </button>
+                    </RequirePermission>
+                  ))}
                 </div>
-
-                {expanded && (
-                  <span className="text-gray-500">
-                    {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                  </span>
-                )}
-              </button>
-
-              <div
-                className={`flex flex-col overflow-hidden transition-all duration-300 ${isOpen && expanded ? 'max-h-[500px] opacity-100 mt-1' : 'max-h-0 opacity-0'
-                  }`}
-              >
-                {menu.subItems.map((subItem) => (
-                  <button
-                    key={subItem.path}
-                    onClick={() => navigate(subItem.path)}
-                    className={`flex items-center pl-11 pr-4 py-2 text-sm rounded-lg transition-colors whitespace-nowrap ${currentPath === subItem.path
-                      ? 'text-white bg-gray-800/50 font-medium'
-                      : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
-                      }`}
-                  >
-                    {subItem.label}
-                  </button>
-                ))}
               </div>
-            </div>
+            </RequirePermission>
           );
         })}
       </nav>
@@ -200,8 +206,8 @@ function Sidebar() {
           className={`ml-3 overflow-hidden transition-all duration-300 ${expanded ? 'w-40 opacity-100' : 'w-0 opacity-0'
             }`}
         >
-          <p className="text-sm font-medium whitespace-nowrap">Admin User</p>
-          <p className="text-xs text-gray-400 whitespace-nowrap">admin@edu.vn</p>
+          <p className="text-sm font-medium whitespace-nowrap">{userName}</p>
+          <p className="text-xs text-gray-400 whitespace-nowrap">{userEmail}</p>
         </div>
       </div>
     </aside>

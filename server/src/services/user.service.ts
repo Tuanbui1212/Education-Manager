@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { UserModel } from '../models/user.model';
-import { IUser, UserRole, GetUsersQuery } from '../types/user.type';
+import RoleModel from '../models/role.model';
+import { IUser, GetUsersQuery } from '../types/user.type';
 
 export class UserService {
   // 1. Tạo mới User (Create)
@@ -12,6 +13,11 @@ export class UserService {
       }
     }
 
+    if (data.roleId) {
+      const roleExists = await RoleModel.findById(data.roleId);
+      if (!roleExists) throw new Error('Vai trò (Role) này không tồn tại trong hệ thống!');
+    }
+
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(data.password as string, salt);
 
@@ -20,12 +26,14 @@ export class UserService {
       password: hashedPassword,
     });
 
-    return await newUser.save();
+    await newUser.save();
+
+    return newUser.populate('roleId', 'name permissions');
   }
 
   // 2. Lấy danh sách Users (Read All)
   async getAllUsers(query: GetUsersQuery): Promise<{ users: IUser[]; totalCount: number }> {
-    const { page = 1, limit = 10, search = '', role = '' } = query;
+    const { page = 1, limit = 10, search = '', roleId = '' } = query;
     const skip = (page - 1) * limit;
 
     const filter: any = {};
@@ -36,12 +44,18 @@ export class UserService {
         { phone: { $regex: search, $options: 'i' } },
       ];
     }
-    if (role) {
-      filter.role = role;
+
+    if (roleId) {
+      filter.roleId = roleId;
     }
 
     const [users, totalCount] = await Promise.all([
-      UserModel.find(filter).select('-password').sort({ createdAt: -1 }).skip(skip).limit(limit),
+      UserModel.find(filter)
+        .select('-password')
+        .populate('roleId', 'name')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
       UserModel.countDocuments(filter),
     ]);
 
@@ -50,15 +64,17 @@ export class UserService {
 
   // 3. Lấy chi tiết 1 User (Read One)
   async getUserById(id: string): Promise<IUser | null> {
-    return await UserModel.findById(id).select('-password');
+    return await UserModel.findById(id).select('-password').populate('roleId', 'name permissions'); // Lấy luôn mảng quyền
   }
 
   // 4. Cập nhật User (Update)
   async updateUser(id: string, data: Partial<IUser>): Promise<IUser | null> {
-    if (data.role) {
-      const validRoles = Object.values(UserRole) as string[];
-      if (!validRoles.includes(data.role)) {
-        throw new Error(`Quyền hạn '${data.role}' không tồn tại. Đừng có hack nhé!`);
+    // SỬA: Bỏ đoạn check enum cứng cũ đi.
+    // Thay bằng kiểm tra xem roleId mới (nếu có cập nhật) có tồn tại ở bảng Roles không
+    if (data.roleId) {
+      const roleExists = await RoleModel.findById(data.roleId);
+      if (!roleExists) {
+        throw new Error(`Vai trò không tồn tại. Đừng có hack nhé!`);
       }
     }
 
@@ -67,7 +83,7 @@ export class UserService {
       data.password = await bcrypt.hash(data.password, salt);
     }
 
-    return await UserModel.findByIdAndUpdate(id, data, { new: true }).select('-password');
+    return await UserModel.findByIdAndUpdate(id, data, { new: true }).select('-password').populate('roleId', 'name'); // Populate để trả về data mới nhất cho Frontend
   }
 
   // 5. Xóa User (Delete)
