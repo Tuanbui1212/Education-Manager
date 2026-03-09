@@ -1,4 +1,4 @@
-export type UserStatus = 'ACTIVE' | 'INACTIVE';
+export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'POTENTIAL' | 'BLOCKED';
 export interface IRole {
   _id: string;
   name: string;

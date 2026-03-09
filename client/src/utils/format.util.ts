@@ -2,7 +2,6 @@ import type { RoomStatus } from '../types/room.type';
 import type { NotificationType } from '../types/notificationTemplate.type';
 
 export const getRoleStyles = (role: string): string => {
-  // Chuẩn hóa tên role (đề phòng có khoảng trắng thừa)
   const normalizedRole = role?.trim();
 
   switch (normalizedRole) {
@@ -39,6 +38,21 @@ export const getRoomStatusStyles = (status: RoomStatus): string => {
       return 'bg-red-100 text-red-700 border-red-200';
     default:
       return 'bg-gray-100 text-gray-700 border-gray-200';
+  }
+};
+
+export const getStatusUserStyles = (status: string): string => {
+  switch (status) {
+    case 'POTENTIAL':
+      return 'px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-600 border border-blue-200';
+    case 'ACTIVE':
+      return 'px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-200';
+    case 'RESERVED':
+      return 'px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-600 border border-amber-200';
+    case 'INACTIVE':
+      return 'px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-600 border border-rose-200';
+    default:
+      return 'px-3 py-1 rounded-full text-xs font-bold bg-gray-50 text-gray-600 border border-gray-200';
   }
 };
 

@@ -94,12 +94,12 @@ const UserList = () => {
 
       const roleName = roles?.find((r: any) => r._id === formData.roleId)?.name;
 
-      if (roleName === 'TEACHER' && formData.teacher_info) {
+      if (roleName.toLowerCase() === 'teacher' && formData.teacher_info) {
         updateData.teacher_info = {
           hourlyRate: Number(formData.teacher_info.hourlyRate),
           degrees: Array.isArray(formData.teacher_info.degrees) ? formData.teacher_info.degrees : [],
         };
-      } else if (roleName === 'STUDENT' && formData.student_info) {
+      } else if (roleName.toLowerCase() === 'student' && formData.student_info) {
         updateData.student_info = {
           parentsName: formData.student_info.parentsName,
         };
