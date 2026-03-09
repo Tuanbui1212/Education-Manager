@@ -1,10 +1,11 @@
 import { ClassModel } from "../models/class.model";
-import { GetClassesQuery } from "../types/class.type";
+import { GetClassesQuery, GetStudentsByClassQuery } from "../types/class.type";
 import { CreateClassType, UpdateClassType } from "../validations/class.validation";
 import { CourseModel } from "../models/course.model";
 import { UserModel } from "../models/user.model";
 import { RoomModel } from "../models/room.model";
-
+import roleModel from "../models/role.model";
+import { Types } from "mongoose";
 export class ClassService {
     async createClass(classData: CreateClassType) {
         const existingClass = await ClassModel.findOne({ name: classData.name });
@@ -20,6 +21,11 @@ export class ClassService {
         const existingTeacher = await UserModel.findById(classData.teacherId);
         if (!existingTeacher) {
             throw new Error("Giáo viên không tồn tại");
+        } else {
+            const teacherRole = await roleModel.findById(existingTeacher.roleId);
+            if (teacherRole?.name !== 'Teacher') {
+                throw new Error("Người được chọn không phải là giáo viên");
+            }
         }
 
         const existingRoom = await RoomModel.findById(classData.roomId);
@@ -48,15 +54,15 @@ export class ClassService {
         }
         const [total, classes] = await Promise.all([
             ClassModel.countDocuments(filter),
-            ClassModel.find(filter).sort({ name: 1 }).skip(skip).limit(limit)
-                .populate('courseId', 'title').populate('teacherId', 'fullName').populate('roomId', 'name').populate('studentIds', 'fullName'),
+            ClassModel.find(filter).sort({ name: 1 }).skip(skip).limit(limit).populate('studentIds', 'fullName')
+                .populate('courseId', 'title').populate('teacherId', 'fullName').populate('roomId', 'name'),
         ]);
         return { classes, total };
     }
 
     async getClassById(id: string) {
-        return await ClassModel.findById(id).populate('courseId', 'title')
-            .populate('teacherId', 'fullName').populate('roomId', 'name').populate('studentIds', 'fullName');
+        return await ClassModel.findById(id).populate('studentIds', 'fullName')
+            .populate('courseId', 'title').populate('teacherId', 'fullName').populate('roomId', 'name')
     }
 
     async updateClass(id: string, classData: UpdateClassType) {
@@ -91,5 +97,64 @@ export class ClassService {
 
     async deleteClass(id: string) {
         return await ClassModel.findByIdAndDelete(id);
+    }
+
+    async getAllStudentByClass(id: string, query: GetStudentsByClassQuery) {
+        const page = Number(query.page) || 1;
+        const limit = Number(query.limit) || 5;
+        const search = query.search || '';
+        const skip = (page - 1) * limit;
+        const filter = {
+            _id: new Types.ObjectId(id),
+        }
+        const classData = await ClassModel.findById(id);
+        if (!classData) {
+            throw new Error("Không tìm thấy lớp học");
+        }
+        const classesData = await ClassModel.aggregate([
+            {
+                $match: filter
+            },
+            {
+                $addFields: {
+                    totalStudentCount: {
+                        $size: { $ifNull: ["$studentIds", []] }
+                    }
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    let: { localStudentIds: "$studentIds" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $in: ["$_id", "$$localStudentIds"]
+                                }
+                            }
+                        },
+                        {
+                            $match: {
+                                fullName: { $regex: search, $options: "i" }
+                            }
+                        },
+                        {
+                            $project: {
+                                fullName: 1
+                            }
+                        },
+                        {
+                            $skip: skip
+                        },
+                        {
+                            $limit: limit
+                        }
+                    ],
+                    as: "studentDetails"
+                }
+            }]);
+
+        return classesData;
     }
 }

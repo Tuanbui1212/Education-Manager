@@ -22,3 +22,9 @@ export interface GetClassesQuery {
     search?: string;
     status?: ClassStatus;
 }
+
+export interface GetStudentsByClassQuery {
+    page?: number;
+    limit?: number;
+    search?: string;
+}

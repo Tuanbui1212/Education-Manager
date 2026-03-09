@@ -11,5 +11,6 @@ router.get("/", classController.getAll);
 router.get("/:id", validate(ClassIdSchema, 'params'), classController.getOne);
 router.put("/:id", validate(ClassIdSchema, 'params'), validate(UpdateClassSchema), classController.update);
 router.delete("/:id", validate(ClassIdSchema, 'params'), classController.delete);
+router.get("/:id/students", validate(ClassIdSchema, 'params'), classController.getAllStudents);
 
 export default router;

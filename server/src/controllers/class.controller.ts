@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { ClassService } from "../services/class.service";
 import { CreateClassType, UpdateClassType } from "../validations/class.validation";
-import { GetClassesQuery } from "../types/class.type";
+import { GetClassesQuery, GetStudentsByClassQuery } from "../types/class.type";
 
 export class ClassController {
     private classService = new ClassService();
@@ -54,6 +54,21 @@ export class ClassController {
             const deletedClass = await this.classService.deleteClass(id);
             if (!deletedClass) return res.status(404).json({ success: false, message: 'Không tìm thấy lớp học để xóa' });
             res.status(200).json({ success: true, message: 'Xóa lớp học thành công' });
+        } catch (error: any) {
+            res.status(400).json({ success: false, message: error.message });
+        }
+    }
+
+    getAllStudents = async (req: Request<{ id: string }, {}, {}, GetStudentsByClassQuery>, res: Response) => {
+        try {
+            const { id } = req.params;
+            const classesData = await this.classService.getAllStudentByClass(id, req.query);
+            res.status(200).json({
+                success: true,
+                data: classesData[0]?.studentDetails || [],
+                message: 'Lấy danh sách học viên thành công',
+                total: classesData[0]?.totalStudentCount || 0
+            });
         } catch (error: any) {
             res.status(400).json({ success: false, message: error.message });
         }
