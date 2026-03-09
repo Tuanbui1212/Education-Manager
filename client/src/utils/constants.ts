@@ -11,6 +11,10 @@ export const PATHS = {
   USER: '/dashboard/users',
   USER_ID: '/dashboard/users/:id',
 
+  TRANINING_STUDENT: '/training/students',
+
+  //Settings
+
   SETTINGS_ROLES: '/accounts/roles',
 
   SETTINGS_SHIFTS: '/settings/shifts',
@@ -27,3 +31,11 @@ export const PATHS = {
   TRAINING_COURSES: '/training/courses',
   TRAINING_CLASSES: '/training/classes',
 };
+
+export const STATUS_OPTIONS = [
+  { value: 'ALL', label: 'Tất cả trạng thái' },
+  { value: 'POTENTIAL', label: 'Tiềm năng' },
+  { value: 'ACTIVE', label: 'Đang học' },
+  { value: 'RESERVED', label: 'Bảo lưu' },
+  { value: 'INACTIVE', label: 'Đã nghỉ' },
+];

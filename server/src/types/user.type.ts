@@ -4,6 +4,8 @@ import { IRole } from './role.type';
 export enum UserStatus {
   ACTIVE = 'ACTIVE',
   INACTIVE = 'INACTIVE',
+  RESERVED = 'RESERVED',
+  POTENTIAL = 'POTENTIAL',
 }
 
 export interface IStudentInfo {
@@ -36,4 +38,5 @@ export interface GetUsersQuery {
   limit?: number;
   search?: string;
   roleId?: string;
+  status?: string;
 }

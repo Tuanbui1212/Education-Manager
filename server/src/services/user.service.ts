@@ -33,7 +33,7 @@ export class UserService {
 
   // 2. Lấy danh sách Users (Read All)
   async getAllUsers(query: GetUsersQuery): Promise<{ users: IUser[]; totalCount: number }> {
-    const { page = 1, limit = 10, search = '', roleId = '' } = query;
+    const { page = 1, limit = 10, search = '', roleId = '', status = '' } = query;
     const skip = (page - 1) * limit;
 
     const filter: any = {};
@@ -47,6 +47,10 @@ export class UserService {
 
     if (roleId) {
       filter.roleId = roleId;
+    }
+
+    if (status) {
+      filter.status = status;
     }
 
     const [users, totalCount] = await Promise.all([

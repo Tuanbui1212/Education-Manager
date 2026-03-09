@@ -77,6 +77,7 @@ function Sidebar() {
       icon: <BookOpen size={20} />,
       permission: PERMISSIONS.ROOM.VIEW,
       subItems: [
+        { label: 'Quản lý học viên', path: '/training/students', permission: PERMISSIONS.ROOM.VIEW },
         { label: 'Quản lý khóa học', path: '/training/courses', permission: PERMISSIONS.ROOM.VIEW },
         { label: 'Quản lý lớp học', path: '/training/classes', permission: PERMISSIONS.ROOM.VIEW },
         { label: 'Xếp thời khóa biểu', path: '/training/schedule', permission: PERMISSIONS.ROOM.VIEW },
