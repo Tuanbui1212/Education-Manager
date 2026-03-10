@@ -10,7 +10,7 @@ import {
   ChevronDown,
   ChevronRight,
 } from 'lucide-react';
-import { useState, memo, useEffect } from 'react';
+import { useState, memo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import SidebarItem from '../../components/SidebarItem';
 import RequirePermission from '../../components/RequirePermission';
@@ -65,10 +65,10 @@ function Sidebar() {
       icon: <Briefcase size={20} />,
       permission: PERMISSIONS.USER.VIEW,
       subItems: [
-        { label: 'Đội ngũ giáo viên', path: '/hr/teachers', permission: PERMISSIONS.USER.VIEW },
-        { label: 'Đội ngũ trợ giảng', path: '/hr/tutors', permission: PERMISSIONS.USER.VIEW },
-        { label: 'Nhân viên văn phòng', path: '/hr/staffs', permission: PERMISSIONS.USER.VIEW },
-        { label: 'Hợp đồng & Lương', path: '/hr/contracts', permission: PERMISSIONS.USER.VIEW },
+        { label: 'Đội ngũ giáo viên', path: PATHS.HR_TEACHERS, permission: PERMISSIONS.USER.VIEW },
+        { label: 'Đội ngũ trợ giảng', path: PATHS.HR_TUTORS, permission: PERMISSIONS.USER.VIEW },
+        { label: 'Nhân viên văn phòng', path: PATHS.HR_STAFFS, permission: PERMISSIONS.USER.VIEW },
+        { label: 'Hợp đồng & Lương', path: PATHS.HR_CONTRACTS, permission: PERMISSIONS.USER.VIEW },
       ],
     },
     {

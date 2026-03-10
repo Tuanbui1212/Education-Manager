@@ -10,7 +10,8 @@ export const userService = {
     return response.data;
   },
 
-  getUserById: async (id: string): Promise<{ success: boolean; message: string; data?: IUser }> => {
+  getUserById: async (id: any): Promise<{ success: boolean; message: string; data?: IUser }> => {
+    console.log(id);
     const response = await axios.get(`/users/${id}`);
     const user = response.data.data;
 

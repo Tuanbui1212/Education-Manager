@@ -35,6 +35,16 @@ const StudentManager = () => {
     type: 'success' as 'success' | 'danger' | 'warning' | 'info',
   });
 
+  const [confirmDelete, setConfirmDelete] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'danger' as 'success' | 'danger' | 'warning' | 'info',
+    confirmText: '',
+    cancelText: '',
+    onConfirm: () => {},
+  });
+
   const [openStatus, setOpenStatus] = useState(false);
 
   const { data: rolesData } = useFetch(roleService.getRoles, {}, []);
@@ -82,8 +92,19 @@ const StudentManager = () => {
 
   const handleEditStudent = async (formData: Partial<IUser>) => {
     if (!selectedStudent?._id) return;
+    console.log(formData);
+    const updateData = {
+      fullName: formData.fullName,
+      phone: formData.phone,
+      date: formData.date,
+      status: formData.status,
+      roleId: studentRoleId,
+      student_info: {
+        parentsName: formData.student_info?.parentsName,
+      },
+    };
     try {
-      const data = await userService.updateUser(selectedStudent._id, formData);
+      const data = await userService.updateUser(selectedStudent._id, updateData);
       if (data.success) {
         setConfirmConfig({ isOpen: true, title: 'Thành công', message: 'Cập nhật hồ sơ thành công!', type: 'success' });
         fetchStudents();
@@ -97,6 +118,38 @@ const StudentManager = () => {
         title: 'Lỗi',
         message: (detailError as string) || 'Có lỗi xảy ra!',
         type: 'danger',
+      });
+    }
+  };
+
+  const handleDeleteStudent = async (id: string) => {
+    try {
+      const data = await userService.deleteUser(id);
+      if (data.success) {
+        setConfirmDelete({
+          isOpen: true,
+          title: 'Thành công',
+          message: 'Xóa hồ sơ thành công!',
+          type: 'success',
+          onConfirm: () => setConfirmDelete({ ...confirmDelete, isOpen: false }),
+          cancelText: '',
+          confirmText: 'Xác nhận',
+        });
+        fetchStudents();
+        setShowModalAdd(false);
+        setSelectedStudent(null);
+        setPage(1);
+      }
+    } catch (error: any) {
+      const detailError = error.response?.data?.errors ? Object.values(error.response.data.errors).flat()[0] : null;
+      setConfirmDelete({
+        isOpen: true,
+        title: 'Lỗi',
+        message: (detailError as string) || 'Có lỗi xảy ra!',
+        type: 'danger',
+        confirmText: '',
+        cancelText: '',
+        onConfirm: () => {},
       });
     }
   };
@@ -143,6 +196,17 @@ const StudentManager = () => {
         type={confirmConfig.type}
         confirmText="Đóng"
         cancelText=""
+      />
+
+      <ConfirmModal
+        isOpen={confirmDelete.isOpen}
+        onClose={() => setConfirmDelete({ ...confirmDelete, isOpen: false })}
+        onConfirm={() => confirmDelete.onConfirm()}
+        title={confirmDelete.title}
+        message={confirmDelete.message}
+        type={confirmDelete.type}
+        confirmText={confirmDelete.confirmText}
+        cancelText={confirmDelete.cancelText}
       />
 
       <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
@@ -216,7 +280,6 @@ const StudentManager = () => {
                     <div className="font-semibold text-blue-600 cursor-pointer group-hover:underline">
                       {student.fullName}
                     </div>
-                    <div className="text-xs text-gray-400 font-mono mt-1">ID: ...{student._id.slice(-6)}</div>
                   </td>
 
                   <td className="p-4">
@@ -256,7 +319,19 @@ const StudentManager = () => {
                         <Edit2 size={18} />
                       </button>
                       <button
-                        onClick={() => console.log('Gọi API xóa ở đây:', student._id)}
+                        onClick={() => {
+                          setConfirmDelete({
+                            isOpen: true,
+                            title: 'Xác nhận xóa',
+                            message: `Bạn có chắc chắn muốn xóa giáo viên ${student.fullName}?`,
+                            type: 'danger',
+                            confirmText: 'Xác nhận',
+                            cancelText: 'Hủy',
+                            onConfirm: () => {
+                              handleDeleteStudent(student._id);
+                            },
+                          });
+                        }}
                         className="p-2 text-red-500 hover:bg-red-100 rounded-xl transition-all duration-300 hover:scale-110 active:scale-95"
                         title="Xóa"
                       >
@@ -289,4 +364,3 @@ const StudentManager = () => {
 };
 
 export default StudentManager;
-
