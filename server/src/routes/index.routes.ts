@@ -5,6 +5,8 @@ import authRouter from './auth.routes';
 import shiftRouter from './shift.routes';
 import expenditureRouter from './expenditure.routes';
 import notificationTemplateRouter from './notificationTemplate.routes';
+import courseRouter from './course.routes';
+import classRouter from './class.routes';
 import fixedCostRouter from './fixedCost.route';
 import roleRouter from './role.route';
 
@@ -16,6 +18,8 @@ function router(app: Application) {
   app.use('/api/shifts', shiftRouter);
   app.use('/api/expenditures', expenditureRouter);
   app.use('/api/notification-templates', notificationTemplateRouter);
+  app.use('/api/courses', courseRouter);
+  app.use('/api/classes', classRouter);
   app.use('/api/fixed-costs', fixedCostRouter);
 }
 

@@ -11,7 +11,6 @@ export class RoomController {
   private roomService = new RoomService();
   // [POST] /api/rooms
   create = async (req: Request<any, any, CreateRoomType>, res: Response) => {
-    console.log(req.body);
     try {
       const room = await this.roomService.createRoom(req.body);
       res.status(201).json({ message: "Tạo phòng thành công", data: room });

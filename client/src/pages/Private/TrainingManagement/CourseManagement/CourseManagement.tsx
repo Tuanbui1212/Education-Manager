@@ -1,32 +1,29 @@
-import { Plus, Filter, Edit2, Trash2 } from 'lucide-react';
-import { getNotificationTypeStyles } from '../../../utils/format.util';
-
-import Button from '../../../components/Button';
-import PageHeader from '../../../components/PageHeader';
-import TablePagination from '../../../components/TablePagination';
-import SearchInput from '../../../components/SearchInput';
-import ConfirmModal from '../../../components/ConfirmModal';
-import TableSkeleton from '../../../components/TableSkeleton';
-
-import NotificationTemplateModal from './NotificationTemplateModal';
-
-import useFetch from '../../../hooks/useFetch';
-import useDebounce from '../../../hooks/useDebounce';
-
-import { notificationTemplateService } from '../../../services/notificationTemplate.service';
-
+import { Plus, Edit2, Trash2, Search } from 'lucide-react';
 import { useState } from 'react';
-import type { INotificationTemplate, NotificationType } from '../../../types/notificationTemplate.type';
 
-const ListNotificationTemplate = () => {
+import Button from '../../../../components/Button';
+import PageHeader from '../../../../components/PageHeader';
+import TablePagination from '../../../../components/TablePagination';
+import SearchInput from '../../../../components/SearchInput';
+import ConfirmModal from '../../../../components/ConfirmModal';
+import TableSkeleton from '../../../../components/TableSkeleton';
+
+import CourseModal from './CourseModal';
+
+import useFetch from '../../../../hooks/useFetch';
+import useDebounce from '../../../../hooks/useDebounce';
+
+import { courseService } from '../../../../services/course.service';
+
+import type { ICourse } from '../../../../types/course.type';
+
+const CourseManagement = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(5);
   const [searchInput, setSearchInput] = useState('');
-  const [type, setType] = useState('');
-  const [open, setOpen] = useState(false);
 
   const [showModalAdd, setShowModalAdd] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<INotificationTemplate | null>(null);
+  const [selectedCourse, setSelectedCourse] = useState<ICourse | null>(null);
 
   const debouncedSearch = useDebounce(searchInput, 500);
 
@@ -42,22 +39,19 @@ const ListNotificationTemplate = () => {
     page,
     limit,
     search: debouncedSearch,
-    type: (type as NotificationType) || undefined,
   };
 
   const {
-    data: templates,
+    data: courses,
     loading,
     error,
     totalCount,
-    refetch: fetchTemplates,
-  } = useFetch(notificationTemplateService.getTemplates, queryParams, [page, debouncedSearch, type, limit]);
+    refetch: fetchCourses,
+  } = useFetch(courseService.getCourses, queryParams, [page, debouncedSearch, limit]);
 
-  console.log(templates);
-
-  const handleCreateTemplate = async (formData: Partial<INotificationTemplate>) => {
+  const handleCreateCourse = async (formData: Partial<ICourse>) => {
     try {
-      const data = await notificationTemplateService.createTemplate(formData);
+      const data = await courseService.createCourse(formData);
       if (data.success) {
         setConfirmConfig({
           isOpen: true,
@@ -66,7 +60,7 @@ const ListNotificationTemplate = () => {
           type: 'success',
           onConfirm: () => setConfirmConfig({ ...confirmConfig, isOpen: false }),
         });
-        fetchTemplates();
+        fetchCourses();
         setShowModalAdd(false);
         setPage(1);
       }
@@ -82,11 +76,11 @@ const ListNotificationTemplate = () => {
     }
   };
 
-  const handleUpdateTemplate = async (formData: Partial<INotificationTemplate>) => {
-    if (!selectedTemplate?._id) return;
+  const handleUpdateCourse = async (formData: Partial<ICourse>) => {
+    if (!selectedCourse?._id) return;
 
     try {
-      const data = await notificationTemplateService.updateTemplate(selectedTemplate._id, formData);
+      const data = await courseService.updateCourse(selectedCourse._id, formData);
       if (data.success) {
         setConfirmConfig({
           isOpen: true,
@@ -96,9 +90,9 @@ const ListNotificationTemplate = () => {
           onConfirm: () => setConfirmConfig({ ...confirmConfig, isOpen: false }),
         });
 
-        fetchTemplates();
+        fetchCourses();
         setShowModalAdd(false);
-        setSelectedTemplate(null);
+        setSelectedCourse(null);
       }
     } catch (error: any) {
       const detailError = error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật!';
@@ -112,15 +106,15 @@ const ListNotificationTemplate = () => {
     }
   };
 
-  const handleDeleteTemplate = async (id: string) => {
+  const handleDeleteCourse = async (id: string) => {
     setConfirmConfig({
       isOpen: true,
       title: 'Xác nhận xóa',
-      message: 'Bạn có chắc chắn muốn xóa mẫu thông báo này?',
+      message: 'Bạn có chắc chắn muốn xóa khóa học này?',
       type: 'warning',
       onConfirm: async () => {
         try {
-          const data = await notificationTemplateService.deleteTemplate(id);
+          const data = await courseService.deleteCourse(id);
           if (data.success) {
             setConfirmConfig({
               isOpen: true,
@@ -129,7 +123,7 @@ const ListNotificationTemplate = () => {
               type: 'success',
               onConfirm: () => setConfirmConfig({ ...confirmConfig, isOpen: false }),
             });
-            fetchTemplates();
+            fetchCourses();
           }
         } catch (error: any) {
           const detailError = error.response?.data?.message || 'Có lỗi xảy ra khi xóa!';
@@ -145,9 +139,13 @@ const ListNotificationTemplate = () => {
     });
   };
 
-  const openEditModal = (template: INotificationTemplate) => {
-    setSelectedTemplate(template);
+  const openEditModal = (course: ICourse) => {
+    setSelectedCourse(course);
     setShowModalAdd(true);
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
   };
 
   const totalPages = Math.ceil((totalCount || 0) / limit);
@@ -155,17 +153,17 @@ const ListNotificationTemplate = () => {
   if (error) return <div className="p-8 text-red-500 text-center">Lỗi: {error}</div>;
 
   return (
-    <div className="p-8 w-full ">
-      <NotificationTemplateModal
+    <div className="p-8 w-full">
+      <CourseModal
         isOpen={showModalAdd}
         onClose={() => {
           setShowModalAdd(false);
-          setSelectedTemplate(null);
+          setSelectedCourse(null);
         }}
-        onSubmit={selectedTemplate?._id ? handleUpdateTemplate : handleCreateTemplate}
-        initialData={selectedTemplate || undefined}
+        onSubmit={selectedCourse?._id ? handleUpdateCourse : handleCreateCourse}
+        initialData={selectedCourse || undefined}
       />
-      <PageHeader title="Quản lý mẫu thông báo" />
+      <PageHeader title="Quản lý khóa học" />
       <ConfirmModal
         isOpen={confirmConfig.isOpen}
         onClose={() => setConfirmConfig({ ...confirmConfig, isOpen: false })}
@@ -176,47 +174,20 @@ const ListNotificationTemplate = () => {
         confirmText="Xác nhận"
         cancelText={confirmConfig.type === 'warning' ? 'Hủy' : ''}
       />
-      <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
-        <div className="flex gap-4 items-center flex-1 max-w-2xl">
+
+      <div className="flex justify-between items-center mb-6 gap-4">
+        <div className="flex gap-4 items-center flex-1 max-w-sm">
           <SearchInput
             type="text"
-            placeholder="Tìm kiếm mẫu thông báo..."
+            placeholder="Tìm kiếm tiêu đề khóa học..."
             value={searchInput}
             setSearchInput={setSearchInput}
             setPage={setPage}
           />
-
-          <div className="relative inline-block">
-            <Button variant="outline" icon={<Filter size={18} />} onClick={() => setOpen(!open)}>
-              Lọc
-            </Button>
-
-            {open && (
-              <div className="absolute mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                {[
-                  { label: 'Tất cả loại', value: '' },
-                  { label: 'Email', value: 'EMAIL' },
-                  { label: 'SMS', value: 'SMS' },
-                ].map((item) => (
-                  <div
-                    key={item.value}
-                    onClick={() => {
-                      setType(item.value);
-                      setPage(1);
-                      setOpen(false);
-                    }}
-                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                  >
-                    {item.label}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
 
         <Button variant="primary" icon={<Plus size={18} />} onClick={() => setShowModalAdd(true)}>
-          Thêm mẫu
+          Thêm khóa học
         </Button>
       </div>
 
@@ -225,30 +196,30 @@ const ListNotificationTemplate = () => {
           <thead>
             <tr className="bg-primary text-white text-sm sticky top-0 z-10 ">
               <th className="p-4 font-semibold w-16 text-center rounded-tl-xl">No.</th>
-              <th className="p-4 font-semibold">Tiêu đề mẫu</th>
-              <th className="p-4 font-semibold">Loại</th>
-              <th className="p-4 font-semibold">Nội dung (Rút gọn)</th>
+              <th className="p-4 font-semibold">Tiêu đề khóa học</th>
+              <th className="p-4 font-semibold text-right">Giá cơ bản</th>
+              <th className="p-4 font-semibold">Nội dung rút gọn</th>
               <th className="p-4 font-semibold text-center rounded-tr-xl">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {templates && templates.length > 0 ? (
-              templates.map((template, index) => (
-                <tr key={template._id} className="hover:bg-blue-50/50 transition-colors group">
+            {courses && courses.length > 0 ? (
+              courses.map((course, index) => (
+                <tr key={course._id} className="hover:bg-blue-50/50 transition-colors group">
                   <td className="p-4 text-text-secondary font-medium text-center">{index + 1 + (page - 1) * limit}</td>
-                  <td className="p-4 font-semibold text-blue-600">{template.title}</td>
-                  <td className="p-4">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-bold shadow-sm ${getNotificationTypeStyles(template.type)}`}
-                    >
-                      {template.type}
-                    </span>
+                  <td className="p-4 font-semibold text-blue-600">
+                    {course.title}
                   </td>
-                  <td className="p-4 text-text-main max-w-xs truncate">{template.content}</td>
+                  <td className="p-4 text-right font-bold text-status-progress-text">
+                    {formatCurrency(course.basePrice)}
+                  </td>
+                  <td className="p-4 text-text-main max-w-xs truncate">
+                    {course.syllabus}
+                  </td>
                   <td className="p-4">
                     <div className="flex items-center justify-center gap-3">
                       <button
-                        onClick={() => openEditModal(template)}
+                        onClick={() => openEditModal(course)}
                         className="p-2 text-blue-600 hover:bg-blue-100 rounded-xl transition-all duration-300 hover:scale-110 hover:-translate-y-1 active:scale-95"
                         title="Sửa"
                       >
@@ -256,7 +227,7 @@ const ListNotificationTemplate = () => {
                       </button>
 
                       <button
-                        onClick={() => template._id && handleDeleteTemplate(template._id)}
+                        onClick={() => course._id && handleDeleteCourse(course._id)}
                         className="p-2 text-red-500 hover:bg-red-100 rounded-xl transition-all duration-300 hover:scale-110 hover:rotate-12 active:scale-95"
                         title="Xóa"
                       >
@@ -273,11 +244,7 @@ const ListNotificationTemplate = () => {
                 </td>
               </tr>
             ) : (
-              Array.from({ length: limit }).map((_, i) => (
-                <tr key={i} className="animate-pulse">
-                  <td colSpan={5} className="p-8 bg-gray-50/50"></td>
-                </tr>
-              ))
+              <TableSkeleton columns={5} rows={limit} />
             )}
           </tbody>
         </table>
@@ -288,4 +255,4 @@ const ListNotificationTemplate = () => {
   );
 };
 
-export default ListNotificationTemplate;
+export default CourseManagement;
