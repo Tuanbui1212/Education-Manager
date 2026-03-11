@@ -13,18 +13,20 @@ export const PATHS = {
 
   TRANINING_STUDENT: '/training/students',
 
+  //HR
+  HR_TEACHERS: '/hr/trachers',
+  HR_TEACHERS_ID: '/hr/trachers/:id',
+
+  HR_TUTORS: '/hr/tutors',
+  HR_STAFFS: '/hr/staffs',
+  HR_CONTRACTS: '/hr/contracts',
+
   //Settings
-
   SETTINGS_ROLES: '/accounts/roles',
-
   SETTINGS_SHIFTS: '/settings/shifts',
-
   SETTINGS_FIXED_COSTS: '/settings/fixed-costs',
-
   SETTINGS_EXPENDITURES: '/settings/expenditures',
-
   SETTINGS_ROOMS: '/settings/rooms',
-
   SETTINGS_NOTIFICATION_TEMPLATES: '/settings/notification-templates',
 
   //Training
@@ -37,5 +39,11 @@ export const STATUS_OPTIONS = [
   { value: 'POTENTIAL', label: 'Tiềm năng' },
   { value: 'ACTIVE', label: 'Đang học' },
   { value: 'RESERVED', label: 'Bảo lưu' },
+  { value: 'INACTIVE', label: 'Đã nghỉ' },
+];
+
+export const TEACHER_STATUS_OPTIONS = [
+  { value: 'ALL', label: 'Tất cả trạng thái' },
+  { value: 'ACTIVE', label: 'Đang giảng dạy' },
   { value: 'INACTIVE', label: 'Đã nghỉ' },
 ];
