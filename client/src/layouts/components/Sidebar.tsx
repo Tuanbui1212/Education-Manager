@@ -80,7 +80,7 @@ function Sidebar() {
         { label: 'Quản lý học viên', path: '/training/students', permission: PERMISSIONS.ROOM.VIEW },
         { label: 'Quản lý khóa học', path: '/training/courses', permission: PERMISSIONS.ROOM.VIEW },
         { label: 'Quản lý lớp học', path: '/training/classes', permission: PERMISSIONS.ROOM.VIEW },
-        { label: 'Xếp thời khóa biểu', path: '/training/schedule', permission: PERMISSIONS.ROOM.VIEW },
+        { label: 'Xếp thời khóa biểu', path: '/training/schedules', permission: PERMISSIONS.ROOM.VIEW },
       ],
     },
     {
@@ -184,8 +184,8 @@ function Sidebar() {
                       <button
                         onClick={() => navigate(subItem.path)}
                         className={`flex items-center pl-11 pr-4 py-2 text-sm rounded-lg transition-colors whitespace-nowrap ${currentPath === subItem.path
-                            ? 'text-white bg-gray-800/50 font-medium'
-                            : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
+                          ? 'text-white bg-gray-800/50 font-medium'
+                          : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
                           }`}
                       >
                         {subItem.label}

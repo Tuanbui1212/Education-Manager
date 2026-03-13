@@ -32,6 +32,7 @@ export const PATHS = {
   //Training
   TRAINING_COURSES: '/training/courses',
   TRAINING_CLASSES: '/training/classes',
+  TRAINING_SCHEDULES: '/training/schedules',
 };
 
 export const STATUS_OPTIONS = [

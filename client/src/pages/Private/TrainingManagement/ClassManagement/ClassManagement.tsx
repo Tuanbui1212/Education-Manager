@@ -275,9 +275,7 @@ const ClassManagement = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50 bg-white">
-                            {loading ? (
-                                <TableSkeleton columns={7} rows={limit} />
-                            ) : classes && classes.length > 0 ? (
+                            {classes && classes.length > 0 ? (
                                 classes.map((item: any, index: number) => {
                                     const statusInfo = getStatusLabel(item.status);
                                     return (
@@ -290,8 +288,8 @@ const ClassManagement = () => {
                                                 {index + 1 + (page - 1) * limit}
                                             </td>
                                             <td className="p-5">
-                                                <div className="flex items-center gap-3">
-                                                    <span className="font-bold text-gray-800 text-lg">{item.name}</span>
+                                                <div className="font-semibold text-blue-600 cursor-pointer group-hover:underline">
+                                                    {item.name}
                                                 </div>
                                             </td>
                                             <td className="p-5">
