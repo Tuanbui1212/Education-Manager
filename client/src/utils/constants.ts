@@ -11,11 +11,9 @@ export const PATHS = {
   USER: '/dashboard/users',
   USER_ID: '/dashboard/users/:id',
 
-  TRANINING_STUDENT: '/training/students',
-
   //HR
-  HR_TEACHERS: '/hr/trachers',
-  HR_TEACHERS_ID: '/hr/trachers/:id',
+  HR_TEACHERS: '/hr/teachers',
+  HR_TEACHERS_ID: '/hr/teachers/:id',
 
   HR_TUTORS: '/hr/tutors',
   HR_STAFFS: '/hr/staffs',
@@ -30,8 +28,11 @@ export const PATHS = {
   SETTINGS_NOTIFICATION_TEMPLATES: '/settings/notification-templates',
 
   //Training
+  TRANINING_STUDENT: '/training/students',
+  TRANINING_STUDENT_ID: '/training/students/:id',
   TRAINING_COURSES: '/training/courses',
   TRAINING_CLASSES: '/training/classes',
+  TRAINING_CLASSES_ID: '/training/classes/:id',
 };
 
 export const STATUS_OPTIONS = [

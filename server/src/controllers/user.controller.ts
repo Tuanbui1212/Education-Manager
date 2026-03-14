@@ -65,17 +65,44 @@ export class UserController {
   };
 
   // [DELETE] /api/users/:id
+  // delete = async (req: Request, res: Response) => {
+  //   try {
+  //     const id = req.params.id as string;
+  //     const user = await this.userService.deleteUser(id);
+
+  //     if (!user) {
+  //       return res.status(404).json({ success: false, message: 'Không tìm thấy user để xóa' });
+  //     }
+  //     res.status(200).json({ success: true, message: 'Xóa thành công' });
+  //   } catch (error: any) {
+  //     res.status(500).json({ success: false, message: error.message || 'Lỗi server' });
+  //   }
+  // };
   delete = async (req: Request, res: Response) => {
     try {
-      const id = req.params.id as string;
-      const user = await this.userService.deleteUser(id);
+      const { id } = req.params;
+      const result = await this.userService.deleteUser(id as string);
 
-      if (!user) {
-        return res.status(404).json({ success: false, message: 'Không tìm thấy user để xóa' });
+      if (result.action === 'SOFT_DELETE') {
+        return res.status(200).json({
+          success: true,
+          message:
+            'Giáo viên này đã có dữ liệu lớp học. Hệ thống đã chuyển sang trạng thái "Ngừng hoạt động" để bảo toàn lịch sử.',
+          data: result.user,
+        });
       }
-      res.status(200).json({ success: true, message: 'Xóa thành công' });
+
+      // Nếu là HARD_DELETE
+      return res.status(200).json({
+        success: true,
+        message: 'Xóa giáo viên thành công (Xóa vĩnh viễn khỏi cơ sở dữ liệu).',
+        data: result.user,
+      });
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message || 'Lỗi server' });
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
     }
   };
 }

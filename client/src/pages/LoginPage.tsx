@@ -1,13 +1,13 @@
-import { useState } from "react";
-import StudentImage from "../assets/image/login-image.png";
-import { CircleUserRound, LockIcon } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { getDecodedToken } from "../utils/auth";
-import { authService } from "../services/auth.service";
+import { useState } from 'react';
+import StudentImage from '../assets/image/login-image.png';
+import { CircleUserRound, LockIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { getDecodedToken } from '../utils/auth';
+import { authService } from '../services/auth.service';
 
 const LoginPage = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -16,18 +16,17 @@ const LoginPage = () => {
       const result = await authService.login(email, password);
 
       if (result) {
-        console.log("Login successful:", result);
-        localStorage.setItem("accessToken", result.data);
-        navigate("/");
+        localStorage.setItem('accessToken', result.data);
+        navigate('/');
       }
     } catch (error: any) {
-      alert(error.response.data.message || "Đăng nhập thất bại");
+      alert(error.response.data.message || 'Đăng nhập thất bại');
     }
   };
 
   const showTokenInfo = () => {
     const roleInfo = getDecodedToken();
-    console.log("Decoded token info:", roleInfo);
+    console.log('Decoded token info:', roleInfo);
   };
   showTokenInfo();
 
@@ -35,11 +34,7 @@ const LoginPage = () => {
     <div className="min-h-screen w-full bg-primary flex items-center justify-center p-4">
       <div className="bg-white w-full max-w-5xl rounded-[40px] shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[400px]">
         <div className="w-full md:w-1/2  flex items-center justify-center bg-white relative">
-          <img
-            src={StudentImage}
-            alt="Students Illustration"
-            className="w-full h-full "
-          />
+          <img src={StudentImage} alt="Students Illustration" className="w-full h-full " />
         </div>
 
         <div className="w-full md:w-1/2 p-10 lg:p-16 flex flex-col justify-center">
@@ -52,10 +47,7 @@ const LoginPage = () => {
           <form className="space-y-10 max-w-md mx-auto w-full">
             {/* Input Email */}
             <div className="flex items-end gap-4">
-              <CircleUserRound
-                className="w-10 h-10 text-primary mb-1"
-                strokeWidth={2.5}
-              />
+              <CircleUserRound className="w-10 h-10 text-primary mb-1" strokeWidth={2.5} />
 
               <div className="flex-1">
                 <input
@@ -69,10 +61,7 @@ const LoginPage = () => {
             </div>
 
             <div className="flex items-end gap-4">
-              <LockIcon
-                className="w-10 h-10 text-primary mb-1"
-                strokeWidth={2.5}
-              />
+              <LockIcon className="w-10 h-10 text-primary mb-1" strokeWidth={2.5} />
 
               <div className="flex-1">
                 <input

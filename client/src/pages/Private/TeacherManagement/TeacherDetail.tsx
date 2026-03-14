@@ -23,18 +23,6 @@ import type { IUser, IRole } from '../../../types/user.type';
 import ConfirmModal from '../../../components/ConfirmModal';
 
 const MOCK_TEACHER = {
-  _id: '69aa79cc7e22fd7256924404',
-  fullName: 'Nguyễn Mai Anh',
-  email: 'gv.maianh@edu.vn',
-  phone: '0944000011',
-  date: '1993-01-10T00:00:00.000Z',
-  status: 'ACTIVE',
-  address: 'Quận Cầu Giấy, TP. Hà Nội',
-  teacher_info: {
-    hourlyRate: 250000,
-    degrees: ['Cử nhân Sư phạm Anh', 'IELTS 8.0', 'Chứng chỉ TESOL'],
-  },
-
   schedule: [
     { day: 'Thứ 2', shifts: ['Sáng', 'Tối'] },
     { day: 'Thứ 3', shifts: ['Tối'] },

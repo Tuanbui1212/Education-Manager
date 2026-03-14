@@ -15,7 +15,7 @@ import useDebounce from '../../../hooks/useDebounce';
 import { userService } from '../../../services/user.service';
 import { roleService } from '../../../services/role.service';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { IUser } from '../../../types/user.type';
 
 const UserList = () => {
@@ -54,6 +54,19 @@ const UserList = () => {
 
   const { data: rolesData } = useFetch(roleService.getRoles, {}, []);
   const roles = Array.isArray(rolesData) ? rolesData : (rolesData as any)?.data || [];
+
+  const consultantRoleId = useMemo(() => {
+    return roles.find((r: any) => r.name?.toLowerCase() === 'consultant')?._id || '';
+  }, [roles]);
+
+  const queryParamsConsultant = {
+    page: 1,
+    limit: 1000,
+    roleId: consultantRoleId,
+    status: 'ACTIVE',
+  };
+
+  const { data: consultants } = useFetch(userService.getUsers, queryParamsConsultant, [consultantRoleId]);
 
   const handleAddUser = async (formData: Partial<IUser>) => {
     try {
@@ -102,6 +115,7 @@ const UserList = () => {
       } else if (roleName.toLowerCase() === 'student' && formData.student_info) {
         updateData.student_info = {
           parentsName: formData.student_info.parentsName,
+          consultantId: formData.student_info.consultantId,
         };
       }
 
@@ -140,7 +154,7 @@ const UserList = () => {
         setShowModalAdd(true);
       }
     } catch (error) {
-      console.error('Lỗi khi lấy thông tin user:', error);
+      console.error(error);
     }
   };
 
@@ -153,6 +167,7 @@ const UserList = () => {
       {showModalAdd && (
         <UserModal
           roles={roles}
+          consultants={consultants}
           isOpen={showModalAdd}
           onClose={() => {
             setShowModalAdd(false);
@@ -286,16 +301,11 @@ const UserList = () => {
                       <button
                         onClick={() => openEditModal(user._id!)}
                         className="p-2 text-blue-600 hover:bg-blue-100 rounded-xl transition-all duration-300 hover:scale-110 hover:-translate-y-1 active:scale-95"
-                        title="Sửa"
                       >
                         <Edit2 size={18} />
                       </button>
 
-                      <button
-                        onClick={() => console.log('Xóa')}
-                        className="p-2 text-red-500 hover:bg-red-100 rounded-xl transition-all duration-300 hover:scale-110 hover:rotate-12 active:scale-95"
-                        title="Xóa"
-                      >
+                      <button className="p-2 text-red-500 hover:bg-red-100 rounded-xl transition-all duration-300 hover:scale-110 hover:rotate-12 active:scale-95">
                         <Trash2 size={18} />
                       </button>
                     </div>

@@ -11,14 +11,18 @@ import {
   GraduationCap,
   Users,
   Lock,
+  Headset,
+  IdCard,
 } from 'lucide-react';
 import Button from '../../../components/Button';
 import InputField from '../../../components/InputField';
 import SelectField from '../../../components/SelectField';
+import Combobox from '../../../components/Combobox';
+import { userService } from '../../../services/user.service';
 
 import type { IUser, UserModalProps, UserStatus } from '../../../types/user.type';
 
-const UserModal = ({ roles = [], isOpen, onClose, onSubmit, initialData }: UserModalProps) => {
+const UserModal = ({ roles = [], consultants = [], isOpen, onClose, onSubmit, initialData }: UserModalProps) => {
   const [formData, setFormData] = useState<Partial<IUser>>(() => {
     if (initialData) {
       return {
@@ -35,10 +39,12 @@ const UserModal = ({ roles = [], isOpen, onClose, onSubmit, initialData }: UserM
       date: undefined,
       roleId: roles.find((r: any) => r.name === 'Student')?._id || '',
       status: 'ACTIVE',
-      student_info: { parentsName: '' },
+      student_info: { parentsName: '', consultantId: '' },
       teacher_info: { hourlyRate: 0, degrees: [] },
     };
   });
+
+  console.log(initialData);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -60,7 +66,7 @@ const UserModal = ({ roles = [], isOpen, onClose, onSubmit, initialData }: UserM
     } else {
       const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
       if (!phoneRegex.test(formData.phone)) {
-        newErrors.phone = 'Số điện thoại không hợp lệ (Ví dụ: 0987654321)';
+        newErrors.phone = 'Số điện thoại không hợp lệ';
       }
     }
     if (!formData.date) newErrors.date = 'Vui lòng chọn ngày sinh';
@@ -82,20 +88,59 @@ const UserModal = ({ roles = [], isOpen, onClose, onSubmit, initialData }: UserM
     }
   };
 
+  const handleConsultantSearch = async (query: string) => {
+    const consultantRole = roles.find(
+      (r: any) => r.name?.toLowerCase() === 'consultant' || r.name?.toLowerCase() === 'sale',
+    );
+
+    if (!consultantRole) return [];
+
+    try {
+      const response = await userService.getUsers({
+        search: query,
+        roleId: consultantRole._id,
+        limit: 10,
+      });
+      return response.data || [];
+    } catch (error) {
+      console.error('Lỗi khi tìm Consultant:', error);
+      return [];
+    }
+  };
+
+  const getInitialConsultantName = () => {
+    const consultant = initialData?.student_info?.consultantId;
+    if (!consultant) return '';
+
+    if (typeof consultant === 'object' && consultant !== null) {
+      return `${(consultant as any).fullName} (${(consultant as any).email})`;
+    }
+
+    const foundConsultant = consultants.find((c: any) => c._id === consultant);
+    if (foundConsultant) {
+      return `${foundConsultant.fullName} (${foundConsultant.email})`;
+    }
+
+    return '';
+  };
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
 
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl z-10 overflow-hidden animate-in zoom-in-95 duration-200">
-        <div className="bg-[var(--color-primary)] p-6 text-white flex justify-between items-center">
-          <h3 className="text-xl font-bold">{initialData ? 'Chỉnh sửa hồ sơ' : 'Đăng ký người dùng mới'}</h3>
-          <button onClick={onClose} className="hover:bg-white/20 p-1 rounded-full transition-colors">
-            <X size={24} />
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl z-10 flex flex-col animate-in zoom-in-95 duration-200">
+        <div className="bg-[var(--color-primary)] px-8 py-5 text-white flex justify-between items-center shrink-0 rounded-t-2xl">
+          <h3 className="text-xl font-bold flex items-center gap-2">
+            <IdCard size={24} />
+            {initialData ? 'Chỉnh sửa hồ sơ tài khoản' : 'Đăng ký người dùng mới'}
+          </h3>
+          <button onClick={onClose} className="hover:bg-white/20 p-1.5 rounded-full transition-colors">
+            <X size={22} />
           </button>
         </div>
 
         <form
-          className="p-6 space-y-4 max-h-[80vh] overflow-y-auto custom-scrollbar"
+          className="flex flex-col flex-1"
           onSubmit={(e) => {
             e.preventDefault();
             if (!validateForm()) return;
@@ -107,152 +152,196 @@ const UserModal = ({ roles = [], isOpen, onClose, onSubmit, initialData }: UserM
             onSubmit(submitData);
           }}
         >
-          <div className="grid grid-cols-2 gap-4">
-            <InputField
-              label="Họ tên"
-              icon={<User size={16} />}
-              value={formData.fullName}
-              onChange={(e) => handleChange('fullName', e.target.value)}
-              error={errors.fullName}
-              placeholder="Nhập họ và tên..."
-            />
+          <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-12">
+            {/* CỘT TRÁI: THÔNG TIN CÁ NHÂN */}
+            <div className="space-y-6">
+              <h4 className="font-bold text-gray-800 flex items-center gap-2 border-b border-gray-100 pb-3 text-base uppercase tracking-wider">
+                <User size={18} className="text-primary" />
+                Thông tin cơ bản
+              </h4>
 
-            <InputField
-              label="Ngày sinh"
-              icon={<Calendar size={16} />}
-              type="date"
-              className="bg-white"
-              value={formData.date ? String(formData.date).split('T')[0] : ''}
-              onChange={(e) => handleChange('date', e.target.value)}
-              error={errors.date}
-            />
-          </div>
+              <div className="grid grid-cols-2 gap-6">
+                <InputField
+                  label="Họ tên"
+                  icon={<User size={18} />}
+                  value={formData.fullName}
+                  onChange={(e) => handleChange('fullName', e.target.value)}
+                  error={errors.fullName}
+                  placeholder="Nhập họ tên..."
+                />
 
-          <div className="grid grid-cols-2 gap-4">
-            <InputField
-              label="Email"
-              icon={<Mail size={16} />}
-              placeholder="example@gmail.com"
-              value={formData.email}
-              disabled={!!initialData}
-              onChange={(e) => handleChange('email', e.target.value)}
-              error={errors.email}
-              className={!initialData ? '' : 'bg-stone-200 cursor-not-allowed'}
-              autoComplete="off"
-            />
+                <InputField
+                  label="Ngày sinh"
+                  icon={<Calendar size={18} />}
+                  type="date"
+                  value={formData.date ? String(formData.date).split('T')[0] : ''}
+                  onChange={(e) => handleChange('date', e.target.value)}
+                  error={errors.date}
+                />
+              </div>
 
-            <InputField
-              label="Mật khẩu"
-              icon={<Lock size={16} />}
-              type="password"
-              placeholder={initialData ? 'Bỏ trống nếu không đổi...' : 'Nhập mật khẩu...'}
-              value={formData.password || ''}
-              onChange={(e) => handleChange('password', e.target.value)}
-              error={errors.password}
-              autoComplete="new-password"
-            />
-          </div>
+              <div className="grid grid-cols-2 gap-6">
+                <InputField
+                  label="Email"
+                  icon={<Mail size={18} />}
+                  placeholder="Email..."
+                  value={formData.email}
+                  disabled={!!initialData}
+                  onChange={(e) => handleChange('email', e.target.value)}
+                  error={errors.email}
+                  className={initialData ? 'bg-stone-100 cursor-not-allowed text-gray-500' : ''}
+                  autoComplete="off"
+                />
 
-          <div className="grid grid-cols-2 gap-4">
-            <InputField
-              label="Phone"
-              icon={<Phone size={16} />}
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => {
-                const onlyNumbers = e.target.value.replace(/\D/g, '');
-                handleChange('phone', onlyNumbers);
-              }}
-              error={errors.phone}
-            />
-
-            <SelectField
-              label="Vai trò"
-              icon={<ShieldCheck size={16} />}
-              value={formData.roleId as string}
-              onChange={(e) => handleChange('roleId', e.target.value)}
-            >
-              {roles.map((role: any) => (
-                <option key={role._id} value={role._id}>
-                  {role.name}
-                </option>
-              ))}
-            </SelectField>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <SelectField
-              label="Trạng thái"
-              icon={<Activity size={16} />}
-              value={formData.status}
-              onChange={(e) => handleChange('status', e.target.value as UserStatus)}
-            >
-              <option value="ACTIVE">Đang hoạt động</option>
-              <option value="INACTIVE">Ngừng kích hoạt</option>
-            </SelectField>
-          </div>
-
-          <hr className="border-gray-100" />
-
-          {selectedRoleName == 'Teacher' && (
-            <div className="grid grid-cols-2 gap-4 animate-in slide-in-from-top-2 text-blue-600">
-              <InputField
-                label="Lương mỗi giờ"
-                icon={<Banknote size={16} />}
-                type="number"
-                className="border-blue-200 focus:ring-blue-400 text-gray-800"
-                placeholder="Vd: 200000"
-                value={formData.teacher_info?.hourlyRate || ''}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    teacher_info: { ...formData.teacher_info, hourlyRate: Number(e.target.value) },
-                  })
-                }
-              />
+                <InputField
+                  label="Số điện thoại"
+                  icon={<Phone size={18} />}
+                  type="tel"
+                  placeholder="SĐT..."
+                  value={formData.phone}
+                  onChange={(e) => {
+                    const onlyNumbers = e.target.value.replace(/\D/g, '');
+                    handleChange('phone', onlyNumbers);
+                  }}
+                  error={errors.phone}
+                />
+              </div>
 
               <InputField
-                label="Bằng cấp"
-                icon={<GraduationCap size={16} />}
-                className="border-blue-200 focus:ring-blue-400 text-gray-800"
-                placeholder="Vd: Thạc sĩ, IELTS 8.0"
-                value={formData.teacher_info?.degrees?.join(', ') || ''}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    teacher_info: {
-                      ...formData.teacher_info,
-                      degrees: e.target.value.split(',').map((d) => d.trim()),
-                    },
-                  })
-                }
+                label="Mật khẩu"
+                icon={<Lock size={18} />}
+                type="password"
+                placeholder={initialData ? 'Bỏ trống nếu không đổi mật khẩu...' : 'Nhập mật khẩu...'}
+                value={formData.password || ''}
+                onChange={(e) => handleChange('password', e.target.value)}
+                error={errors.password}
+                autoComplete="new-password"
               />
             </div>
-          )}
 
-          {selectedRoleName == 'Student' && (
-            <div className="animate-in slide-in-from-top-2 text-green-600">
-              <InputField
-                label="Tên phụ huynh"
-                icon={<Users size={16} />}
-                className="border-green-200 focus:ring-green-400 text-gray-800"
-                placeholder="Vd: Nguyễn Văn A"
-                value={formData.student_info?.parentsName || ''}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    student_info: { ...formData.student_info, parentsName: e.target.value },
-                  })
-                }
-              />
+            {/* CỘT PHẢI: QUYỀN & THÔNG TIN ROLE CỤ THỂ */}
+            <div className="space-y-6">
+              <h4 className="font-bold text-gray-800 flex items-center gap-2 border-b border-gray-100 pb-3 text-base uppercase tracking-wider">
+                <ShieldCheck size={18} className="text-primary" />
+                Phân quyền & Trạng thái
+              </h4>
+
+              <div className="grid grid-cols-2 gap-6">
+                <SelectField
+                  label="Vai trò (Role)"
+                  icon={<ShieldCheck size={18} />}
+                  value={formData.roleId as string}
+                  onChange={(e) => handleChange('roleId', e.target.value)}
+                >
+                  {roles.map((role: any) => (
+                    <option key={role._id} value={role._id}>
+                      {role.name}
+                    </option>
+                  ))}
+                </SelectField>
+
+                <SelectField
+                  label="Trạng thái"
+                  icon={<Activity size={18} />}
+                  value={formData.status}
+                  onChange={(e) => handleChange('status', e.target.value as UserStatus)}
+                >
+                  <option value="ACTIVE">Đang hoạt động</option>
+                  <option value="INACTIVE">Ngừng kích hoạt</option>
+                </SelectField>
+              </div>
+
+              {selectedRoleName?.toLowerCase() === 'teacher' && (
+                <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100 space-y-5 animate-in fade-in duration-300">
+                  <h4 className="font-bold text-blue-700 flex items-center gap-2 text-base">
+                    <GraduationCap size={18} /> Thông tin Giáo viên
+                  </h4>
+
+                  <div className="grid grid-cols-1 gap-5">
+                    <InputField
+                      label="Lương mỗi giờ"
+                      icon={<Banknote size={18} className="text-blue-500" />}
+                      type="number"
+                      className="bg-white border-blue-200"
+                      placeholder="Vd: 200000"
+                      value={formData.teacher_info?.hourlyRate || ''}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          teacher_info: { ...formData.teacher_info, hourlyRate: Number(e.target.value) },
+                        })
+                      }
+                    />
+
+                    <InputField
+                      label="Bằng cấp (cách nhau dấu phẩy)"
+                      icon={<GraduationCap size={18} className="text-blue-500" />}
+                      className="bg-white border-blue-200"
+                      placeholder="Vd: Thạc sĩ, IELTS 8.0"
+                      value={formData.teacher_info?.degrees?.join(', ') || ''}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          teacher_info: {
+                            ...formData.teacher_info,
+                            degrees: e.target.value.split(',').map((d) => d.trim()),
+                          },
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              )}
+
+              {selectedRoleName?.toLowerCase() === 'student' && (
+                <div className="bg-green-50/50 p-6 rounded-2xl border border-green-100 space-y-5 animate-in fade-in duration-300">
+                  <h4 className="font-bold text-green-700 flex items-center gap-2 text-base">
+                    <Users size={18} /> Thông tin Học viên
+                  </h4>
+
+                  <div className="grid grid-cols-1 gap-5">
+                    <InputField
+                      label="Tên phụ huynh"
+                      icon={<Users size={18} className="text-green-500" />}
+                      className="bg-white border-green-200"
+                      placeholder="Vd: Nguyễn Văn A"
+                      value={formData.student_info?.parentsName || ''}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          student_info: { ...formData.student_info, parentsName: e.target.value },
+                        })
+                      }
+                    />
+
+                    <Combobox
+                      label="Nhân viên Sale chăm sóc"
+                      icon={<Headset size={18} className="text-green-500" />}
+                      placeholder="Tìm kiếm Sale..."
+                      onSearch={handleConsultantSearch}
+                      onSelect={(consultant) => {
+                        setFormData({
+                          ...formData,
+                          student_info: { ...formData.student_info, consultantId: consultant?._id },
+                        });
+                      }}
+                      getDisplayValue={(consultant) =>
+                        consultant ? `${consultant.fullName} (${consultant.email})` : ''
+                      }
+                      direction="up"
+                      initialValue={getInitialConsultantName()}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
-          <div className="flex gap-3 pt-4">
-            <Button variant="outline" className="flex-1 rounded-xl" onClick={onClose} type="button">
+          <div className="px-8 py-5 border-t border-gray-100 bg-gray-50 flex justify-end gap-4 shrink-0 rounded-b-2xl">
+            <Button variant="outline" className="w-32 rounded-xl py-2.5" onClick={onClose} type="button">
               Hủy
             </Button>
-            <Button variant="primary" className="flex-1 rounded-xl" type="submit">
+            <Button variant="primary" className="w-44 rounded-xl py-2.5 shadow-lg shadow-primary/20" type="submit">
               {initialData ? 'Lưu thay đổi' : 'Tạo tài khoản'}
             </Button>
           </div>

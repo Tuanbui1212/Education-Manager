@@ -10,6 +10,7 @@ export interface GetUsersParams {
   limit?: number;
   search?: string;
   roleId?: string;
+  status?: string;
 }
 
 export interface IStudentInfo {
