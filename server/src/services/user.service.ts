@@ -67,12 +67,12 @@ export class UserService {
     return { users, totalCount };
   }
 
-  // 3. Lấy chi tiết 1 User (Read One)
+  // 3. Lấy chi tiết 1 User
   async getUserById(id: string): Promise<IUser | null> {
     return await UserModel.findById(id).select('-password').populate('roleId', 'name permissions');
   }
 
-  // 4. Cập nhật User (Update)
+  // 4. Cập nhật User
   async updateUser(id: string, data: Partial<IUser>): Promise<IUser | null> {
     if (data.roleId) {
       const roleExists = await RoleModel.findById(data.roleId);
@@ -89,7 +89,7 @@ export class UserService {
     return await UserModel.findByIdAndUpdate(id, data, { new: true }).select('-password').populate('roleId', 'name'); // Populate để trả về data mới nhất cho Frontend
   }
 
-  // 5. Xóa User (Delete)
+  // 5. Xóa User
   async deleteUser(id: string): Promise<{ action: 'SOFT_DELETE' | 'HARD_DELETE'; user: IUser }> {
     const user = await UserModel.findById(id);
     if (!user) {

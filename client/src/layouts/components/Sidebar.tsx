@@ -94,19 +94,31 @@ function Sidebar() {
         { label: 'Đội ngũ giáo viên', path: PATHS.HR_TEACHERS, permission: PERMISSIONS.USER.VIEW },
         { label: 'Đội ngũ trợ giảng', path: PATHS.HR_TUTORS, permission: PERMISSIONS.USER.VIEW },
         { label: 'Nhân viên văn phòng', path: PATHS.HR_STAFFS, permission: PERMISSIONS.USER.VIEW },
-        { label: 'Hợp đồng & Lương', path: PATHS.HR_CONTRACTS, permission: PERMISSIONS.USER.VIEW },
+        {
+          label: 'Hợp đồng & Lương',
+          path: PATHS.HR_CONTRACTS,
+          permission: PERMISSIONS.SALARY?.VIEW || PERMISSIONS.USER.VIEW,
+        },
       ],
     },
     {
       key: 'training',
       label: 'Quản lý đào tạo',
       icon: <BookOpen size={20} />,
-      permission: PERMISSIONS.ROOM.VIEW,
+      permission: PERMISSIONS.CLASS.VIEW,
       subItems: [
-        { label: 'Quản lý học viên', path: '/training/students', permission: PERMISSIONS.ROOM.VIEW },
-        { label: 'Quản lý khóa học', path: '/training/courses', permission: PERMISSIONS.ROOM.VIEW },
-        { label: 'Quản lý lớp học', path: '/training/classes', permission: PERMISSIONS.ROOM.VIEW },
-        { label: 'Xếp thời khóa biểu', path: '/training/schedule', permission: PERMISSIONS.ROOM.VIEW },
+        { label: 'Quản lý học viên', path: '/training/students', permission: PERMISSIONS.USER.VIEW },
+        {
+          label: 'Quản lý khóa học',
+          path: '/training/courses',
+          permission: PERMISSIONS.COURSE.VIEW || PERMISSIONS.CLASS.VIEW,
+        },
+        { label: 'Quản lý lớp học', path: '/training/classes', permission: PERMISSIONS.CLASS.VIEW },
+        {
+          label: 'Xếp thời khóa biểu',
+          path: '/training/schedule',
+          permission: PERMISSIONS.SHIFT?.VIEW || PERMISSIONS.CLASS.VIEW,
+        },
       ],
     },
     {
@@ -115,7 +127,11 @@ function Sidebar() {
       icon: <BadgeDollarSign size={20} />,
       permission: PERMISSIONS.EXPENDITURE.VIEW,
       subItems: [
-        { label: 'Học phí học viên', path: '/finance/tuition', permission: PERMISSIONS.EXPENDITURE.VIEW },
+        {
+          label: 'Học phí học viên',
+          path: '/finance/tuition',
+          permission: PERMISSIONS.INVOICE?.VIEW || PERMISSIONS.EXPENDITURE.VIEW,
+        },
         { label: 'Thu chi tổng quát', path: '/finance/transactions', permission: PERMISSIONS.EXPENDITURE.VIEW },
         { label: 'Báo cáo tài chính', path: '/finance/reports', permission: PERMISSIONS.EXPENDITURE.VIEW },
       ],
@@ -126,7 +142,7 @@ function Sidebar() {
       icon: <Settings size={20} />,
       permission: PERMISSIONS.ROOM.VIEW,
       subItems: [
-        { label: 'Ca học', path: PATHS.SETTINGS_SHIFTS, permission: PERMISSIONS.ROOM.VIEW },
+        { label: 'Ca học', path: PATHS.SETTINGS_SHIFTS, permission: PERMISSIONS.SHIFT?.VIEW || PERMISSIONS.ROOM.VIEW },
         { label: 'Phòng học', path: PATHS.SETTINGS_ROOMS, permission: PERMISSIONS.ROOM.VIEW },
         {
           label: 'Các loại chi phí cố định',
@@ -233,15 +249,15 @@ function Sidebar() {
 
       <div className="border-t border-gray-700 p-3 flex items-center">
         <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center font-bold flex-shrink-0">
-          AD
+          {userName ? userName.charAt(0).toUpperCase() : 'AD'}
         </div>
         <div
           className={`ml-3 overflow-hidden transition-all duration-300 ${
             expanded ? 'w-40 opacity-100' : 'w-0 opacity-0'
           }`}
         >
-          <p className="text-sm font-medium whitespace-nowrap">{userName}</p>
-          <p className="text-xs text-gray-400 whitespace-nowrap">{userEmail}</p>
+          <p className="text-sm font-medium whitespace-nowrap">{userName || 'Admin'}</p>
+          <p className="text-xs text-gray-400 whitespace-nowrap">{userEmail || 'Chưa cập nhật'}</p>
         </div>
       </div>
     </aside>

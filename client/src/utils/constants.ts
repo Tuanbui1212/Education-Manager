@@ -16,7 +16,10 @@ export const PATHS = {
   HR_TEACHERS_ID: '/hr/teachers/:id',
 
   HR_TUTORS: '/hr/tutors',
+
   HR_STAFFS: '/hr/staffs',
+  HR_STAFFS_ID: '/hr/staffs/:id',
+
   HR_CONTRACTS: '/hr/contracts',
 
   //Settings
@@ -41,6 +44,11 @@ export const STATUS_OPTIONS = [
   { value: 'ACTIVE', label: 'Đang học' },
   { value: 'RESERVED', label: 'Bảo lưu' },
   { value: 'INACTIVE', label: 'Đã nghỉ' },
+];
+
+export const STATUS_USER_OPTIONS = [
+  { value: 'ACTIVE', label: 'Hoạt Động' },
+  { value: 'INACTIVE', label: 'Ngừng hoạt động' },
 ];
 
 export const TEACHER_STATUS_OPTIONS = [

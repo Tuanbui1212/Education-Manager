@@ -1,10 +1,15 @@
 import { PATHS } from '../utils/constants';
 
 import ListUser from '../pages/Private/Users/ListUser';
+
 import StudentManager from '../pages/Private/StudentManagement/StudentManagement';
 import StudentDetail from '../pages/Private/StudentManagement/StudentDetail';
+
 import TeacherManager from '../pages/Private/TeacherManagement/TeacherManager';
 import TeacherDetail from '../pages/Private/TeacherManagement/TeacherDetail';
+
+import StaffManager from '../pages/Private/StaffManagement/StaffManager';
+import StaffDetail from '../pages/Private/StaffManagement/StaffDetail';
 
 import DashboardLayout from '../layouts/DashboardLayout';
 
@@ -16,4 +21,7 @@ export const userRoutes = [
 
   { path: PATHS.HR_TEACHERS, component: TeacherManager, layout: DashboardLayout },
   { path: PATHS.HR_TEACHERS_ID, component: TeacherDetail, layout: DashboardLayout },
+
+  { path: PATHS.HR_STAFFS, component: StaffManager, layout: DashboardLayout },
+  { path: PATHS.HR_STAFFS_ID, component: StaffDetail, layout: DashboardLayout },
 ];
