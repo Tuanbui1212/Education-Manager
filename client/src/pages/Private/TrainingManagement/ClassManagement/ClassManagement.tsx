@@ -244,9 +244,7 @@ const ClassManagement = () => {
                 >
                   Tất cả trạng thái
                 </div>
-                {/* Cập nhật danh sách filter để bao gồm các trạng thái mới 
-                  Bạn có thể thay đổi mảng này dựa theo Enum thực tế của bạn
-                */}
+
                 {['ACTIVE', 'PENDING', 'COMPLETED', 'MAINTENANCE', 'INACTIVE'].map((item) => (
                   <div
                     key={item}

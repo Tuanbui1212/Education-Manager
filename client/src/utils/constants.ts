@@ -28,6 +28,7 @@ export const PATHS = {
   SETTINGS_FIXED_COSTS: '/settings/fixed-costs',
   SETTINGS_EXPENDITURES: '/settings/expenditures',
   SETTINGS_ROOMS: '/settings/rooms',
+  SETTINGS_ROOMS_ID: '/settings/rooms/:id',
   SETTINGS_NOTIFICATION_TEMPLATES: '/settings/notification-templates',
 
   //Training
@@ -56,4 +57,14 @@ export const TEACHER_STATUS_OPTIONS = [
   { value: 'ALL', label: 'Tất cả trạng thái' },
   { value: 'ACTIVE', label: 'Đang giảng dạy' },
   { value: 'INACTIVE', label: 'Đã nghỉ' },
+];
+
+export const DAYS_OF_WEEK = [
+  { label: 'T2', value: 1 },
+  { label: 'T3', value: 2 },
+  { label: 'T4', value: 3 },
+  { label: 'T5', value: 4 },
+  { label: 'T6', value: 5 },
+  { label: 'T7', value: 6 },
+  { label: 'CN', value: 0 },
 ];

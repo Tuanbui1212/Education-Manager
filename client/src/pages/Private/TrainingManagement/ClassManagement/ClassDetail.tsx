@@ -10,14 +10,22 @@ import {
   FileText,
   CheckCircle2,
   Clock,
+  Calendar,
+  Sparkles,
+  Trash2,
 } from 'lucide-react';
 
 import useFetch from '../../../../hooks/useFetch';
 import { classService } from '../../../../services/class.service';
+import { scheduleService } from '../../../../services/schedule.service';
+
 import Button from '../../../../components/Button';
 import SearchInput from '../../../../components/SearchInput';
 import ConfirmModal from '../../../../components/ConfirmModal';
+
 import ClassModal from './ClassModal';
+import AutoScheduleModal from './AutoScheduleModal';
+
 import { PATHS } from '../../../../utils/constants';
 import type { IClass } from '../../../../types/class.type';
 
@@ -32,8 +40,63 @@ const ClassDetail = () => {
     refetch: fetchClass,
   } = useFetch(classService.getClassById, id as string, [id]);
 
+  const {
+    data: schedulesResponse,
+    loading: loadingSchedules,
+    refetch: fetchSchedules,
+  } = useFetch(scheduleService.getSchedules, { classId: id, limit: 100 }, [id]);
+
+  const schedulesList = Array.isArray(schedulesResponse) ? schedulesResponse : (schedulesResponse as any)?.data || [];
+
+  const scheduleSummary = useMemo(() => {
+    if (!schedulesList || schedulesList.length === 0) return null;
+
+    const dayShiftMap = new Map<number, Set<string>>();
+
+    schedulesList.forEach((s: any) => {
+      if (s.date) {
+        const dateObj = new Date(s.date);
+        const day = dateObj.getDay();
+        
+        let shiftName = '';
+        if (s.shiftId?.name) {
+          shiftName = s.shiftId.name;
+        } else if (typeof s.shiftId === 'string') {
+          shiftName = s.shiftId;
+        }
+
+        if (shiftName) {
+          if (!dayShiftMap.has(day)) {
+            dayShiftMap.set(day, new Set());
+          }
+          dayShiftMap.get(day)!.add(shiftName);
+        }
+      }
+    });
+
+    const dayNames = ['Chủ Nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
+
+    const sortedDays = Array.from(dayShiftMap.keys()).sort((a, b) => {
+      const dayA = a === 0 ? 7 : a;
+      const dayB = b === 0 ? 7 : b;
+      return dayA - dayB;
+    });
+
+    const details = sortedDays.map((day) => ({
+      dayName: dayNames[day],
+      shifts: Array.from(dayShiftMap.get(day)!).join(', '),
+    }));
+
+    return {
+      details,
+      total: schedulesList.length,
+    };
+  }, [schedulesList]);
+
   const [searchInput, setSearchInput] = useState('');
   const [showClassModal, setShowClassModal] = useState(false);
+  const [showAutoScheduleModal, setShowAutoScheduleModal] = useState(false);
+  const [isDeletingBulk, setIsDeletingBulk] = useState(false);
 
   const [confirmConfig, setConfirmConfig] = useState({
     isOpen: false,
@@ -41,6 +104,12 @@ const ClassDetail = () => {
     message: '',
     type: 'success' as 'success' | 'danger' | 'warning' | 'info',
     onConfirm: () => {},
+  });
+
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
   });
 
   const handleUpdateClass = async (formData: Partial<IClass>) => {
@@ -51,7 +120,7 @@ const ClassDetail = () => {
         setConfirmConfig({
           isOpen: true,
           title: 'Thành công',
-          message: 'Cập nhật thông tin lớp học thành công!',
+          message: 'Cập nhật thông khoá học thành công!',
           type: 'success',
           onConfirm: () => setConfirmConfig({ ...confirmConfig, isOpen: false }),
         });
@@ -67,6 +136,38 @@ const ClassDetail = () => {
         type: 'danger',
         onConfirm: () => setConfirmConfig({ ...confirmConfig, isOpen: false }),
       });
+    }
+  };
+
+  const handleDeleteAllSchedules = async () => {
+    if (schedulesList.length === 0) return;
+
+    setIsDeletingBulk(true);
+    setConfirmDeleteAll({ ...confirmDeleteAll, isOpen: false });
+
+    const scheduleIds = schedulesList.map((s: any) => s._id);
+
+    try {
+      await scheduleService.deleteSchedulesBulk(scheduleIds);
+
+      setConfirmConfig({
+        isOpen: true,
+        title: 'Thành công',
+        message: `Đã xóa sạch ${scheduleIds.length} buổi học của lớp này.`,
+        type: 'success',
+        onConfirm: () => setConfirmConfig({ ...confirmConfig, isOpen: false }),
+      });
+      fetchSchedules();
+    } catch (error: any) {
+      setConfirmConfig({
+        isOpen: true,
+        title: 'Lỗi',
+        message: error.response?.data?.message || 'Không thể xóa lịch học lúc này.',
+        type: 'danger',
+        onConfirm: () => setConfirmConfig({ ...confirmConfig, isOpen: false }),
+      });
+    } finally {
+      setIsDeletingBulk(false);
     }
   };
 
@@ -123,6 +224,18 @@ const ClassDetail = () => {
         />
       )}
 
+      {showAutoScheduleModal && (
+        <AutoScheduleModal
+          isOpen={showAutoScheduleModal}
+          onClose={() => setShowAutoScheduleModal(false)}
+          onSuccess={() => {
+            fetchSchedules();
+          }}
+          classData={classData}
+        />
+      )}
+
+      {/* Modal Thông báo chung */}
       <ConfirmModal
         isOpen={confirmConfig.isOpen}
         onClose={() => setConfirmConfig({ ...confirmConfig, isOpen: false })}
@@ -132,6 +245,19 @@ const ClassDetail = () => {
         type={confirmConfig.type}
         confirmText="Đóng"
         cancelText=""
+      />
+
+      {/* Modal Xác nhận Xóa Toàn Bộ Lịch */}
+      <ConfirmModal
+        isOpen={confirmDeleteAll.isOpen}
+        onClose={() => setConfirmDeleteAll({ ...confirmDeleteAll, isOpen: false })}
+        onConfirm={handleDeleteAllSchedules}
+        title={confirmDeleteAll.title}
+        message={confirmDeleteAll.message}
+        type="danger"
+        confirmText="Xác nhận xóa sạch"
+        cancelText="Hủy bỏ"
+        isLoading={isDeletingBulk}
       />
 
       <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
@@ -180,19 +306,25 @@ const ClassDetail = () => {
                   Giáo viên phụ trách
                 </span>
                 <div
-                  className="flex items-center gap-2 text-gray-800 font-medium cursor-pointer"
+                  className="flex items-center gap-2 text-gray-800 font-medium cursor-pointer hover:text-blue-600 transition-colors"
                   onClick={() => navigate(PATHS.HR_TEACHERS_ID.replace(':id', classData.teacherId?._id || ''))}
                 >
                   <UserIcon size={16} className="text-blue-400" />
-                  <span>{classData.teacherId?.fullName || 'Chưa phân công'}</span>
+                  <span className="underline decoration-blue-200 underline-offset-4">
+                    {classData.teacherId?.fullName || 'Chưa phân công'}
+                  </span>
                 </div>
               </div>
 
               <div className="flex flex-col gap-1 border-b border-gray-50 pb-4">
-                <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider">Phòng học</span>
+                <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider">Phòng học mặc định</span>
                 <div className="flex items-center gap-2 text-gray-800 font-medium">
                   <MapPin size={16} className="text-rose-400" />
-                  <span>{classData.roomId?.name || 'Chưa xếp phòng / Học Online'}</span>
+                  <span
+                    onClick={() => navigate(PATHS.SETTINGS_ROOMS_ID.replace(':id', classData.roomId?._id as string))}
+                  >
+                    {classData.roomId?.name || 'Chưa xếp phòng / Học Online'}
+                  </span>
                 </div>
               </div>
 
@@ -208,7 +340,91 @@ const ClassDetail = () => {
         </div>
 
         <div className="xl:col-span-2 space-y-6">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col h-full">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-6 pb-4 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-indigo-50 rounded-lg">
+                  <Calendar size={20} className="text-indigo-600" />
+                </div>
+                <h3 className="text-lg font-bold text-gray-800">Lịch học định kỳ</h3>
+              </div>
+
+              {/* Nút Sinh lịch chỉ hiện khi chưa có lịch */}
+              {schedulesList.length === 0 && (
+                <Button
+                  variant="outline"
+                  icon={<Sparkles size={16} className="text-indigo-500" />}
+                  className="border-indigo-200 hover:bg-indigo-50 text-indigo-700"
+                  onClick={() => setShowAutoScheduleModal(true)}
+                >
+                  Sinh lịch tự động
+                </Button>
+              )}
+            </div>
+
+            {loadingSchedules ? (
+              <div className="h-20 flex items-center justify-center text-gray-400 animate-pulse">
+                Đang tải thông tin lịch...
+              </div>
+            ) : scheduleSummary ? (
+              <div className="flex flex-col md:flex-row gap-6 md:items-start justify-between bg-indigo-50/50 border border-indigo-100 rounded-xl p-5 relative overflow-hidden">
+                <div className="flex items-start gap-5 relative z-10">
+                  <div className="w-14 h-14 bg-white border border-indigo-100 rounded-full flex items-center justify-center text-indigo-600 shrink-0 shadow-sm">
+                    <Clock size={26} />
+                  </div>
+                  <div className="space-y-3 pt-1">
+                    {scheduleSummary.details.map((item, idx) => (
+                      <div key={idx} className="flex items-center gap-3">
+                        <span className="text-sm font-bold text-gray-800 w-[70px]">{item.dayName}:</span>
+                        <span className="text-sm font-semibold text-indigo-700 bg-indigo-100/70 px-3 py-1 rounded-md border border-indigo-200 shadow-sm">
+                          {item.shifts}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex flex-col md:items-end gap-3 mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 border-indigo-100 w-full md:w-auto relative z-10">
+                  <span className="text-sm font-bold bg-white border border-indigo-200 text-indigo-700 px-5 py-2 rounded-full shadow-sm mb-2">
+                    Tổng cộng: {scheduleSummary.total} buổi học
+                  </span>
+
+                  {/* NÚT RESET LỊCH KHI BỊ SAI */}
+                  <Button
+                    variant="outline"
+                    icon={<Trash2 size={14} />}
+                    className="w-full text-xs font-bold border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition-colors"
+                    onClick={() =>
+                      setConfirmDeleteAll({
+                        isOpen: true,
+                        title: 'Xóa toàn bộ lịch học của lớp',
+                        message: `Bạn chuẩn bị xóa sạch ${scheduleSummary.total} buổi học của lớp ${classData.name}. Hệ thống sẽ thu hồi toàn bộ lịch để bạn có thể sinh lại tự động từ đầu.\n\nHành động này không thể hoàn tác!`,
+                      })
+                    }
+                  >
+                    Làm lại lịch (Xóa tất cả)
+                  </Button>
+
+                  <button
+                    onClick={() => navigate(PATHS.TRAINING_SCHEDULES)}
+                    className="text-xs mt-2 font-semibold text-indigo-600 hover:text-indigo-800 hover:underline flex items-center justify-end gap-1 transition-colors w-full"
+                  >
+                    Chỉnh sửa từng buổi ở TKB →
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-gray-400 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                <Calendar size={44} className="mb-3 opacity-20" />
+                <p className="text-sm font-medium text-gray-500 mb-3">Lớp học này chưa có thời khóa biểu</p>
+                <Button variant="primary" onClick={() => setShowAutoScheduleModal(true)}>
+                  Tạo lịch học ngay
+                </Button>
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col">
             <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
               <div className="flex items-center gap-2">
                 <div className="p-2 bg-blue-50 rounded-lg">
