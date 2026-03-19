@@ -38,6 +38,8 @@ export const PATHS = {
   TRAINING_CLASSES: '/training/classes',
   TRAINING_CLASSES_ID: '/training/classes/:id',
   TRAINING_SCHEDULES: '/training/schedules',
+  TRAINING_ATTENDANCES: '/training/attendances',
+  TRAINING_ATTENDANCES_ID: '/training/attendances/:id',
 };
 
 export const STATUS_OPTIONS = [

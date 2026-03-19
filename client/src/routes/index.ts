@@ -10,6 +10,7 @@ import { roleRoutes } from './role.routes';
 import { courseRoutes } from './course.routes';
 import { classRoutes } from './class.routes';
 import scheduleRoutes from './schedule.routes';
+import attendanceRoutes from './attendance.routes';
 
 const publicRoutes = [...authRoutes];
 
@@ -25,6 +26,7 @@ const privateRoutes = [
   ...courseRoutes,
   ...classRoutes,
   ...scheduleRoutes,
+  ...attendanceRoutes,
 ];
 
 export { publicRoutes, privateRoutes };

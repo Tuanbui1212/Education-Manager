@@ -42,7 +42,7 @@ const ClassManagement = () => {
     title: '',
     message: '',
     type: 'success' as 'success' | 'danger' | 'warning' | 'info',
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   const queryParams = {
@@ -287,7 +287,7 @@ const ClassManagement = () => {
             </thead>
             <tbody className="divide-y divide-gray-50 bg-white">
               {loading ? (
-                <TableSkeleton columns={7} rows={limit} />
+                <TableSkeleton columns={5} rows={limit} />
               ) : classes && classes.length > 0 ? (
                 classes.map((item: any, index: number) => {
                   const statusInfo = getStatusLabel(item.status);

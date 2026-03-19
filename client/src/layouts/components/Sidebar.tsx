@@ -119,6 +119,11 @@ function Sidebar() {
           path: '/training/schedules',
           permission: PERMISSIONS.SHIFT?.VIEW || PERMISSIONS.CLASS.VIEW,
         },
+        {
+          label: 'Điểm danh',
+          path: PATHS.TRAINING_ATTENDANCES,
+          permission: PERMISSIONS.SHIFT?.VIEW || PERMISSIONS.CLASS.VIEW,
+        },
       ],
     },
     {
