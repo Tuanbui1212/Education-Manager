@@ -13,11 +13,11 @@ export const UpsertAttendanceItemSchema = z.object({
 
 export const UpsertAttendancesSchema = z.array(UpsertAttendanceItemSchema);
 
-export const GetAttendanceByScheduleSchema = z.object({
+export const GetAttendanceByIdSchema = z.object({
     scheduleId: z.string().trim().regex(/^[0-9a-fA-F]{24}$/, 'ID không đúng định dạng ObjectId'),
 });
 
-export const ScheduleStatsQuerySchema = z.object({
+export const GetAllAttendanceQuerySchema = z.object({
     page: z.coerce.number().min(1).optional(),
     limit: z.coerce.number().min(1).optional(),
     classId: z.string().trim().regex(/^[0-9a-fA-F]{24}$/, 'ID không đúng định dạng ObjectId').optional(),

@@ -16,7 +16,6 @@ export interface IAttendanceRecord {
     studentInfo: {
         _id: string;
         fullName: string;
-        code: string;
         email?: string;
         phone?: string;
     };

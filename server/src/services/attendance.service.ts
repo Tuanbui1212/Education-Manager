@@ -9,7 +9,7 @@ import { UpsertAttendanceItemSchema } from "../validations/attendance.validation
 type UpsertAttendanceData = z.infer<typeof UpsertAttendanceItemSchema>;
 
 export class AttendanceService {
-    async getScheduleStats(query: any) {
+    async getAll(query: any) {
         const { page = 1, limit = 10, classId, shiftId } = query;
         const match: any = {};
         if (classId) match.classId = new Types.ObjectId(classId);
@@ -94,11 +94,11 @@ export class AttendanceService {
         return { data: schedules, totalCount };
     }
 
-    async getAttendanceBySchedule(scheduleId: string) {
+    async getById(scheduleId: string) {
         const schedule = await ScheduleModel.findById(scheduleId);
         if (!schedule) throw new Error("Không tìm thấy buổi học");
 
-        const classData = await ClassModel.findById(schedule.classId).populate('studentIds', 'fullName code email phone');
+        const classData = await ClassModel.findById(schedule.classId).populate('studentIds', 'fullName email phone');
         if (!classData) throw new Error("Không tìm thấy lớp học");
 
         const attendances = await AttendanceModel.find({ scheduleId });
@@ -133,7 +133,7 @@ export class AttendanceService {
         return result;
     }
 
-    async upsertAttendances(attendances: UpsertAttendanceData[]) {
+    async upsert(attendances: UpsertAttendanceData[]) {
         if (!attendances || attendances.length === 0) return [];
 
         const ops = attendances.map(att => ({
