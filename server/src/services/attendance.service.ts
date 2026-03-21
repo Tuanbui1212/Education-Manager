@@ -28,6 +28,7 @@ export class AttendanceService {
                 }
             },
             { $unwind: { path: '$classInfo' } },
+            { $match: { 'classInfo.status': 'ACTIVE' } },
         ];
 
         const [schedules, totalCountResult] = await Promise.all([
