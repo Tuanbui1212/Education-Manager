@@ -13,7 +13,7 @@ interface ComboboxProps {
   error?: string;
   initialValue?: string;
   onFocus?: () => void;
-  direction: string;
+  direction?: string;
 }
 
 const Combobox: React.FC<ComboboxProps> = ({

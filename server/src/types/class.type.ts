@@ -4,11 +4,11 @@ import { IUser } from '../types/user.type';
 import { IRoom } from './room.type';
 
 export enum ClassStatus {
+  UPCOMING = 'UPCOMING',
   ACTIVE = 'ACTIVE',
-  MAINTENANCE = 'MAINTENANCE',
-  INACTIVE = 'INACTIVE',
-  PENDING = 'PENDING',
   COMPLETED = 'COMPLETED',
+  MAINTENANCE = 'MAINTENANCE',
+  PENDING = 'PENDING',
 }
 
 export interface IClass {

@@ -219,7 +219,6 @@ const UserList = () => {
       {showModalAdd && (
         <UserModal
           roles={roles}
-          // @ts-ignore - Bỏ qua cảnh báo TS do UserModalProps chưa được khai báo trường consultants
           consultants={consultants}
           isOpen={showModalAdd}
           onClose={() => {

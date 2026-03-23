@@ -154,7 +154,21 @@ export class ScheduleService {
     const session = await mongoose.startSession();
     session.startTransaction();
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const firstSchedule = schedules[0];
+
     try {
+      if (firstSchedule && firstSchedule.classId) {
+        const startDate = new Date(firstSchedule.date);
+        startDate.setHours(0, 0, 0, 0);
+
+        if (startDate <= today) {
+          await ClassModel.findByIdAndUpdate(firstSchedule.classId, { status: 'ACTIVE' }, { session });
+        }
+      }
+
       const createdSchedules = [];
 
       for (const schedule of schedules) {
@@ -203,7 +217,29 @@ export class ScheduleService {
     if (!ids || ids.length === 0) {
       throw new Error('Danh sách ID không hợp lệ');
     }
-    const result = await ScheduleModel.deleteMany({ _id: { $in: ids } });
-    return result;
+
+    const scheduleData = await ScheduleModel.findById(ids[0]);
+    if (!scheduleData) {
+      throw new Error('Không tìm thấy dữ liệu lịch học để xóa');
+    }
+
+    const classId = scheduleData.classId;
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const result = await ScheduleModel.deleteMany({ _id: { $in: ids } }, { session });
+
+      await ClassModel.findByIdAndUpdate(classId, { status: 'UPCOMING' }, { session });
+
+      await session.commitTransaction();
+      return result;
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
   }
 }

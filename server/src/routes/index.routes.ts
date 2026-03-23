@@ -10,6 +10,8 @@ import classRouter from './class.routes';
 import fixedCostRouter from './fixedCost.route';
 import roleRouter from './role.route';
 import scheduleRouter from './schedule.routes';
+import invoiceRouter from './invoice.route';
+import transactionRoute from './transaction.route';
 
 function router(app: Application) {
   app.use('/api/users', userRouter);
@@ -23,6 +25,8 @@ function router(app: Application) {
   app.use('/api/classes', classRouter);
   app.use('/api/fixed-costs', fixedCostRouter);
   app.use('/api/schedules', scheduleRouter);
+  app.use('/api/invoices', invoiceRouter);
+  app.use('/api/transactions', transactionRoute);
 }
 
 export default router;

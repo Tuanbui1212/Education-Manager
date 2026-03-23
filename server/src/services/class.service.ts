@@ -6,7 +6,16 @@ import { UserModel } from '../models/user.model';
 import { RoomModel } from '../models/room.model';
 import roleModel from '../models/role.model';
 import { Types } from 'mongoose';
+import { InvoiceService } from './invoice.service';
+import { InvoiceModel } from '../models/invoice.model';
+import mongoose from 'mongoose';
 export class ClassService {
+  private invoiceService: InvoiceService;
+
+  constructor() {
+    this.invoiceService = new InvoiceService();
+  }
+
   async createClass(classData: CreateClassType) {
     const existingClass = await ClassModel.findOne({ name: classData.name });
     if (existingClass) {
@@ -69,7 +78,7 @@ export class ClassService {
   async getClassById(id: string) {
     return await ClassModel.findById(id)
       .populate('studentIds', 'fullName')
-      .populate('courseId', 'title')
+      .populate('courseId', 'title basePrice')
       .populate('teacherId', 'fullName')
       .populate('roomId', 'name');
   }
@@ -116,10 +125,12 @@ export class ClassService {
     const filter = {
       _id: new Types.ObjectId(id),
     };
+
     const classData = await ClassModel.findById(id);
     if (!classData) {
       throw new Error('Không tìm thấy lớp học');
     }
+
     const classesData = await ClassModel.aggregate([
       {
         $match: filter,
@@ -175,5 +186,61 @@ export class ClassService {
       .populate('teacherId', 'fullName')
       .populate('roomId', 'name');
     return ClassData;
+  }
+
+  async enrollStudent(data: { classId: string; studentId: string; finalAmount: number; dueDate?: string }) {
+    {
+      const session = await mongoose.startSession();
+      session.startTransaction();
+
+      try {
+        const currentClass = await ClassModel.findById(data.classId).session(session);
+        if (!currentClass) throw new Error('Lớp học không tồn tại');
+
+        if (currentClass.studentIds.includes(new mongoose.Types.ObjectId(data.studentId))) {
+          throw new Error('Học viên này đã có tên trong danh sách lớp');
+        }
+
+        await ClassModel.findByIdAndUpdate(data.classId, { $push: { studentIds: data.studentId } }, { session });
+
+        const invoiceCode = await this.invoiceService.generateInvoiceCode();
+
+        const student = await UserModel.findById(data.studentId).session(session);
+        if (!student) throw new Error('Không tìm thấy học viên');
+
+        const consultantId = student.student_info?.consultantId;
+
+        let finalDueDate = data.dueDate ? new Date(data.dueDate) : new Date();
+        if (!data.dueDate) {
+          finalDueDate.setDate(finalDueDate.getDate() + 7);
+        }
+
+        const newInvoice = new InvoiceModel({
+          code: invoiceCode,
+          studentId: data.studentId,
+          classId: data.classId,
+          consultantId: consultantId,
+          finalAmount: data.finalAmount,
+          debt: data.finalAmount,
+          status: 'UNPAID',
+          dueDate: finalDueDate,
+        });
+
+        await newInvoice.save({ session });
+
+        await session.commitTransaction();
+
+        return {
+          success: true,
+          message: 'Ghi danh và tạo hóa đơn thành công',
+          invoiceCode,
+        };
+      } catch (error: any) {
+        await session.abortTransaction();
+        throw error;
+      } finally {
+        session.endSession();
+      }
+    }
   }
 }

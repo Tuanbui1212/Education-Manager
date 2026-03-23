@@ -38,6 +38,13 @@ export const PATHS = {
   TRAINING_CLASSES: '/training/classes',
   TRAINING_CLASSES_ID: '/training/classes/:id',
   TRAINING_SCHEDULES: '/training/schedules',
+
+  //Finace
+  FINANCE_INVOICES: '/finance/invoices',
+  FINANCE_INVOICES_ID: '/finance/invoices/:id',
+
+  FINANCE_TRANSACTIONS: '/finance/transactions',
+  FINANCE_TRANSACTIONS_ID: '/finance/transactions/:id',
 };
 
 export const STATUS_OPTIONS = [
