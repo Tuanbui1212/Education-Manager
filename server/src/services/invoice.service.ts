@@ -1,8 +1,10 @@
 import { InvoiceModel } from '../models/invoice.model';
 import { InvoiceStatus } from '../types/invoice.type';
 import type { IInvoice, CreateInvoiceType } from '../types/invoice.type';
+import { EmailService } from './email.service';
 
 export class InvoiceService {
+  private emailService = new EmailService();
   async createInvoice(data: CreateInvoiceType) {
     const newCode = await this.generateInvoiceCode();
 
@@ -131,6 +133,75 @@ export class InvoiceService {
       .populate('studentId', 'fullName email phone')
       .populate('classId', 'name');
 
+    const student = updatedInvoice?.studentId as any;
+
+    // 2. GỬI EMAIL THÔNG BÁO LỊCH TRẢ GÓP
+    if (student && student.email) {
+      const emailPayload = {
+        studentName: student.fullName || 'Học viên',
+        invoiceCode: updatedInvoice?.code,
+        debtAmount: updatedInvoice?.debt,
+        totalMonths: data.totalMonths,
+        amountPerMonth: amountPerMonth,
+      };
+
+      this.emailService.sendEmailWithTemplate(student.email, 'INSTALLMENT_CREATED', emailPayload).catch((err) => {
+        console.error(`[Lỗi gửi mail Trả góp]: ${err.message}`);
+      });
+    }
+
     return updatedInvoice;
+  }
+
+  async markAsNotified(id: string, isInstallment: boolean = false) {
+    const invoice = await InvoiceModel.findById(id)
+      .populate('studentId', 'fullName email phone')
+      .populate('classId', 'name')
+      .populate('consultantId', 'fullName');
+
+    if (!invoice) {
+      throw new Error('Không tìm thấy hóa đơn');
+    }
+
+    if (invoice.lastRemindedAt) {
+      const minInterval = 5 * 24 * 60 * 60 * 1000;
+      const timeSinceLast = Date.now() - new Date(invoice.lastRemindedAt).getTime();
+
+      if (timeSinceLast < minInterval) {
+        const daysLeft = Math.ceil((minInterval - timeSinceLast) / (1000 * 60 * 60 * 24));
+        throw new Error(`Vui lòng chờ ${daysLeft} ngày nữa để nhắc tiếp.`);
+      }
+    }
+
+    invoice.remindCount = (invoice.remindCount || 0) + 1;
+    invoice.lastRemindedAt = new Date();
+    await invoice.save();
+
+    const student = invoice.studentId as any;
+    let isEmailSent = false;
+
+    if (student && student.email) {
+      let templateCode = 'REMIND_DEBT';
+      let amountToRemind = invoice.debt;
+
+      if (isInstallment && invoice.installmentConfig) {
+        templateCode = 'REMIND_INSTALLMENT';
+        amountToRemind = Math.min(invoice.installmentConfig.amountPerMonth, invoice.debt);
+      }
+
+      const emailPayload = {
+        studentName: student.fullName || 'Học viên',
+        invoiceCode: invoice.code,
+        debtAmount: amountToRemind,
+        dueDate: invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('vi-VN') : 'Sớm nhất có thể',
+      };
+
+      isEmailSent = await this.emailService.sendEmailWithTemplate(student.email, templateCode, emailPayload);
+    }
+
+    return {
+      invoice,
+      emailSent: isEmailSent,
+    };
   }
 }

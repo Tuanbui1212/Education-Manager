@@ -41,4 +41,12 @@ export const invoiceService = {
     const response = await axios.put(`/invoices/${id}/installment`, data);
     return response.data;
   },
+
+  markAsNotified: async (
+    id: string,
+    isInstallment: boolean,
+  ): Promise<{ success: boolean; message: string; data: IInvoice }> => {
+    const response = await axios.patch(`/invoices/${id}/notify`, { isInstallment });
+    return response.data;
+  },
 };

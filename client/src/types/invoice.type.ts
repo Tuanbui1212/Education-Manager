@@ -27,8 +27,9 @@ export interface IInvoice {
   debt: number;
   status: InvoiceStatus;
   installmentConfig?: InvoiceConfig;
-  remindCount: number;
   dueDate: string;
+  remindCount?: number;
+  lastRemindedAt?: Date;
   createdAt: string;
   updatedAt: string;
 }

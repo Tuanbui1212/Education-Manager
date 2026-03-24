@@ -563,7 +563,7 @@ const ClassDetail = () => {
                         {/* Menu Dropdown */}
                         {openDropdownId === student._id && (
                           <div
-                            className="absolute right-3 top-14 w-48 bg-white border border-gray-100 rounded-xl shadow-xl z- overflow-hidden animate-in fade-in zoom-in-95"
+                            className="absolute right-3 z-10 top-14 w-48 bg-white border border-gray-100 rounded-xl shadow-xl z- overflow-hidden animate-in fade-in zoom-in-95"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <button

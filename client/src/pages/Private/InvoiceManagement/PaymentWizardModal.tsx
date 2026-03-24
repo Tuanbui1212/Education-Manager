@@ -1,5 +1,16 @@
 import React, { useState } from 'react';
-import { CheckCircle2, Banknote, CreditCard, User, ArrowLeft, X, AlertCircle, Send, QrCode } from 'lucide-react';
+import {
+  CheckCircle2,
+  Banknote,
+  CreditCard,
+  User,
+  ArrowLeft,
+  X,
+  AlertCircle,
+  Send,
+  QrCode,
+  Loader2,
+} from 'lucide-react';
 import { formatCurrency } from '../../../utils/format.util';
 import type { IInvoice, InvoiceStatus, InvoiceConfig } from '../../../types/invoice.type';
 import { invoiceService } from '../../../services/invoice.service';
@@ -9,7 +20,14 @@ import { getDecodedToken } from '../../../utils/auth';
 interface PaymentWizardModalProps {
   invoice: IInvoice;
   onClose: () => void;
-  onSuccess: (id: string, newDebt: number, newStatus: InvoiceStatus, newConfig?: InvoiceConfig) => void;
+  onSuccess: (
+    id: string,
+    newDebt: number,
+    newStatus: InvoiceStatus,
+    newConfig?: InvoiceConfig,
+    newRemindCount?: number,
+    newLastRemindedAt?: string,
+  ) => void;
 }
 
 const PaymentWizardModal: React.FC<PaymentWizardModalProps> = ({ invoice, onClose, onSuccess }) => {
@@ -19,14 +37,20 @@ const PaymentWizardModal: React.FC<PaymentWizardModalProps> = ({ invoice, onClos
   const [message, setMessage] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'TRANSFER'>('TRANSFER');
 
-  // Lấy ID người dùng hiện tại từ Token để lưu làm người xử lý
   const currentUserId = getDecodedToken()?.id || '';
   const currentUserFullName = getDecodedToken()?.name || 'Tôi';
 
-  console.log(currentUserId);
-
   const paidAmount = (invoice?.finalAmount || 0) - (invoice?.debt || 0);
   const isExistingInstallment = invoice?.status === 'PARTIAL' && invoice?.installmentConfig;
+
+  const lastRemindedDate = invoice?.lastRemindedAt ? new Date(invoice.lastRemindedAt) : null;
+  const now = new Date();
+  const daysSinceLastRemind = lastRemindedDate
+    ? (now.getTime() - lastRemindedDate.getTime()) / (1000 * 3600 * 24)
+    : null;
+
+  const canRemind = daysSinceLastRemind === null || daysSinceLastRemind >= 5;
+  const remindBlockMessage = !canRemind ? `Chỉ có thể gửi lại sau ${Math.ceil(5 - daysSinceLastRemind!)} ngày` : '';
 
   const handleProcess = async (
     action:
@@ -41,40 +65,66 @@ const PaymentWizardModal: React.FC<PaymentWizardModalProps> = ({ invoice, onClos
     setIsLoading(true);
 
     try {
-      // LUỒNG 1: THÔNG BÁO (KHÔNG TẠO GIAO DỊCH)
       if (action === 'notify_full') {
-        setMessage('Đã gửi yêu cầu thanh toán toàn bộ kèm Mã QR Online thành công.');
+        const res = await invoiceService.markAsNotified(invoice._id as string, false);
+
+        const updatedInvoice = res?.data as IInvoice;
+        const updatedRemindCount = updatedInvoice?.remindCount || (invoice.remindCount || 0) + 1;
+        const rawDate = updatedInvoice?.lastRemindedAt;
+        const updatedLastRemindedAt = rawDate ? new Date(rawDate).toISOString() : new Date().toISOString();
+
+        setMessage('Hệ thống đã gửi thông báo yêu cầu thanh toán toàn bộ công nợ qua Email.');
+        onSuccess(
+          invoice._id as string,
+          invoice.debt,
+          invoice.status,
+          invoice.installmentConfig,
+          updatedRemindCount,
+          updatedLastRemindedAt,
+        );
+        setStep(4);
+      } else if (action === 'notify_next_period') {
+        const res = await invoiceService.markAsNotified(invoice._id as string, true);
+
+        const updatedInvoice = res?.data as IInvoice;
+        const updatedRemindCount = updatedInvoice?.remindCount || (invoice.remindCount || 0) + 1;
+        const rawDate = updatedInvoice?.lastRemindedAt;
+        const updatedLastRemindedAt = rawDate ? new Date(rawDate).toISOString() : new Date().toISOString();
+
+        setMessage('Hệ thống đã gửi thông báo nhắc nợ trả góp kỳ này qua Email.');
+        onSuccess(
+          invoice._id as string,
+          invoice.debt,
+          invoice.status,
+          invoice.installmentConfig,
+          updatedRemindCount,
+          updatedLastRemindedAt,
+        );
         setStep(4);
       } else if (action === 'installment_email') {
         const res = await invoiceService.setupInstallment(invoice._id as string, { totalMonths: months });
         if (res.success) {
-          setMessage(`Đã chuyển sang trả góp ${months} kỳ và gửi Email lịch thu.`);
+          setMessage(`Đã chuyển trạng thái trả góp ${months} kỳ. Email lịch trình thanh toán đã được gửi.`);
           onSuccess(invoice._id as string, invoice.debt, 'PARTIAL', res.data?.installmentConfig);
           setStep(4);
         }
-      } else if (action === 'notify_next_period') {
-        const amountToPay = invoice.installmentConfig
-          ? Math.min(invoice.installmentConfig.amountPerMonth, invoice.debt)
-          : 0;
-        setMessage(`Đã gửi nhắc hẹn thanh toán kỳ tiếp theo (${formatCurrency(amountToPay)}) qua Email/Zalo.`);
-        setStep(4);
-      }
-
-      // LUỒNG 2: THU TIỀN TRỰC TIẾP (TỰ ĐỘNG TRUYỀN currentUserId)
-      else if (action === 'full' || action === 'pay_off_all') {
+      } else if (action === 'full' || action === 'pay_off_all') {
         const res = await transactionService.createTransaction({
           invoiceId: invoice._id as string,
           amount: invoice.debt,
           paymentMethod: paymentMethod,
-          processedBy: currentUserId, // Mặc định lấy từ Token
-          note: action === 'pay_off_all' ? 'Tất toán trả góp' : 'Thu thẳng toàn bộ',
+          processedBy: currentUserId,
+          note: action === 'pay_off_all' ? 'Tất toán toàn bộ nợ trả góp' : 'Thu tiền thanh toán toàn bộ hóa đơn',
         });
         if (res.success) {
-          setMessage('Đã thu toàn bộ công nợ thành công.');
+          setMessage('Xác nhận thu toàn bộ công nợ thành công.');
           onSuccess(invoice._id as string, 0, 'PAID');
           setStep(4);
         }
-      } else if (action === 'installment_cash') {
+      }
+
+      // 5. THIẾT LẬP TRẢ GÓP VÀ THU LUÔN KỲ 1
+      else if (action === 'installment_cash') {
         const setupRes = await invoiceService.setupInstallment(invoice._id as string, { totalMonths: months });
         const newConfig = setupRes.data?.installmentConfig;
         const amountPerMonth = newConfig ? newConfig.amountPerMonth : Math.ceil(invoice.debt / months);
@@ -84,15 +134,18 @@ const PaymentWizardModal: React.FC<PaymentWizardModalProps> = ({ invoice, onClos
           amount: amountPerMonth,
           paymentMethod: paymentMethod,
           processedBy: currentUserId,
-          note: `Thu tiền trả góp Kỳ 1`,
+          note: `Thanh toán trả góp - Kỳ 1/${months}`,
         });
 
         if (txRes.success) {
-          setMessage(`Đã tạo lịch trả góp và thu thành công Kỳ 1: ${formatCurrency(amountPerMonth)}`);
+          setMessage(`Đã thiết lập trả góp và thu thành công Kỳ 1: ${formatCurrency(amountPerMonth)}`);
           onSuccess(invoice._id as string, invoice.debt - amountPerMonth, 'PARTIAL', newConfig);
           setStep(4);
         }
-      } else if (action === 'pay_next_period') {
+      }
+
+      // 6. THU TIỀN KỲ TIẾP THEO CỦA TRẢ GÓP
+      else if (action === 'pay_next_period') {
         const amountToPay = invoice.installmentConfig
           ? Math.min(invoice.installmentConfig.amountPerMonth, invoice.debt)
           : 0;
@@ -101,7 +154,7 @@ const PaymentWizardModal: React.FC<PaymentWizardModalProps> = ({ invoice, onClos
           amount: amountToPay,
           paymentMethod: paymentMethod,
           processedBy: currentUserId,
-          note: 'Thu tiền trả góp định kỳ',
+          note: 'Thanh toán trả góp định kỳ',
         });
 
         if (res.success) {
@@ -112,33 +165,34 @@ const PaymentWizardModal: React.FC<PaymentWizardModalProps> = ({ invoice, onClos
         }
       }
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Có lỗi xảy ra!');
+      alert(error.response?.data?.message || 'Không thể xử lý giao dịch. Vui lòng thử lại.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Component chọn Phương thức thanh toán (Giữ lại vì cần biết Tiền mặt hay Chuyển khoản)
   const PaymentMethodSelector = () => (
-    <div className="animate-in slide-in-from-bottom-4">
-      <p className="text-sm font-semibold text-gray-700 mb-2">Phương thức thanh toán:</p>
+    <div className="animate-in slide-in-from-bottom-2">
+      <p className="text-sm font-semibold text-gray-700 mb-2 italic">Chọn phương thức thu tiền:</p>
       <div className="grid grid-cols-2 gap-3">
         <button
+          disabled={isLoading}
           onClick={() => setPaymentMethod('TRANSFER')}
-          className={`p-3 rounded-xl border-2 font-semibold flex items-center justify-center gap-2 transition-all ${
+          className={`p-3 rounded-xl border-2 font-bold flex items-center justify-center gap-2 transition-all ${
             paymentMethod === 'TRANSFER'
-              ? 'border-blue-500 bg-blue-50 text-blue-700'
-              : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+              ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm'
+              : 'border-gray-200 text-gray-400 hover:bg-gray-50'
           }`}
         >
           <CreditCard size={18} /> Chuyển khoản
         </button>
         <button
+          disabled={isLoading}
           onClick={() => setPaymentMethod('CASH')}
-          className={`p-3 rounded-xl border-2 font-semibold flex items-center justify-center gap-2 transition-all ${
+          className={`p-3 rounded-xl border-2 font-bold flex items-center justify-center gap-2 transition-all ${
             paymentMethod === 'CASH'
-              ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-              : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+              ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
+              : 'border-gray-200 text-gray-400 hover:bg-gray-50'
           }`}
         >
           <Banknote size={18} /> Tiền mặt
@@ -148,116 +202,164 @@ const PaymentWizardModal: React.FC<PaymentWizardModalProps> = ({ invoice, onClos
   );
 
   return (
-    <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
-        <div className="bg-gray-50 p-5 sm:p-6 flex justify-between items-center border-b border-gray-100">
+    <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+      <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] relative">
+        {/* Overlay Loading chặn mọi thao tác */}
+        {isLoading && (
+          <div className="absolute inset-0 z- bg-white/80 backdrop-blur-[2px] flex flex-col items-center justify-center animate-in fade-in">
+            <Loader2 size={60} className="text-blue-600 animate-spin mb-4" />
+            <h3 className="text-xl font-bold text-gray-800">Đang đồng bộ dữ liệu...</h3>
+            <p className="text-gray-500 mt-1">Hệ thống đang gửi yêu cầu và ghi nhận lịch sử</p>
+          </div>
+        )}
+
+        {/* Header Section */}
+        <div className="bg-gray-50 p-6 flex justify-between items-center border-b border-gray-100">
           <div>
-            <h2 className="text-xl font-bold text-gray-800">Xử lý Giao dịch</h2>
-            <p className="text-sm text-gray-500 mt-1">
-              Hệ thống ghi nhận người thu: <span className="font-semibold text-blue-600">{currentUserFullName}</span>
+            <h2 className="text-xl font-black text-gray-800 flex items-center gap-3">
+              Quản lý Công nợ & Giao dịch
+              {invoice?.lastRemindedAt && (
+                <span className="text-[10px] font-bold px-3 py-1 bg-amber-500 text-white rounded-full uppercase tracking-tighter">
+                  Đã nhắc: {invoice.remindCount} lần
+                </span>
+              )}
+            </h2>
+            <p className="text-xs text-gray-500 mt-1">
+              Người thực hiện: <span className="font-bold text-blue-600">{currentUserFullName}</span>
             </p>
           </div>
-          <button onClick={onClose} className="p-2 text-gray-400 hover:bg-red-50 hover:text-red-500 rounded-full">
+          <button
+            disabled={isLoading}
+            onClick={onClose}
+            className="p-2 text-gray-400 hover:bg-red-50 hover:text-red-500 rounded-full transition-colors disabled:opacity-30"
+          >
             <X size={24} />
           </button>
         </div>
 
-        <div className="p-5 sm:p-8 overflow-y-auto custom-scrollbar">
+        {/* Content Section */}
+        <div className="p-6 sm:p-8 overflow-y-auto custom-scrollbar">
           {step !== 4 && (
-            <div className="mb-6 flex flex-col sm:flex-row gap-4 p-5 bg-blue-50/50 rounded-2xl border border-blue-100">
+            <div className="mb-8 flex flex-col sm:flex-row gap-4 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 shadow-inner">
               <div className="flex-1">
-                <p className="text-xs text-blue-600 font-bold uppercase mb-1">Học viên</p>
-                <p className="font-medium text-gray-800 flex items-center gap-2">
-                  <User size={16} className="text-blue-500" />
-                  {(invoice?.studentId as any)?.fullName || 'Chưa cập nhật'}
+                <p className="text-[10px] text-blue-600 font-black uppercase tracking-widest mb-1">Học viên / Lớp</p>
+                <p className="font-bold text-gray-800 flex items-center gap-2 text-lg">
+                  <User size={18} className="text-blue-500" />
+                  {(invoice?.studentId as any)?.fullName || 'N/A'}
                 </p>
-                <p className="text-sm text-gray-500 mt-1">{(invoice?.classId as any)?.name || 'Chưa phân lớp'}</p>
+                <p className="text-sm text-gray-500 italic mt-0.5">
+                  {(invoice?.classId as any)?.name || 'Chưa xếp lớp'}
+                </p>
               </div>
-              <div className="hidden sm:block w-px bg-blue-200 mx-2"></div>
+              <div className="hidden sm:block w-px bg-blue-200"></div>
               <div className="flex-1 sm:text-center">
-                <p className="text-xs text-blue-600 font-bold uppercase mb-1">Đã Thanh Toán</p>
-                <p className="font-bold text-lg text-emerald-600">{formatCurrency(paidAmount)}</p>
-                <p className="text-xs text-gray-500 mt-1">/ {formatCurrency(invoice?.finalAmount || 0)}</p>
+                <p className="text-[10px] text-emerald-600 font-black uppercase tracking-widest mb-1">
+                  Thanh toán (Tạm tính)
+                </p>
+                <p className="font-bold text-xl text-emerald-600">{formatCurrency(paidAmount)}</p>
+                <p className="text-[11px] text-gray-400 mt-0.5">Tổng: {formatCurrency(invoice?.finalAmount || 0)}</p>
               </div>
-              <div className="hidden sm:block w-px bg-blue-200 mx-2"></div>
+              <div className="hidden sm:block w-px bg-blue-200"></div>
               <div className="flex-1 sm:text-right">
-                <p className="text-xs text-red-600 font-bold uppercase mb-1">Công Nợ Hiện Tại</p>
-                <p className="font-bold text-2xl text-red-600">{formatCurrency(invoice?.debt || 0)}</p>
+                <p className="text-[10px] text-red-600 font-black uppercase tracking-widest mb-1">Công nợ cần thu</p>
+                <p className="font-black text-3xl text-red-600 drop-shadow-sm">{formatCurrency(invoice?.debt || 0)}</p>
               </div>
             </div>
           )}
 
           {step === 1 && (
-            <div className="space-y-4 animate-in slide-in-from-bottom-4">
+            <div className="space-y-4 animate-in slide-in-from-bottom-5">
               {isExistingInstallment ? (
-                <div className="bg-amber-50 border border-amber-200 p-6 rounded-2xl">
-                  <div className="flex items-center gap-2 text-amber-800 mb-2">
-                    <AlertCircle size={20} />
-                    <h3 className="font-bold text-lg">Đang trả góp ({invoice.installmentConfig?.totalMonths} kỳ)</h3>
+                <div className="bg-amber-50 border-2 border-amber-200 p-6 rounded-2xl shadow-sm">
+                  <div className="flex items-center gap-3 text-amber-800 mb-3">
+                    <div className="bg-amber-100 p-2 rounded-lg">
+                      <AlertCircle size={24} />
+                    </div>
+                    <div>
+                      <h3 className="font-black text-lg uppercase tracking-tight">Hóa đơn đang trả góp</h3>
+                      <p className="text-xs font-medium">
+                        Lộ trình: {invoice.installmentConfig?.totalMonths} kỳ thanh toán
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-amber-700 mb-5">
-                    Số tiền thu kỳ này:{' '}
-                    <span className="font-bold text-xl">
+
+                  <div className="p-4 bg-white rounded-xl border border-amber-200 mb-6">
+                    <p className="text-xs text-gray-500 mb-1">Số tiền định kỳ kỳ này:</p>
+                    <p className="font-black text-2xl text-amber-600">
                       {formatCurrency(Math.min(invoice.installmentConfig!.amountPerMonth, invoice.debt))}
-                    </span>
-                  </p>
+                    </p>
+                  </div>
 
                   <button
+                    disabled={isLoading || !canRemind}
                     onClick={() => handleProcess('notify_next_period')}
-                    className="w-full mb-5 p-4 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                    className={`w-full mb-6 p-4 rounded-xl font-black flex items-center justify-center gap-3 shadow-sm transition-all active:scale-[0.98] ${
+                      canRemind
+                        ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    }`}
                   >
-                    <QrCode size={20} /> Gửi thông báo & QR thanh toán kỳ này
+                    <QrCode size={20} />
+                    {canRemind ? 'GỬI THÔNG BÁO NHẮC NỢ KỲ NÀY' : remindBlockMessage}
                   </button>
 
-                  <div className="relative py-3 mb-2">
+                  <div className="relative py-4 mb-4">
                     <div className="absolute inset-0 flex items-center">
                       <div className="w-full border-t border-amber-200"></div>
                     </div>
                     <div className="relative flex justify-center">
-                      <span className="bg-amber-50 px-4 text-sm text-amber-600 font-medium">
-                        Thu trực tiếp tại quầy
+                      <span className="bg-amber-50 px-4 text-xs text-amber-600 font-bold uppercase">
+                        Xác nhận thu tiền tại quầy
                       </span>
                     </div>
                   </div>
 
-                  <div className="mb-5">
-                    <PaymentMethodSelector />
-                  </div>
+                  <PaymentMethodSelector />
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
                     <button
+                      disabled={isLoading}
                       onClick={() => handleProcess('pay_next_period')}
-                      className="p-4 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold flex flex-col items-center justify-center gap-2"
+                      className="p-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold flex flex-col items-center justify-center gap-2 shadow-md transition-all disabled:opacity-50"
                     >
-                      <Banknote size={24} /> Thu kỳ tiếp theo
+                      <Banknote size={24} /> Thu định kỳ kỳ này
                     </button>
                     <button
+                      disabled={isLoading}
                       onClick={() => handleProcess('pay_off_all')}
-                      className="p-4 border-2 border-amber-200 text-amber-700 hover:bg-amber-100 rounded-xl font-bold flex flex-col items-center justify-center gap-2"
+                      className="p-4 border-2 border-blue-200 text-blue-700 hover:bg-blue-50 rounded-xl font-bold flex flex-col items-center justify-center gap-2 transition-all disabled:opacity-50"
                     >
-                      <CheckCircle2 size={24} /> Tất toán toàn bộ
+                      <CheckCircle2 size={24} /> Tất toán tất cả
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <button
+                    disabled={isLoading}
                     onClick={() => setStep(2)}
-                    className="p-6 border-2 border-gray-100 rounded-2xl hover:border-blue-500 hover:bg-blue-50 flex flex-col items-center group transition-all"
+                    className="p-8 border-2 border-gray-100 rounded-3xl hover:border-blue-500 hover:bg-blue-50 flex flex-col items-center group transition-all shadow-sm disabled:opacity-50"
                   >
-                    <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110">
-                      <CreditCard size={32} />
+                    <div className="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                      <CreditCard size={40} />
                     </div>
-                    <span className="font-bold text-gray-800">Thu toàn bộ ({formatCurrency(invoice.debt)})</span>
+                    <span className="font-black text-gray-800 text-lg">THANH TOÁN ĐỦ</span>
+                    <span className="text-sm text-gray-500 mt-1 uppercase tracking-tighter">
+                      Thu 100% công nợ hiện tại
+                    </span>
                   </button>
                   <button
+                    disabled={isLoading}
                     onClick={() => setStep(3)}
-                    className="p-6 border-2 border-gray-100 rounded-2xl hover:border-indigo-500 hover:bg-indigo-50 flex flex-col items-center group transition-all"
+                    className="p-8 border-2 border-gray-100 rounded-3xl hover:border-indigo-500 hover:bg-indigo-50 flex flex-col items-center group transition-all shadow-sm disabled:opacity-50"
                   >
-                    <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110">
-                      <Banknote size={32} />
+                    <div className="w-20 h-20 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                      <Banknote size={40} />
                     </div>
-                    <span className="font-bold text-gray-800">Thiết lập Trả góp</span>
+                    <span className="font-black text-gray-800 text-lg">CHIA TRẢ GÓP</span>
+                    <span className="text-sm text-gray-500 mt-1 uppercase tracking-tighter">
+                      Hỗ trợ đóng tiền định kỳ
+                    </span>
                   </button>
                 </div>
               )}
@@ -265,91 +367,123 @@ const PaymentWizardModal: React.FC<PaymentWizardModalProps> = ({ invoice, onClos
           )}
 
           {step === 2 && (
-            <div className="space-y-5">
+            <div className="space-y-6 animate-in slide-in-from-right-5">
               <button
+                disabled={isLoading}
                 onClick={() => setStep(1)}
-                className="text-sm text-gray-500 flex items-center gap-1 hover:text-gray-800"
+                className="text-sm text-gray-500 flex items-center gap-2 hover:text-gray-800 font-bold"
               >
-                <ArrowLeft size={16} /> Quay lại
+                <ArrowLeft size={18} /> QUAY LẠI
               </button>
+
               <button
+                disabled={isLoading || !canRemind}
                 onClick={() => handleProcess('notify_full')}
-                className="w-full p-4 bg-emerald-100 text-emerald-700 rounded-xl font-bold flex justify-center items-center gap-3"
+                className={`w-full p-5 rounded-2xl font-black flex justify-center items-center gap-3 transition-all shadow-md ${
+                  canRemind
+                    ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
+                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                }`}
               >
-                <QrCode size={24} /> Gửi yêu cầu Online
+                <QrCode size={24} />
+                {canRemind ? 'GỬI THÔNG BÁO NHẮC NỢ TOÀN BỘ' : remindBlockMessage}
               </button>
-              <div className="relative py-2">
+
+              <div className="relative py-4">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-gray-200"></div>
                 </div>
                 <div className="relative flex justify-center">
-                  <span className="bg-white px-4 text-sm text-gray-400">Hoặc thu trực tiếp</span>
+                  <span className="bg-white px-6 text-xs text-gray-400 font-black uppercase tracking-widest">
+                    Hoặc xác nhận thu trực tiếp
+                  </span>
                 </div>
               </div>
+
               <PaymentMethodSelector />
+
               <button
+                disabled={isLoading}
                 onClick={() => handleProcess('full')}
-                className="w-full p-5 bg-blue-600 text-white rounded-2xl font-bold text-lg flex justify-center items-center gap-3"
+                className="w-full p-6 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-xl flex justify-center items-center gap-4 shadow-xl transition-all active:scale-[0.98] disabled:bg-blue-400"
               >
-                <Banknote size={24} /> Xác nhận thu đủ {formatCurrency(invoice.debt)}
+                <Banknote size={28} /> XÁC NHẬN ĐÃ THU {formatCurrency(invoice.debt)}
               </button>
             </div>
           )}
 
           {step === 3 && (
-            <div className="space-y-5">
+            <div className="space-y-6 animate-in slide-in-from-right-5">
               <button
+                disabled={isLoading}
                 onClick={() => setStep(1)}
-                className="text-sm text-gray-500 flex items-center gap-1 hover:text-gray-800"
+                className="text-sm text-gray-500 flex items-center gap-2 hover:text-gray-800 font-bold"
               >
-                <ArrowLeft size={16} /> Quay lại
+                <ArrowLeft size={18} /> QUAY LẠI
               </button>
-              <div className="bg-indigo-50 p-5 rounded-2xl text-center border border-indigo-100">
-                <p className="font-semibold text-indigo-800 mb-3">Chia thành mấy kỳ?</p>
-                <div className="flex justify-center gap-3 mb-4">
-                  {[3, 6, 12].map((m) => (
+
+              <div className="bg-indigo-50 p-6 rounded-3xl text-center border-2 border-indigo-100 shadow-inner">
+                <p className="font-black text-indigo-800 mb-4 uppercase tracking-tighter text-lg">
+                  Thiết lập số kỳ thanh toán
+                </p>
+                <div className="flex justify-center gap-4 mb-6">
+                  {[3, 6, 9, 12].map((m) => (
                     <button
                       key={m}
+                      disabled={isLoading}
                       onClick={() => setMonths(m)}
-                      className={`px-6 py-2 rounded-xl font-bold transition-all ${months === m ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-600 border'}`}
+                      className={`w-16 h-16 rounded-2xl font-black transition-all border-2 ${
+                        months === m
+                          ? 'bg-indigo-600 text-white border-indigo-700 shadow-lg scale-110'
+                          : 'bg-white text-gray-600 border-gray-100 hover:border-indigo-300'
+                      }`}
                     >
-                      {m} Kỳ
+                      {m}K
                     </button>
                   ))}
                 </div>
-                <p className="text-gray-600">
-                  Số tiền mỗi kỳ:{' '}
-                  <span className="font-bold text-indigo-700">{formatCurrency(Math.ceil(invoice.debt / months))}</span>
-                </p>
+                <div className="bg-white p-4 rounded-xl border border-indigo-100 inline-block">
+                  <p className="text-xs text-gray-400 font-bold uppercase mb-1">Số tiền mỗi kỳ:</p>
+                  <p className="font-black text-2xl text-indigo-700">
+                    {formatCurrency(Math.ceil(invoice.debt / months))}
+                  </p>
+                </div>
               </div>
+
               <button
+                disabled={isLoading}
                 onClick={() => handleProcess('installment_email')}
-                className="w-full p-4 bg-emerald-100 text-emerald-700 rounded-xl font-bold flex justify-center items-center gap-2"
+                className="w-full p-4 bg-white border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 rounded-2xl font-black flex justify-center items-center gap-3 transition-all shadow-sm"
               >
-                <Send size={20} /> Chỉ gửi lịch thu
+                <Send size={22} /> CHỈ THIẾT LẬP VÀ GỬI LỊCH HẸN
               </button>
-              <PaymentMethodSelector />
+
+              <div className="py-2">
+                <PaymentMethodSelector />
+              </div>
+
               <button
+                disabled={isLoading}
                 onClick={() => handleProcess('installment_cash')}
-                className="w-full p-4 bg-indigo-600 text-white rounded-xl font-bold shadow-md flex justify-center items-center gap-2"
+                className="w-full p-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black shadow-xl flex justify-center items-center gap-3 transition-all active:scale-[0.98] disabled:bg-indigo-400"
               >
-                <Banknote size={20} /> Thu Kỳ 1 Trực Tiếp
+                <Banknote size={24} /> THU KỲ 1 & KÍCH HOẠT LỊCH TRẢ GÓP
               </button>
             </div>
           )}
 
           {step === 4 && (
-            <div className="text-center py-10 animate-in zoom-in-95">
-              <div className="w-20 h-20 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                <CheckCircle2 size={48} />
+            <div className="text-center py-12 animate-in zoom-in-95">
+              <div className="w-24 h-24 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-8 shadow-sm">
+                <CheckCircle2 size={56} />
               </div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">Giao dịch thành công!</h3>
-              <p className="text-gray-600 mb-8 max-w-sm mx-auto">{message}</p>
+              <h3 className="text-3xl font-black text-gray-800 mb-3 tracking-tighter">HOÀN TẤT GIAO DỊCH</h3>
+              <p className="text-gray-500 mb-10 max-w-sm mx-auto font-medium">{message}</p>
               <button
                 onClick={onClose}
-                className="px-8 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all"
+                className="px-12 py-4 bg-gray-900 text-white rounded-2xl font-black hover:bg-black transition-all active:scale-95 shadow-lg uppercase tracking-widest"
               >
-                Hoàn tất & Đóng
+                XÁC NHẬN & ĐÓNG
               </button>
             </div>
           )}

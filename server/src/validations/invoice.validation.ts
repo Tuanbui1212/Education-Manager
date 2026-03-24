@@ -28,9 +28,7 @@ export const updateInvoiceSchema = z.object({
 });
 
 export const invoiceIdSchema = z.object({
-  params: z.object({
-    id: z.string().regex(objectIdRegex, 'ID hóa đơn không hợp lệ'),
-  }),
+  id: z.string().regex(objectIdRegex, 'ID hóa đơn không hợp lệ'),
 });
 
 export type CreateInvoiceDTO = z.infer<typeof createInvoiceSchema>;

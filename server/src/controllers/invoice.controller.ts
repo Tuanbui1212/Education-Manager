@@ -80,4 +80,33 @@ export class InvoiceController {
       res.status(400).json({ success: false, message: error.message });
     }
   };
+
+  // [PATH] /api/invoices/:id/notify
+  markAsNotified = async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+
+      const { isInstallment } = req.body;
+
+      if (!id) {
+        return res.status(400).json({
+          success: false,
+          message: 'Thiếu ID hóa đơn',
+        });
+      }
+
+      const result = await this.invoiceService.markAsNotified(id as string, !!isInstallment);
+
+      res.status(200).json({
+        success: true,
+        message: 'Đã cập nhật trạng thái nhắc nợ thành công',
+        data: result,
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  };
 }

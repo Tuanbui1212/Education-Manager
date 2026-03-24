@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Filter, MoreVertical, Calendar } from 'lucide-react';
+import { Search, Filter, MoreVertical, Calendar, Bell, BellRing, BellOff } from 'lucide-react';
 
 import { formatCurrency, formatDate } from '../../../utils/format.util';
 import type { IInvoice, InvoiceStatus, InvoiceConfig } from '../../../types/invoice.type';
@@ -46,16 +46,26 @@ const InvoiceManagement = () => {
     setInvoices(fetchedList.filter(Boolean));
   }
 
-  const handlePaymentSuccess = (id: string, newDebt: number, newStatus: InvoiceStatus, newConfig?: InvoiceConfig) => {
+  // Cập nhật hàm nhận thêm trạng thái remindCount và lastRemindedAt
+  const handlePaymentSuccess = (
+    id: string,
+    newDebt: number,
+    newStatus: InvoiceStatus,
+    newConfig?: InvoiceConfig,
+    newRemindCount?: number,
+    newLastRemindedAt?: string,
+  ) => {
     setInvoices(
       invoices.map((inv) =>
         inv?._id === id
-          ? {
+          ? ({
               ...inv,
               debt: newDebt,
               status: newStatus,
               ...(newConfig && { installmentConfig: newConfig }),
-            }
+              ...(newRemindCount !== undefined && { remindCount: newRemindCount }),
+              ...(newLastRemindedAt !== undefined && { lastRemindedAt: newLastRemindedAt as any }),
+            } as unknown as IInvoice)
           : inv,
       ),
     );
@@ -101,6 +111,52 @@ const InvoiceManagement = () => {
         );
       default:
         return null;
+    }
+  };
+
+  // ==========================================
+  // LOGIC HIỂN THỊ BADGE BÊN NGOÀI BẢNG
+  // ==========================================
+  const renderNotificationBadge = (inv: IInvoice) => {
+    // Không hiện nhắc nợ nếu đã thanh toán xong hoặc bị hủy
+    if (inv.status === 'PAID' || inv.status === ('CANCELLED' as any) || inv.status === ('REFUNDED' as any)) {
+      return null;
+    }
+
+    const lastRemindedDate = inv?.lastRemindedAt ? new Date(inv.lastRemindedAt) : null;
+    const now = new Date();
+    const daysSinceLastRemind = lastRemindedDate
+      ? (now.getTime() - lastRemindedDate.getTime()) / (1000 * 3600 * 24)
+      : null;
+    const canRemind = daysSinceLastRemind === null || daysSinceLastRemind >= 5;
+
+    if (!inv.remindCount || inv.remindCount === 0) {
+      return (
+        <div className="flex items-center gap-1 mt-1.5 justify-center text-[10px] font-medium text-gray-400">
+          <Bell size={12} /> Chưa nhắc nợ
+        </div>
+      );
+    }
+
+    if (canRemind) {
+      return (
+        <div
+          className="flex items-center gap-1 mt-1.5 justify-center text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100 mx-auto w-fit shadow-sm"
+          title={`Đã nhắc nợ ${inv.remindCount} lần. Có thể nhắc tiếp.`}
+        >
+          <BellRing size={12} /> Sẵn sàng nhắc
+        </div>
+      );
+    } else {
+      const daysLeft = Math.ceil(5 - daysSinceLastRemind!);
+      return (
+        <div
+          className="flex items-center gap-1 mt-1.5 justify-center text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md border border-gray-200 mx-auto w-fit shadow-sm"
+          title={`Đã nhắc nợ ${inv.remindCount} lần. Phải chờ thêm ${daysLeft} ngày.`}
+        >
+          <BellOff size={12} /> Chờ {daysLeft} ngày
+        </div>
+      );
     }
   };
 
@@ -189,7 +245,11 @@ const InvoiceManagement = () => {
                         </td>
                         <td className="p-4 text-right font-medium text-emerald-600">{formatCurrency(paid)}</td>
                         <td className="p-4 text-right font-bold text-red-600">{formatCurrency(inv?.debt || 0)}</td>
-                        <td className="p-4 text-center">{renderStatus(inv?.status)}</td>
+                        <td className="p-4 text-center">
+                          {renderStatus(inv?.status)}
+                          {/* HIỂN THỊ BADGE BÊN DƯỚI TRẠNG THÁI */}
+                          {renderNotificationBadge(inv)}
+                        </td>
                         <td className="p-4 text-right">
                           {inv?.debt > 0 && inv.status !== 'CANCELLED' && inv.status !== 'REFUNDED' ? (
                             <button
