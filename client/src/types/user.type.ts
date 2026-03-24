@@ -48,6 +48,7 @@ export interface UserResponse {
 export interface UserModalProps {
   roles: IRole[];
   isOpen: boolean;
+  consultants?: IUser[];
   onClose: () => void;
   onSubmit: (data: any) => void;
   initialData?: IUser | null;

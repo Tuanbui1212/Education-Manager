@@ -44,8 +44,6 @@ const UserModal = ({ roles = [], consultants = [], isOpen, onClose, onSubmit, in
     };
   });
 
-  console.log(initialData);
-
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const selectedRoleName = roles.find((r: any) => r._id === formData.roleId)?.name;
@@ -54,6 +52,7 @@ const UserModal = ({ roles = [], consultants = [], isOpen, onClose, onSubmit, in
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
+    const roleName = selectedRoleName?.toLowerCase();
 
     if (!formData.fullName?.trim()) newErrors.fullName = 'Vui lòng nhập họ tên';
     if (!formData.email?.trim()) {
@@ -61,12 +60,13 @@ const UserModal = ({ roles = [], consultants = [], isOpen, onClose, onSubmit, in
     } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
       newErrors.email = 'Email không đúng định dạng';
     }
+
     if (!formData.phone?.trim()) {
       newErrors.phone = 'Vui lòng nhập số điện thoại';
     } else {
-      const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
+      const phoneRegex = /^\d{10}$/;
       if (!phoneRegex.test(formData.phone)) {
-        newErrors.phone = 'Số điện thoại không hợp lệ';
+        newErrors.phone = 'Số điện thoại phải bao gồm đúng 10 số';
       }
     }
     if (!formData.date) newErrors.date = 'Vui lòng chọn ngày sinh';
@@ -75,6 +75,21 @@ const UserModal = ({ roles = [], consultants = [], isOpen, onClose, onSubmit, in
       newErrors.password = 'Vui lòng nhập mật khẩu';
     } else if (formData.password && formData.password.length < 6) {
       newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
+    }
+
+    if (roleName === 'student') {
+      if (!formData.student_info?.parentsName?.trim()) {
+        newErrors.parentsName = 'Vui lòng nhập tên phụ huynh';
+      }
+      if (!formData.student_info?.consultantId) {
+        newErrors.consultantId = 'Vui lòng chọn nhân viên tư vấn/Sale';
+      }
+    }
+
+    if (roleName === 'teacher') {
+      if (!formData.teacher_info?.hourlyRate || formData.teacher_info.hourlyRate <= 0) {
+        newErrors.hourlyRate = 'Vui lòng nhập mức lương hợp lệ (>0)';
+      }
     }
 
     setErrors(newErrors);
@@ -100,6 +115,7 @@ const UserModal = ({ roles = [], consultants = [], isOpen, onClose, onSubmit, in
         search: query,
         roleId: consultantRole._id,
         limit: 10,
+        status: 'ACTIVE',
       });
       return response.data || [];
     } catch (error) {
@@ -125,7 +141,7 @@ const UserModal = ({ roles = [], consultants = [], isOpen, onClose, onSubmit, in
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
 
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl z-10 flex flex-col animate-in zoom-in-95 duration-200">
@@ -149,6 +165,21 @@ const UserModal = ({ roles = [], consultants = [], isOpen, onClose, onSubmit, in
             if (initialData && !submitData.password) {
               delete submitData.password;
             }
+
+            const roleName = selectedRoleName?.toLowerCase();
+
+            if (roleName !== 'student') {
+              delete submitData.student_info;
+            } else {
+              if (submitData.student_info && !submitData.student_info.consultantId) {
+                delete submitData.student_info.consultantId;
+              }
+            }
+
+            if (roleName !== 'teacher') {
+              delete submitData.teacher_info;
+            }
+
             onSubmit(submitData);
           }}
         >
@@ -174,7 +205,7 @@ const UserModal = ({ roles = [], consultants = [], isOpen, onClose, onSubmit, in
                   label="Ngày sinh"
                   icon={<Calendar size={18} />}
                   type="date"
-                  value={formData.date ? String(formData.date).split('T')[0] : ''}
+                  value={formData.date ? String(formData.date).split('T') : ''}
                   onChange={(e) => handleChange('date', e.target.value)}
                   error={errors.date}
                 />
@@ -265,12 +296,14 @@ const UserModal = ({ roles = [], consultants = [], isOpen, onClose, onSubmit, in
                       className="bg-white border-blue-200"
                       placeholder="Vd: 200000"
                       value={formData.teacher_info?.hourlyRate || ''}
-                      onChange={(e) =>
+                      error={errors.hourlyRate}
+                      onChange={(e) => {
                         setFormData({
                           ...formData,
                           teacher_info: { ...formData.teacher_info, hourlyRate: Number(e.target.value) },
-                        })
-                      }
+                        });
+                        if (errors.hourlyRate) setErrors({ ...errors, hourlyRate: '' });
+                      }}
                     />
 
                     <InputField
@@ -306,31 +339,37 @@ const UserModal = ({ roles = [], consultants = [], isOpen, onClose, onSubmit, in
                       className="bg-white border-green-200"
                       placeholder="Vd: Nguyễn Văn A"
                       value={formData.student_info?.parentsName || ''}
-                      onChange={(e) =>
+                      error={errors.parentsName}
+                      onChange={(e) => {
                         setFormData({
                           ...formData,
                           student_info: { ...formData.student_info, parentsName: e.target.value },
-                        })
-                      }
+                        });
+                        if (errors.parentsName) setErrors({ ...errors, parentsName: '' });
+                      }}
                     />
 
-                    <Combobox
-                      label="Nhân viên Sale chăm sóc"
-                      icon={<Headset size={18} className="text-green-500" />}
-                      placeholder="Tìm kiếm Sale..."
-                      onSearch={handleConsultantSearch}
-                      onSelect={(consultant) => {
-                        setFormData({
-                          ...formData,
-                          student_info: { ...formData.student_info, consultantId: consultant?._id },
-                        });
-                      }}
-                      getDisplayValue={(consultant) =>
-                        consultant ? `${consultant.fullName} (${consultant.email})` : ''
-                      }
-                      direction="up"
-                      initialValue={getInitialConsultantName()}
-                    />
+                    <div className="space-y-1">
+                      <Combobox
+                        label="Nhân viên Sale chăm sóc"
+                        icon={<Headset size={18} className="text-green-500" />}
+                        placeholder="Tìm kiếm Sale..."
+                        onSearch={handleConsultantSearch}
+                        onSelect={(consultant) => {
+                          setFormData({
+                            ...formData,
+                            student_info: { ...formData.student_info, consultantId: consultant?._id },
+                          });
+                          if (errors.consultantId) setErrors({ ...errors, consultantId: '' });
+                        }}
+                        getDisplayValue={(consultant) =>
+                          consultant ? `${consultant.fullName} (${consultant.email})` : ''
+                        }
+                        direction="up"
+                        initialValue={getInitialConsultantName()}
+                      />
+                      {errors.consultantId && <p className="text-sm text-red-500 mt-1 pl-1">{errors.consultantId}</p>}
+                    </div>
                   </div>
                 </div>
               )}

@@ -1,9 +1,9 @@
 import { Plus, Filter, Edit2, Trash2 } from 'lucide-react';
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom'; // Thêm import navigate
+import { useNavigate } from 'react-router-dom';
 
-import { getRoleStyles, formatDate } from '../../../utils/format.util';
-import { PATHS } from '../../../utils/constants'; // Thêm import PATHS
+import { getRoleStyles, formatDate, translateRole } from '../../../utils/format.util';
+import { PATHS } from '../../../utils/constants';
 
 import Button from '../../../components/Button';
 import PageHeader from '../../../components/PageHeader';
@@ -19,7 +19,7 @@ import { roleService } from '../../../services/role.service';
 import type { IUser } from '../../../types/user.type';
 
 const UserList = () => {
-  const navigate = useNavigate(); // Khởi tạo hook navigate
+  const navigate = useNavigate();
 
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(5);
@@ -32,7 +32,6 @@ const UserList = () => {
 
   const debouncedSearch = useDebounce(searchInput, 500);
 
-  // Modal thông báo chung (Thành công/Lỗi)
   const [confirmConfig, setConfirmConfig] = useState({
     isOpen: false,
     title: '',
@@ -40,7 +39,6 @@ const UserList = () => {
     type: 'success' as 'success' | 'danger' | 'warning' | 'info',
   });
 
-  // Modal xác nhận Xóa
   const [confirmDelete, setConfirmDelete] = useState({
     isOpen: false,
     title: '',
@@ -313,18 +311,18 @@ const UserList = () => {
         </Button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 relative overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 relative">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-primary text-white text-sm sticky top-0 z-10 ">
-              <th className="p-4 font-semibold w-16 text-center">No.</th>
+            <tr className="bg-primary text-white text-sm sticky top-0 z-10">
+              <th className="p-4 font-semibold w-16 text-center rounded-tl-xl">No.</th>
               <th className="p-4 font-semibold">Tên người dùng</th>
               <th className="p-4 font-semibold">Email</th>
-              <th className="p-4 font-semibold">Phone</th>
-              <th className="p-4 font-semibold">Birthday</th>
-              <th className="p-4 font-semibold">Role</th>
-              <th className="p-4 font-semibold">Status</th>
-              <th className="p-4 font-semibold text-center">Action</th>
+              <th className="p-4 font-semibold">Số điện thoại</th>
+              <th className="p-4 font-semibold">Ngày sinh</th>
+              <th className="p-4 font-semibold">Vai trò</th>
+              <th className="p-4 font-semibold">Trạng thái</th>
+              <th className="p-4 font-semibold text-center rounded-tr-xl">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -333,7 +331,6 @@ const UserList = () => {
                 <tr key={user._id} className="hover:bg-blue-50/50 transition-colors group">
                   <td className="p-4 text-gray-500 font-medium text-center">{index + 1 + (page - 1) * limit}</td>
                   <td className="p-4">
-                    {/* Thêm onClick chuyển hướng vào thẻ này */}
                     <div
                       className="font-semibold text-blue-600 group-hover:underline cursor-pointer inline-block"
                       onClick={() => navigateToDetail(user)}
@@ -348,7 +345,7 @@ const UserList = () => {
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-bold shadow-sm ${getRoleStyles((user.roleId as any)?.name || '')}`}
                     >
-                      {(user.roleId as any)?.name || 'N/A'}
+                      {(translateRole(user.roleId?.name as string) as string) || ''}
                     </span>
                   </td>
                   <td className="p-4">
