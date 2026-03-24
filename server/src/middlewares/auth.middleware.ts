@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { UserModel } from '../models/user.model';
-import RoleModel from '../models/role.model';
+import { ClassModel } from '../models/class.model';
 
 export const verifyToken = (req: Request, res: Response, next: NextFunction) => {
   const token = req.headers.authorization?.split(' ')[1];
@@ -48,4 +48,26 @@ export const requirePermission = (requiredPermission: string) => {
       res.status(500).json({ success: false, message: 'Lỗi máy chủ khi kiểm tra quyền!' });
     }
   };
+};
+
+export const requireTeacherForAttendance = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req as any).user?._id || (req as any).user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Chưa xác thực người dùng!' });
+    }
+
+    const classId = req.params.classId;
+    const classData = await ClassModel.findById(classId);
+    if (!classData) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy lớp học!' });
+    }
+
+    if (classData.teacherId.toString() !== userId) {
+      return res.status(200).json({ success: false, message: 'Bạn không phải giáo viên phụ trách lớp này!' });
+    }
+    next();
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: 'Lỗi máy chủ khi kiểm tra quyền!' });
+  }
 };

@@ -9,10 +9,75 @@ import { UpsertAttendanceItemSchema } from "../validations/attendance.validation
 type UpsertAttendanceData = z.infer<typeof UpsertAttendanceItemSchema>;
 
 export class AttendanceService {
-    async getAll(query: any) {
-        const { page = 1, limit = 10, classId, shiftId } = query;
+
+    async getAllClasses(query: any, userId: string) {
+        const { page = 1, limit = 10, shiftId, search } = query;
         const match: any = {};
-        if (classId) match.classId = new Types.ObjectId(classId);
+        if (shiftId) match.shiftId = new Types.ObjectId(shiftId);
+        if (search) match.name = { $regex: search, $options: 'i' };
+        match.teacherId = new Types.ObjectId(userId);
+
+        const skip = (Number(page) - 1) * Number(limit);
+
+        const pipeline: any[] = [
+            { $match: match },
+            { $match: { status: 'ACTIVE' } },
+            { $sort: { createdAt: -1 } },
+            { $skip: skip },
+            { $limit: Number(limit) },
+            {
+                $lookup: {
+                    from: 'courses',
+                    localField: 'courseId',
+                    foreignField: '_id',
+                    as: 'courseInfo'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'teacherId',
+                    foreignField: '_id',
+                    as: 'teacherInfo'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'rooms',
+                    localField: 'roomId',
+                    foreignField: '_id',
+                    as: 'roomInfo'
+                }
+            },
+            {
+                $project: {
+                    name: 1,
+                    courseName: { $arrayElemAt: ['$courseInfo.title', 0] },
+                    teacherName: { $arrayElemAt: ['$teacherInfo.fullName', 0] },
+                    roomName: { $arrayElemAt: ['$roomInfo.name', 0] },
+                }
+            }
+        ];
+
+        const [classes, totalCountResult] = await Promise.all([
+            ClassModel.aggregate([
+                ...pipeline
+            ]),
+            ClassModel.aggregate([
+                ...pipeline,
+                { $count: 'total' }
+            ])
+        ]);
+
+        const totalCount = totalCountResult.length > 0 ? totalCountResult[0].total : 0;
+
+        return { data: classes, totalCount };
+    }
+
+    async getAllAttendancesByClassId(classId: string, query: any) {
+        const { page = 1, limit = 10, shiftId } = query;
+        const match: any = {};
+        match.classId = new Types.ObjectId(classId);
         if (shiftId) match.shiftId = new Types.ObjectId(shiftId);
 
         const skip = (Number(page) - 1) * Number(limit);
@@ -80,7 +145,8 @@ export class AttendanceService {
                                     cond: { $eq: ['$$att.status', AttendanceStatus.ABSENT] }
                                 }
                             }
-                        }
+                        },
+                        isAttended: { $gt: [{ $size: '$attendances' }, 0] }
                     }
                 }
             ]),
@@ -95,19 +161,25 @@ export class AttendanceService {
         return { data: schedules, totalCount };
     }
 
-    async getById(scheduleId: string) {
+    async getListAttendanceByClassId(classId: string, scheduleId: string, query: any) {
+        const { page = 1, limit = 10 } = query;
+        const skip = (Number(page) - 1) * Number(limit);
+
         const schedule = await ScheduleModel.findById(scheduleId);
         if (!schedule) throw new Error("Không tìm thấy buổi học");
 
-        const classData = await ClassModel.findById(schedule.classId).populate('studentIds', 'fullName email phone');
+        const classData = await ClassModel.findById(classId).populate('studentIds', 'fullName email phone code');
         if (!classData) throw new Error("Không tìm thấy lớp học");
 
         const attendances = await AttendanceModel.find({ scheduleId });
 
         const students = classData.studentIds as any[];
+        const totalCount = students.length;
+        const paginatedStudents = students.slice(skip, skip + Number(limit));
+
         const attendanceMap = new Map(attendances.map(a => [a.studentId.toString(), a]));
 
-        const result = students.map(student => {
+        const data = paginatedStudents.map(student => {
             const studentIdStr = student._id.toString();
             const record = attendanceMap.get(studentIdStr);
 
@@ -131,7 +203,7 @@ export class AttendanceService {
             };
         });
 
-        return result;
+        return { data, totalCount };
     }
 
     async upsert(attendances: UpsertAttendanceData[]) {

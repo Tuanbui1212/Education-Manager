@@ -13,13 +13,27 @@ export const UpsertAttendanceItemSchema = z.object({
 
 export const UpsertAttendancesSchema = z.array(UpsertAttendanceItemSchema);
 
-export const GetAttendanceByIdSchema = z.object({
+export const GetActiveClassesQuerySchema = z.object({
+    page: z.coerce.number().min(1).optional(),
+    limit: z.coerce.number().min(1).optional(),
+    search: z.string().trim().optional(),
+});
+
+export const GetSchedulesByClassParamsSchema = z.object({
+    classId: z.string().trim().regex(/^[0-9a-fA-F]{24}$/, 'ID không đúng định dạng ObjectId'),
+});
+
+export const GetSchedulesByClassQuerySchema = z.object({
+    page: z.coerce.number().min(1).optional(),
+    limit: z.coerce.number().min(1).optional(),
+});
+
+export const GetAttendanceListParamsSchema = z.object({
+    classId: z.string().trim().regex(/^[0-9a-fA-F]{24}$/, 'ID không đúng định dạng ObjectId'),
     scheduleId: z.string().trim().regex(/^[0-9a-fA-F]{24}$/, 'ID không đúng định dạng ObjectId'),
 });
 
-export const GetAllAttendanceQuerySchema = z.object({
+export const GetAttendanceListQuerySchema = z.object({
     page: z.coerce.number().min(1).optional(),
     limit: z.coerce.number().min(1).optional(),
-    classId: z.string().trim().regex(/^[0-9a-fA-F]{24}$/, 'ID không đúng định dạng ObjectId').optional(),
-    shiftId: z.string().trim().regex(/^[0-9a-fA-F]{24}$/, 'ID không đúng định dạng ObjectId').optional(),
 });

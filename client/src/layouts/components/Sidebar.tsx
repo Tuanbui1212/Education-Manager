@@ -129,7 +129,7 @@ function Sidebar() {
         {
           label: 'Điểm danh',
           path: PATHS.TRAINING_ATTENDANCES,
-          permission: PERMISSIONS.SHIFT?.VIEW || PERMISSIONS.CLASS.VIEW,
+          permission: PERMISSIONS.ATTENDANCE.VIEW
         },
       ],
     },

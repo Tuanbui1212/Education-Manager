@@ -16,10 +16,19 @@ export interface IAttendanceRecord {
     studentInfo: {
         _id: string;
         fullName: string;
+        code: string;
         email?: string;
         phone?: string;
     };
     attendance: IAttendance;
+}
+
+export interface IActiveClass {
+    _id: string;
+    name: string;
+    courseName: string;
+    teacherName: string;
+    roomName: string;
 }
 
 export interface IScheduleStat {
@@ -32,4 +41,5 @@ export interface IScheduleStat {
     totalStudents: number;
     presentCount: number;
     absentCount: number;
+    isAttended?: boolean;
 }
