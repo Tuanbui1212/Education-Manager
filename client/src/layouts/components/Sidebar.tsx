@@ -9,6 +9,7 @@ import {
   PanelRightClose,
   ChevronDown,
   ChevronRight,
+  LogOut, // <-- Import thêm icon LogOut
 } from 'lucide-react';
 import { useState, memo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -16,7 +17,7 @@ import SidebarItem from '../../components/SidebarItem';
 import RequirePermission from '../../components/RequirePermission';
 import { PATHS } from '../../utils/constants';
 import { PERMISSIONS } from '../../utils/permission.constant';
-import { getDecodedToken } from '../../utils/auth';
+import { getDecodedToken, clearToken } from '../../utils/auth';
 
 function Sidebar() {
   const [expanded, setExpanded] = useState(true);
@@ -39,6 +40,7 @@ function Sidebar() {
   const currentPath = location.pathname;
 
   const toggleMenu = (menuKey: string) => {
+    // ... (Phần logic toggleMenu giữ nguyên như của bạn)
     if (!expanded) {
       setExpanded(true);
       setOpenMenus((prev) => {
@@ -71,6 +73,11 @@ function Sidebar() {
         return { ...resetMenus, [menuKey]: !prev[menuKey] };
       });
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/login');
   };
 
   const menuConfig = [
@@ -134,10 +141,10 @@ function Sidebar() {
       subItems: [
         {
           label: 'Học phí học viên',
-          path: '/finance/tuition',
+          path: PATHS.FINANCE_INVOICES,
           permission: PERMISSIONS.INVOICE?.VIEW || PERMISSIONS.EXPENDITURE.VIEW,
         },
-        { label: 'Thu chi tổng quát', path: '/finance/transactions', permission: PERMISSIONS.EXPENDITURE.VIEW },
+        { label: 'Thu chi tổng quát', path: PATHS.FINANCE_TRANSACTIONS, permission: PERMISSIONS.EXPENDITURE.VIEW },
         { label: 'Báo cáo tài chính', path: '/finance/reports', permission: PERMISSIONS.EXPENDITURE.VIEW },
       ],
     },
@@ -169,6 +176,7 @@ function Sidebar() {
         expanded ? 'w-64' : 'w-20'
       }`}
     >
+      {/* Header Sidebar */}
       <div className="p-4 flex justify-between items-center border-b border-gray-700 h-16">
         <div
           className={`font-bold text-xl overflow-hidden transition-all duration-300 whitespace-nowrap ${
@@ -186,6 +194,7 @@ function Sidebar() {
         </button>
       </div>
 
+      {/* Menu Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto custom-scrollbar">
         <SidebarItem
           icon={<LayoutDashboard size={20} />}
@@ -196,6 +205,7 @@ function Sidebar() {
         />
 
         {menuConfig.map((menu) => {
+          // ... (Phần map menu giữ nguyên)
           const isOpen = openMenus[menu.key];
           const isChildActive = menu.subItems.some((item) => currentPath === item.path);
 
@@ -252,18 +262,38 @@ function Sidebar() {
         })}
       </nav>
 
-      <div className="border-t border-gray-700 p-3 flex items-center">
-        <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center font-bold flex-shrink-0">
-          {userName ? userName.charAt(0).toUpperCase() : 'AD'}
+      {/* User Info & Logout Button */}
+      <div className="border-t border-gray-700 p-3 flex flex-col gap-2">
+        <div className="flex items-center">
+          <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center font-bold flex-shrink-0">
+            {userName ? userName.charAt(0).toUpperCase() : 'AD'}
+          </div>
+          <div
+            className={`ml-3 overflow-hidden transition-all duration-300 ${
+              expanded ? 'w-40 opacity-100' : 'w-0 opacity-0'
+            }`}
+          >
+            <p className="text-sm font-medium whitespace-nowrap">{userName || 'Admin'}</p>
+            <p className="text-xs text-gray-400 whitespace-nowrap">{userEmail || 'Chưa cập nhật'}</p>
+          </div>
         </div>
-        <div
-          className={`ml-3 overflow-hidden transition-all duration-300 ${
-            expanded ? 'w-40 opacity-100' : 'w-0 opacity-0'
+
+        <button
+          onClick={handleLogout}
+          className={`flex items-center gap-3 p-2 rounded-lg text-gray-400 hover:bg-red-500/10 hover:text-red-400 transition-colors w-full ${
+            expanded ? 'justify-start' : 'justify-center'
           }`}
+          title="Đăng xuất"
         >
-          <p className="text-sm font-medium whitespace-nowrap">{userName || 'Admin'}</p>
-          <p className="text-xs text-gray-400 whitespace-nowrap">{userEmail || 'Chưa cập nhật'}</p>
-        </div>
+          <LogOut size={20} className="flex-shrink-0" />
+          <span
+            className={`font-medium text-sm whitespace-nowrap transition-all duration-300 ${
+              expanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'
+            }`}
+          >
+            Đăng xuất
+          </span>
+        </button>
       </div>
     </aside>
   );

@@ -49,4 +49,9 @@ export const classService = {
     const response = await axios.get(`/classes/student/${id}`);
     return response.data;
   },
+
+  enrollStudent: async (data: { classId: string; studentId: string; finalAmount: number }) => {
+    const response = await axios.post('/classes/enroll', data);
+    return response.data;
+  },
 };

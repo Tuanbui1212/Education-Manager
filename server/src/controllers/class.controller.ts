@@ -96,4 +96,17 @@ export class ClassController {
       res.status(500).json({ success: false, message: 'Lỗi server nội bộ' });
     }
   };
+
+  //[POST] /api/classes/enroll
+  enroll = async (req: Request, res: Response) => {
+    try {
+      const result = await this.classService.enrollStudent(req.body);
+      return res.status(200).json(result);
+    } catch (error: any) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  };
 }

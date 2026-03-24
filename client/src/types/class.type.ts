@@ -3,11 +3,11 @@ import type { IRoom } from './room.type';
 import type { IUser } from './user.type';
 
 export const ClassStatus = {
-  PENDING: 'PENDING',
+  UPCOMING: 'UPCOMING',
   ACTIVE: 'ACTIVE',
   COMPLETED: 'COMPLETED',
   MAINTENANCE: 'MAINTENANCE',
-  INACTIVE: 'INACTIVE',
+  PENDING: 'PENDING',
 } as const;
 
 export type ClassStatus = (typeof ClassStatus)[keyof typeof ClassStatus];
@@ -15,7 +15,7 @@ export type ClassStatus = (typeof ClassStatus)[keyof typeof ClassStatus];
 export interface IClass {
   _id?: string;
   name: string;
-  courseId: string | { _id: string; title: string };
+  courseId: string | { _id: string; title: string; basePrice?: number };
   teacherId: string | { _id: string; fullName: string };
   roomId: string | { _id: string; name: string };
   documents?: string[];

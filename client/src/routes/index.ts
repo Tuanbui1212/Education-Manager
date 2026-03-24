@@ -11,6 +11,8 @@ import { courseRoutes } from './course.routes';
 import { classRoutes } from './class.routes';
 import scheduleRoutes from './schedule.routes';
 import attendanceRoutes from './attendance.routes';
+import { invoiceRoutes } from './invoice.routes';
+import { transactionRoutes } from './transaction.routes';
 
 const publicRoutes = [...authRoutes];
 
@@ -27,6 +29,8 @@ const privateRoutes = [
   ...classRoutes,
   ...scheduleRoutes,
   ...attendanceRoutes,
+  ...invoiceRoutes,
+  ...transactionRoutes,
 ];
 
 export { publicRoutes, privateRoutes };

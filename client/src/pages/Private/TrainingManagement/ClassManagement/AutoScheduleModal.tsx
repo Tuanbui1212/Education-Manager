@@ -70,7 +70,6 @@ const AutoScheduleModal: React.FC<AutoScheduleModalProps> = ({ isOpen, onClose, 
     setIsGenerating(true);
     setServerError(null);
 
-    // 1. Chuẩn bị danh sách toàn bộ các buổi học (Bulk Data)
     const schedules = [];
     let currentDate = new Date(startDate);
     while (schedules.length < totalSessions) {
@@ -88,7 +87,6 @@ const AutoScheduleModal: React.FC<AutoScheduleModalProps> = ({ isOpen, onClose, 
     }
 
     try {
-      // 2. Gửi mảng trực tiếp vào service để khớp với kiểu dữ liệu Partial<ISchedule>[]
       const res = await scheduleService.createSchedulesBulk(schedules);
 
       if (res.success) {

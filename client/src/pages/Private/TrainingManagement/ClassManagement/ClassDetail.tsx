@@ -13,6 +13,13 @@ import {
   Calendar,
   Sparkles,
   Trash2,
+  UserPlus,
+  AlertCircle,
+  CalendarClock,
+  XCircle,
+  MoreVertical,
+  Receipt,
+  UserMinus,
 } from 'lucide-react';
 
 import useFetch from '../../../../hooks/useFetch';
@@ -25,6 +32,7 @@ import ConfirmModal from '../../../../components/ConfirmModal';
 
 import ClassModal from './ClassModal';
 import AutoScheduleModal from './AutoScheduleModal';
+import EnrollStudentModal from './EnrollStudentModal';
 
 import { PATHS } from '../../../../utils/constants';
 import type { IClass } from '../../../../types/class.type';
@@ -57,7 +65,7 @@ const ClassDetail = () => {
       if (s.date) {
         const dateObj = new Date(s.date);
         const day = dateObj.getDay();
-        
+
         let shiftName = '';
         if (s.shiftId?.name) {
           shiftName = s.shiftId.name;
@@ -96,7 +104,9 @@ const ClassDetail = () => {
   const [searchInput, setSearchInput] = useState('');
   const [showClassModal, setShowClassModal] = useState(false);
   const [showAutoScheduleModal, setShowAutoScheduleModal] = useState(false);
+  const [showEnrollModal, setShowEnrollModal] = useState(false);
   const [isDeletingBulk, setIsDeletingBulk] = useState(false);
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
   const [confirmConfig, setConfirmConfig] = useState({
     isOpen: false,
@@ -120,7 +130,7 @@ const ClassDetail = () => {
         setConfirmConfig({
           isOpen: true,
           title: 'Thành công',
-          message: 'Cập nhật thông khoá học thành công!',
+          message: 'Cập nhật thông tin lớp học thành công!',
           type: 'success',
           onConfirm: () => setConfirmConfig({ ...confirmConfig, isOpen: false }),
         });
@@ -150,6 +160,7 @@ const ClassDetail = () => {
     try {
       await scheduleService.deleteSchedulesBulk(scheduleIds);
 
+      await Promise.all([fetchSchedules(), fetchClass()]);
       setConfirmConfig({
         isOpen: true,
         title: 'Thành công',
@@ -157,7 +168,6 @@ const ClassDetail = () => {
         type: 'success',
         onConfirm: () => setConfirmConfig({ ...confirmConfig, isOpen: false }),
       });
-      fetchSchedules();
     } catch (error: any) {
       setConfirmConfig({
         isOpen: true,
@@ -168,6 +178,31 @@ const ClassDetail = () => {
       });
     } finally {
       setIsDeletingBulk(false);
+    }
+  };
+
+  const handleEnrollStudent = async (formData: any) => {
+    try {
+      const res = await classService.enrollStudent(formData);
+      if (res.success) {
+        setConfirmConfig({
+          isOpen: true,
+          title: 'Ghi danh thành công!',
+          message: 'Học viên đã được thêm vào lớp. Hóa đơn học phí tương ứng cũng đã được hệ thống tự động sinh ra.',
+          type: 'success',
+          onConfirm: () => setConfirmConfig({ ...confirmConfig, isOpen: false }),
+        });
+        fetchClass();
+        setShowEnrollModal(false);
+      }
+    } catch (error: any) {
+      setConfirmConfig({
+        isOpen: true,
+        title: 'Lỗi ghi danh',
+        message: error.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại!',
+        type: 'danger',
+        onConfirm: () => setConfirmConfig({ ...confirmConfig, isOpen: false }),
+      });
     }
   };
 
@@ -192,29 +227,51 @@ const ClassDetail = () => {
 
   const renderStatusBadge = (status: string) => {
     switch (status) {
+      case 'UPCOMING':
+        return (
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm font-bold uppercase tracking-wider shadow-sm border border-blue-200">
+            <CalendarClock size={16} /> Sắp khai giảng
+          </span>
+        );
       case 'ACTIVE':
         return (
-          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm font-bold uppercase tracking-wider shadow-sm">
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-sm font-bold uppercase tracking-wider shadow-sm border border-emerald-200">
             <CheckCircle2 size={16} /> Đang hoạt động
           </span>
         );
       case 'COMPLETED':
         return (
-          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-200 text-gray-600 text-sm font-bold uppercase tracking-wider shadow-sm">
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-200 text-gray-600 text-sm font-bold uppercase tracking-wider shadow-sm border border-gray-300">
             <CheckCircle2 size={16} /> Đã hoàn thành
+          </span>
+        );
+      case 'MAINTENANCE':
+        return (
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-sm font-bold uppercase tracking-wider shadow-sm border border-amber-200">
+            <AlertCircle size={16} /> Tạm ngưng
+          </span>
+        );
+      case 'INACTIVE':
+        return (
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-100 text-rose-700 text-sm font-bold uppercase tracking-wider shadow-sm border border-rose-200">
+            <XCircle size={16} /> Đã hủy
           </span>
         );
       default:
         return (
-          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-sm font-bold uppercase tracking-wider shadow-sm">
-            <Clock size={16} /> {status}
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-100 text-gray-500 text-sm font-bold uppercase tracking-wider shadow-sm border border-gray-200">
+            <Clock size={16} /> {status || 'KHÔNG RÕ'}
           </span>
         );
     }
   };
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen animate-in fade-in duration-500">
+    <div
+      className="p-8 bg-gray-50 min-h-screen animate-in fade-in duration-500"
+      onClick={() => setOpenDropdownId(null)}
+    >
+      {/* Các Modal hiện có */}
       {showClassModal && (
         <ClassModal
           isOpen={showClassModal}
@@ -229,13 +286,23 @@ const ClassDetail = () => {
           isOpen={showAutoScheduleModal}
           onClose={() => setShowAutoScheduleModal(false)}
           onSuccess={() => {
+            setShowAutoScheduleModal(false);
             fetchSchedules();
+            fetchClass();
           }}
           classData={classData}
         />
       )}
 
-      {/* Modal Thông báo chung */}
+      {showEnrollModal && (
+        <EnrollStudentModal
+          isOpen={showEnrollModal}
+          onClose={() => setShowEnrollModal(false)}
+          onSubmit={handleEnrollStudent}
+          classData={classData}
+        />
+      )}
+
       <ConfirmModal
         isOpen={confirmConfig.isOpen}
         onClose={() => setConfirmConfig({ ...confirmConfig, isOpen: false })}
@@ -247,7 +314,6 @@ const ClassDetail = () => {
         cancelText=""
       />
 
-      {/* Modal Xác nhận Xóa Toàn Bộ Lịch */}
       <ConfirmModal
         isOpen={confirmDeleteAll.isOpen}
         onClose={() => setConfirmDeleteAll({ ...confirmDeleteAll, isOpen: false })}
@@ -321,6 +387,7 @@ const ClassDetail = () => {
                 <div className="flex items-center gap-2 text-gray-800 font-medium">
                   <MapPin size={16} className="text-rose-400" />
                   <span
+                    className="cursor-pointer hover:text-rose-600 transition-colors"
                     onClick={() => navigate(PATHS.SETTINGS_ROOMS_ID.replace(':id', classData.roomId?._id as string))}
                   >
                     {classData.roomId?.name || 'Chưa xếp phòng / Học Online'}
@@ -349,7 +416,6 @@ const ClassDetail = () => {
                 <h3 className="text-lg font-bold text-gray-800">Lịch học định kỳ</h3>
               </div>
 
-              {/* Nút Sinh lịch chỉ hiện khi chưa có lịch */}
               {schedulesList.length === 0 && (
                 <Button
                   variant="outline"
@@ -389,7 +455,6 @@ const ClassDetail = () => {
                     Tổng cộng: {scheduleSummary.total} buổi học
                   </span>
 
-                  {/* NÚT RESET LỊCH KHI BỊ SAI */}
                   <Button
                     variant="outline"
                     icon={<Trash2 size={14} />}
@@ -436,14 +501,24 @@ const ClassDetail = () => {
                 </span>
               </div>
 
-              <div className="w-64">
-                <SearchInput
-                  type="text"
-                  placeholder="Tìm tên, SĐT học viên..."
-                  value={searchInput}
-                  setSearchInput={setSearchInput}
-                  setPage={() => {}}
-                />
+              <div className="flex items-center gap-3">
+                <div className="w-64">
+                  <SearchInput
+                    type="text"
+                    placeholder="Tìm tên, SĐT học viên..."
+                    value={searchInput}
+                    setSearchInput={setSearchInput}
+                    setPage={() => {}}
+                  />
+                </div>
+                <Button
+                  variant="primary"
+                  className="bg-primary hover:bg-primary-btn shadow-md shadow-blue-500/20"
+                  icon={<UserPlus size={18} />}
+                  onClick={() => setShowEnrollModal(true)}
+                >
+                  Ghi danh
+                </Button>
               </div>
             </div>
 
@@ -453,19 +528,66 @@ const ClassDetail = () => {
                   {filteredStudents.map((student: any) => (
                     <div
                       key={student._id || student}
-                      className="group flex items-center gap-4 p-3 border border-gray-100 rounded-xl hover:border-blue-200 hover:shadow-sm bg-gray-50/50 hover:bg-white transition-all cursor-pointer"
+                      className="group relative flex items-center gap-4 p-3 border border-gray-100 rounded-xl hover:border-blue-200 hover:shadow-sm bg-gray-50/50 hover:bg-white transition-all cursor-pointer"
                       onClick={() => navigate(PATHS.TRANINING_STUDENT_ID.replace(':id', student._id))}
                     >
                       <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold flex-shrink-0 group-hover:bg-blue-500 group-hover:text-white transition-colors shadow-inner">
                         {student.fullName ? student.fullName.charAt(0).toUpperCase() : 'U'}
                       </div>
-                      <div className="flex flex-col overflow-hidden">
+
+                      <div className="flex flex-col overflow-hidden flex-1">
                         <span className="text-sm font-bold text-gray-800 truncate group-hover:text-blue-600 transition-colors">
                           {student.fullName || 'Học viên ẩn danh'}
                         </span>
                         <span className="text-xs text-gray-500 truncate mt-0.5">
                           {student.phone || student.email || `ID: ${student._id?.slice(-6) || student.slice(-6)}`}
                         </span>
+                      </div>
+
+                      {/* --- UI: Badge Trạng thái & Nút 3 chấm --- */}
+                      <div className="flex items-center gap-2 ml-auto shrink-0">
+                        <span className="hidden xl:inline-block px-2 py-1 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
+                          Đã thu đủ
+                        </span>
+
+                        <button
+                          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenDropdownId(openDropdownId === student._id ? null : student._id);
+                          }}
+                        >
+                          <MoreVertical size={18} />
+                        </button>
+
+                        {/* Menu Dropdown */}
+                        {openDropdownId === student._id && (
+                          <div
+                            className="absolute right-3 z-10 top-14 w-48 bg-white border border-gray-100 rounded-xl shadow-xl z- overflow-hidden animate-in fade-in zoom-in-95"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <button
+                              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left font-medium"
+                              onClick={() => {
+                                console.log('👉 XEM HÓA ĐƠN CỦA:', student._id);
+                                setOpenDropdownId(null);
+                              }}
+                            >
+                              <Receipt size={16} className="text-blue-500" />
+                              Xem hóa đơn
+                            </button>
+                            <button
+                              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors text-left border-t border-gray-50 font-medium"
+                              onClick={() => {
+                                console.log('👉 HỦY GHI DANH HỌC VIÊN:', student._id);
+                                setOpenDropdownId(null);
+                              }}
+                            >
+                              <UserMinus size={16} className="text-red-500" />
+                              Hủy ghi danh
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
