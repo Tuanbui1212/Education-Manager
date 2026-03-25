@@ -3,6 +3,8 @@ export const API_ROOT = 'http://localhost:5000/api';
 export const PATHS = {
   HOME: '/',
   LOGIN: '/login',
+  FORGOT_PASSWORD: '/forgot-password',
+  RESET_PASSWORD: '/reset-password',
 
   //Dashboard
   DASHBOARD: '/',

@@ -17,7 +17,7 @@ function router(app: Application) {
   app.use('/api/users', userRouter);
   app.use('/api/roles', roleRouter);
   app.use('/api/rooms', roomRouter);
-  app.use('/api/login', authRouter);
+  app.use('/api/auth', authRouter);
   app.use('/api/shifts', shiftRouter);
   app.use('/api/expenditures', expenditureRouter);
   app.use('/api/notification-templates', notificationTemplateRouter);

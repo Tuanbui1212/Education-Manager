@@ -31,6 +31,9 @@ const UserSchema = new Schema<IUser>(
       hourlyRate: { type: Number },
       degrees: [{ type: String }],
     },
+
+    passwordResetToken: { type: String },
+    passwordResetExpires: { type: Date },
   },
   {
     timestamps: true,

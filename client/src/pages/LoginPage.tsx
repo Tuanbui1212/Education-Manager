@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import StudentImage from '../assets/image/login-image.png';
 import { Mail, Lock, Loader2, Eye, EyeOff } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '../services/auth.service';
+import { PATHS } from '../utils/constants';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -108,12 +109,12 @@ const LoginPage = () => {
               </div>
 
               <div className="flex items-center pt-1">
-                <a
-                  href="#"
+                <Link
+                  to={PATHS.FORGOT_PASSWORD}
                   className="text-xs ms-auto font-semibold text-primary hover:text-primary-btn hover:underline transition-colors"
                 >
                   Quên mật khẩu?
-                </a>
+                </Link>
               </div>
             </div>
 
