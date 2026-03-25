@@ -11,7 +11,10 @@ import TeacherDetail from '../pages/Private/TeacherManagement/TeacherDetail';
 import StaffManager from '../pages/Private/StaffManagement/StaffManager';
 import StaffDetail from '../pages/Private/StaffManagement/StaffDetail';
 
+import UserProfileForm from '../pages/Private/MyManagement/UserProfileForm';
+
 import DashboardLayout from '../layouts/DashboardLayout';
+import { Fragment } from 'react/jsx-runtime';
 
 export const userRoutes = [
   { path: PATHS.USER, component: ListUser, layout: DashboardLayout },
@@ -24,4 +27,7 @@ export const userRoutes = [
 
   { path: PATHS.HR_STAFFS, component: StaffManager, layout: DashboardLayout },
   { path: PATHS.HR_STAFFS_ID, component: StaffDetail, layout: DashboardLayout },
+
+  { path: PATHS.PROFILE_STUDENT, component: UserProfileForm, layout: Fragment },
+  { path: PATHS.PROFILE_STAFF, component: UserProfileForm, layout: DashboardLayout },
 ];

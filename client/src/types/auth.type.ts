@@ -4,6 +4,7 @@ export interface DecodedToken {
   name: string;
   success: boolean;
   user: string;
+  phone: string;
   role: {
     _id: string;
     name: string;

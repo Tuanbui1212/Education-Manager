@@ -9,15 +9,17 @@ import {
   PanelRightClose,
   ChevronDown,
   ChevronRight,
-  LogOut, // <-- Import thêm icon LogOut
+  LogOut,
+  User,
+  KeyRound,
 } from 'lucide-react';
-import { useState, memo } from 'react';
+import { useState, memo, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import SidebarItem from '../../components/SidebarItem';
 import RequirePermission from '../../components/RequirePermission';
 import { PATHS } from '../../utils/constants';
 import { PERMISSIONS } from '../../utils/permission.constant';
-import { getDecodedToken, clearToken } from '../../utils/auth';
+import { getDecodedToken } from '../../utils/auth';
 
 function Sidebar() {
   const [expanded, setExpanded] = useState(true);
@@ -29,18 +31,30 @@ function Sidebar() {
     finance: false,
     settings: false,
   });
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
+  const profileMenuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
   const currentUser = getDecodedToken();
   const userName = currentUser?.name;
   const userEmail = currentUser?.email;
-
   const currentPath = location.pathname;
 
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setIsProfileMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   const toggleMenu = (menuKey: string) => {
-    // ... (Phần logic toggleMenu giữ nguyên như của bạn)
     if (!expanded) {
       setExpanded(true);
       setOpenMenus((prev) => {
@@ -171,15 +185,12 @@ function Sidebar() {
         expanded ? 'w-64' : 'w-20'
       }`}
     >
-      {/* Header Sidebar */}
       <div className="p-4 flex justify-between items-center border-b border-gray-700 h-16">
         <div
           className={`font-bold text-xl overflow-hidden transition-all duration-300 whitespace-nowrap ${
             expanded ? 'w-32 opacity-100' : 'w-0 opacity-0'
           }`}
-        >
-          Admin Portal
-        </div>
+        ></div>
 
         <button
           onClick={() => setExpanded(!expanded)}
@@ -189,8 +200,7 @@ function Sidebar() {
         </button>
       </div>
 
-      {/* Menu Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto custom-scrollbar">
+      <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto overflow-x-hidden custom-scrollbar">
         <SidebarItem
           icon={<LayoutDashboard size={20} />}
           text="Dashboard"
@@ -200,7 +210,6 @@ function Sidebar() {
         />
 
         {menuConfig.map((menu) => {
-          // ... (Phần map menu giữ nguyên)
           const isOpen = openMenus[menu.key];
           const isChildActive = menu.subItems.some((item) => currentPath === item.path);
 
@@ -257,38 +266,74 @@ function Sidebar() {
         })}
       </nav>
 
-      {/* User Info & Logout Button */}
-      <div className="border-t border-gray-700 p-3 flex flex-col gap-2">
-        <div className="flex items-center">
-          <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center font-bold flex-shrink-0">
-            {userName ? userName.charAt(0).toUpperCase() : 'AD'}
-          </div>
-          <div
-            className={`ml-3 overflow-hidden transition-all duration-300 ${
-              expanded ? 'w-40 opacity-100' : 'w-0 opacity-0'
-            }`}
-          >
-            <p className="text-sm font-medium whitespace-nowrap">{userName || 'Admin'}</p>
-            <p className="text-xs text-gray-400 whitespace-nowrap">{userEmail || 'Chưa cập nhật'}</p>
-          </div>
-        </div>
-
+      <div className="border-t border-gray-700 p-3 relative" ref={profileMenuRef}>
         <button
-          onClick={handleLogout}
-          className={`flex items-center gap-3 p-2 rounded-lg text-gray-400 hover:bg-red-500/10 hover:text-red-400 transition-colors w-full ${
+          onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+          className={`w-full flex items-center gap-3 p-2 rounded-xl hover:bg-gray-800 transition-colors ${
             expanded ? 'justify-start' : 'justify-center'
           }`}
-          title="Đăng xuất"
         >
-          <LogOut size={20} className="flex-shrink-0" />
-          <span
-            className={`font-medium text-sm whitespace-nowrap transition-all duration-300 ${
-              expanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'
+          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 flex items-center justify-center font-bold text-white flex-shrink-0 shadow-md">
+            {userName ? userName.charAt(0).toUpperCase() : 'AD'}
+          </div>
+
+          <div
+            className={`flex flex-col items-start overflow-hidden transition-all duration-300 ${
+              expanded ? 'w-full opacity-100' : 'w-0 opacity-0'
             }`}
           >
-            Đăng xuất
-          </span>
+            <p className="text-sm font-semibold text-gray-200 whitespace-nowrap truncate w-full">
+              {userName || 'Admin'}
+            </p>
+            <p className="text-xs text-gray-500 whitespace-nowrap truncate w-full">{userEmail || 'Chưa cập nhật'}</p>
+          </div>
         </button>
+
+        {isProfileMenuOpen && (
+          <div
+            className={`absolute bottom-[calc(100%+10px)] left-3 bg-gray-800 border border-gray-700 rounded-xl shadow-2xl py-2 flex flex-col min-w-[200px] z-50 animate-in fade-in slide-in-from-bottom-2 duration-200 ${
+              !expanded && 'left-14'
+            }`}
+          >
+            {!expanded && (
+              <div className="px-4 py-2 border-b border-gray-700 mb-2">
+                <p className="text-sm font-semibold text-white truncate">{userName}</p>
+                <p className="text-xs text-gray-400 truncate">{userEmail}</p>
+              </div>
+            )}
+
+            <button
+              onClick={() => {
+                navigate('/profile');
+                setIsProfileMenuOpen(false);
+              }}
+              className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-gray-700 transition-colors w-full text-left"
+            >
+              <User size={18} />
+              Thông tin cá nhân
+            </button>
+
+            <button
+              onClick={() => {
+                setIsProfileMenuOpen(false);
+              }}
+              className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-gray-700 transition-colors w-full text-left"
+            >
+              <KeyRound size={18} />
+              Đổi mật khẩu
+            </button>
+
+            <div className="h-px bg-gray-700 my-1 mx-2"></div>
+
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors w-full text-left"
+            >
+              <LogOut size={18} />
+              Đăng xuất
+            </button>
+          </div>
+        )}
       </div>
     </aside>
   );

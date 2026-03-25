@@ -6,6 +6,9 @@ export const PATHS = {
   FORGOT_PASSWORD: '/forgot-password',
   RESET_PASSWORD: '/reset-password',
 
+  PROFILE_STUDENT: '/profile/student',
+  PROFILE_STAFF: '/profile/staff',
+
   //Dashboard
   DASHBOARD: '/',
 
