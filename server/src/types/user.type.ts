@@ -31,6 +31,8 @@ export interface IUser extends Document {
   teacher_info?: ITeacherInfo;
   createdAt: Date;
   updatedAt: Date;
+  passwordResetToken?: string;
+  passwordResetExpires?: Date;
 }
 
 export interface GetUsersQuery {

@@ -1,7 +1,8 @@
 import bcrypt from 'bcryptjs';
 import { UserModel } from '../models/user.model';
 import RoleModel from '../models/role.model';
-import { IUser, GetUsersQuery } from '../types/user.type';
+import { ClassModel } from '../models/class.model';
+import { IUser, GetUsersQuery, UserStatus } from '../types/user.type';
 
 export class UserService {
   // 1. Tạo mới User (Create)
@@ -66,15 +67,13 @@ export class UserService {
     return { users, totalCount };
   }
 
-  // 3. Lấy chi tiết 1 User (Read One)
+  // 3. Lấy chi tiết 1 User
   async getUserById(id: string): Promise<IUser | null> {
-    return await UserModel.findById(id).select('-password').populate('roleId', 'name permissions'); // Lấy luôn mảng quyền
+    return await UserModel.findById(id).select('-password').populate('roleId', 'name permissions');
   }
 
-  // 4. Cập nhật User (Update)
+  // 4. Cập nhật User
   async updateUser(id: string, data: Partial<IUser>): Promise<IUser | null> {
-    // SỬA: Bỏ đoạn check enum cứng cũ đi.
-    // Thay bằng kiểm tra xem roleId mới (nếu có cập nhật) có tồn tại ở bảng Roles không
     if (data.roleId) {
       const roleExists = await RoleModel.findById(data.roleId);
       if (!roleExists) {
@@ -90,8 +89,35 @@ export class UserService {
     return await UserModel.findByIdAndUpdate(id, data, { new: true }).select('-password').populate('roleId', 'name'); // Populate để trả về data mới nhất cho Frontend
   }
 
-  // 5. Xóa User (Delete)
-  async deleteUser(id: string): Promise<IUser | null> {
-    return await UserModel.findByIdAndDelete(id);
+  // 5. Xóa User
+  async deleteUser(id: string): Promise<{ action: 'SOFT_DELETE' | 'HARD_DELETE'; user: IUser }> {
+    const user = await UserModel.findById(id);
+    if (!user) {
+      throw new Error('Người dùng không tồn tại!');
+    }
+
+    const isLinkedToClass = await ClassModel.findOne({
+      $or: [{ teacherId: id }, { studentIds: id }],
+    });
+
+    // Nếu bạn muốn check thêm bảng Lịch học (Schedules) hay Giao dịch (Invoices), bạn có thể query tương tự ở đây
+    // const isLinkedToSchedule = await ScheduleModel.findOne({ teacherId: id });
+
+    if (isLinkedToClass) {
+      user.status = UserStatus.INACTIVE;
+      await user.save();
+
+      return {
+        action: 'SOFT_DELETE',
+        user: user,
+      };
+    } else {
+      const deletedUser = await UserModel.findByIdAndDelete(id);
+
+      return {
+        action: 'HARD_DELETE',
+        user: deletedUser as IUser,
+      };
+    }
   }
 }

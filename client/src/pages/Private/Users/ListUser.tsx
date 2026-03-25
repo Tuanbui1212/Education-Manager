@@ -1,24 +1,26 @@
 import { Plus, Filter, Edit2, Trash2 } from 'lucide-react';
-import { getRoleStyles, formatDate } from '../../../utils/format.util';
+import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+import { getRoleStyles, formatDate, translateRole } from '../../../utils/format.util';
+import { PATHS } from '../../../utils/constants';
 
 import Button from '../../../components/Button';
 import PageHeader from '../../../components/PageHeader';
 import TablePagination from '../../../components/TablePagination';
 import SearchInput from '../../../components/SearchInput';
 import ConfirmModal from '../../../components/ConfirmModal';
-
 import UserModal from './UserModal';
 
 import useFetch from '../../../hooks/useFetch';
 import useDebounce from '../../../hooks/useDebounce';
-
 import { userService } from '../../../services/user.service';
 import { roleService } from '../../../services/role.service';
-
-import { useState } from 'react';
 import type { IUser } from '../../../types/user.type';
 
 const UserList = () => {
+  const navigate = useNavigate();
+
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(5);
   const [searchInput, setSearchInput] = useState('');
@@ -35,6 +37,16 @@ const UserList = () => {
     title: '',
     message: '',
     type: 'success' as 'success' | 'danger' | 'warning' | 'info',
+  });
+
+  const [confirmDelete, setConfirmDelete] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'danger' as 'success' | 'danger' | 'warning' | 'info',
+    confirmText: '',
+    cancelText: '',
+    onConfirm: () => {},
   });
 
   const queryParams = {
@@ -55,6 +67,19 @@ const UserList = () => {
   const { data: rolesData } = useFetch(roleService.getRoles, {}, []);
   const roles = Array.isArray(rolesData) ? rolesData : (rolesData as any)?.data || [];
 
+  const consultantRoleId = useMemo(() => {
+    return roles.find((r: any) => r.name?.toLowerCase() === 'consultant')?._id || '';
+  }, [roles]);
+
+  const queryParamsConsultant = {
+    page: 1,
+    limit: 1000,
+    roleId: consultantRoleId,
+    status: 'ACTIVE',
+  };
+
+  const { data: consultants } = useFetch(userService.getUsers, queryParamsConsultant, [consultantRoleId]);
+
   const handleAddUser = async (formData: Partial<IUser>) => {
     try {
       const data: any = await userService.createUser(formData);
@@ -62,7 +87,7 @@ const UserList = () => {
         setConfirmConfig({
           isOpen: true,
           title: 'Thông báo',
-          message: data.message,
+          message: 'Tạo tài khoản thành công!',
           type: 'success',
         });
         fetchUsers();
@@ -102,6 +127,7 @@ const UserList = () => {
       } else if (roleName.toLowerCase() === 'student' && formData.student_info) {
         updateData.student_info = {
           parentsName: formData.student_info.parentsName,
+          consultantId: formData.student_info.consultantId,
         };
       }
 
@@ -111,7 +137,7 @@ const UserList = () => {
         setConfirmConfig({
           isOpen: true,
           title: 'Thông báo',
-          message: data.message,
+          message: 'Cập nhật tài khoản thành công!',
           type: 'success',
         });
 
@@ -131,16 +157,54 @@ const UserList = () => {
     }
   };
 
+  // LOGIC: Xóa người dùng
+  const handleDeleteUser = async (id: string) => {
+    try {
+      const data = await userService.deleteUser(id);
+      if (data.success) {
+        setConfirmConfig({
+          isOpen: true,
+          title: 'Thành công',
+          message: 'Đã xóa tài khoản thành công!',
+          type: 'success',
+        });
+        fetchUsers();
+      }
+    } catch (error: any) {
+      const detailError = error.response?.data?.errors ? Object.values(error.response.data.errors).flat()[0] : null;
+      setConfirmConfig({
+        isOpen: true,
+        title: 'Lỗi',
+        message: (detailError as string) || 'Có lỗi xảy ra khi xóa!',
+        type: 'danger',
+      });
+    }
+  };
+
+  // LOGIC: Điều hướng vào trang chi tiết dựa theo Role
+  const navigateToDetail = (user: any) => {
+    if (!user?._id) return;
+    const roleName = (user.roleId?.name || '').toLowerCase();
+
+    if (roleName === 'student') {
+      navigate(PATHS.TRANINING_STUDENT_ID.replace(':id', user._id));
+    } else if (roleName === 'teacher') {
+      navigate(PATHS.HR_TEACHERS_ID.replace(':id', user._id));
+    } else {
+      // Dành cho Manager, Accountant, Consultant, Admin...
+      navigate(PATHS.HR_STAFFS_ID.replace(':id', user._id));
+    }
+  };
+
   const openEditModal = async (id: string) => {
     try {
       const response = await userService.getUserById(id);
-
       if (response.success) {
         setSelectedUser(response.data || null);
         setShowModalAdd(true);
       }
     } catch (error) {
-      console.error('Lỗi khi lấy thông tin user:', error);
+      console.error(error);
     }
   };
 
@@ -153,6 +217,7 @@ const UserList = () => {
       {showModalAdd && (
         <UserModal
           roles={roles}
+          consultants={consultants}
           isOpen={showModalAdd}
           onClose={() => {
             setShowModalAdd(false);
@@ -163,8 +228,9 @@ const UserList = () => {
         />
       )}
 
-      <PageHeader title="Danh sách tài khoản" />
+      <PageHeader title="Danh sách Tất cả Tài khoản" />
 
+      {/* Modal Thông báo */}
       <ConfirmModal
         isOpen={confirmConfig.isOpen}
         onClose={() => setConfirmConfig({ ...confirmConfig, isOpen: false })}
@@ -174,6 +240,18 @@ const UserList = () => {
         type={confirmConfig.type}
         confirmText="Đóng"
         cancelText=""
+      />
+
+      {/* Modal Xác nhận Xóa */}
+      <ConfirmModal
+        isOpen={confirmDelete.isOpen}
+        onClose={() => setConfirmDelete({ ...confirmDelete, isOpen: false })}
+        onConfirm={confirmDelete.onConfirm}
+        title={confirmDelete.title}
+        message={confirmDelete.message}
+        type={confirmDelete.type}
+        confirmText={confirmDelete.confirmText}
+        cancelText={confirmDelete.cancelText}
       />
 
       <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
@@ -188,11 +266,11 @@ const UserList = () => {
 
           <div className="relative inline-block">
             <Button variant="outline" icon={<Filter size={18} />} onClick={() => setOpen(!open)}>
-              Filter
+              Filter Role
             </Button>
 
             {open && (
-              <div className="absolute mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+              <div className="absolute mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
                 <div
                   onClick={() => {
                     setRole('');
@@ -201,7 +279,7 @@ const UserList = () => {
                   }}
                   className={`px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm ${role === '' ? 'bg-blue-50 font-semibold' : ''}`}
                 >
-                  All Roles
+                  Tất cả Role
                 </div>
                 {roles.map((item: any) => (
                   <div
@@ -236,48 +314,49 @@ const UserList = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 relative">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-primary text-white text-sm sticky top-0 z-10 ">
+            <tr className="bg-primary text-white text-sm sticky top-0 z-10">
               <th className="p-4 font-semibold w-16 text-center rounded-tl-xl">No.</th>
-              <th className="p-4 font-semibold cursor-pointer hover:opacity-80 transition-colors">Full Name</th>
+              <th className="p-4 font-semibold">Tên người dùng</th>
               <th className="p-4 font-semibold">Email</th>
-              <th className="p-4 font-semibold">Phone</th>
-              <th className="p-4 font-semibold">Birthday</th>
-              <th className="p-4 font-semibold">Role</th>
-              <th className="p-4 font-semibold">Status</th>
-              <th className="p-4 font-semibold text-center rounded-tr-xl">Action</th>
+              <th className="p-4 font-semibold">Số điện thoại</th>
+              <th className="p-4 font-semibold">Ngày sinh</th>
+              <th className="p-4 font-semibold">Vai trò</th>
+              <th className="p-4 font-semibold">Trạng thái</th>
+              <th className="p-4 font-semibold text-center rounded-tr-xl">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {users && users.length > 0 ? (
               users?.map((user: any, index: number) => (
                 <tr key={user._id} className="hover:bg-blue-50/50 transition-colors group">
-                  <td className="p-4 text-text-secondary font-medium text-center">{index + 1 + (page - 1) * limit}</td>
-                  <td className="p-4 font-semibold text-blue-600 group-hover:underline cursor-pointer">
-                    {user.fullName}
+                  <td className="p-4 text-gray-500 font-medium text-center">{index + 1 + (page - 1) * limit}</td>
+                  <td className="p-4">
+                    <div
+                      className="font-semibold text-blue-600 group-hover:underline cursor-pointer inline-block"
+                      onClick={() => navigateToDetail(user)}
+                    >
+                      {user.fullName}
+                    </div>
                   </td>
-                  <td className="p-4 text-text-main">{user.email}</td>
-                  <td className="p-4 text-text-main">{user.phone}</td>
-                  <td className="p-4 text-text-main">{formatDate(user.date as string)}</td>
+                  <td className="p-4 text-gray-600">{user.email}</td>
+                  <td className="p-4 text-gray-600">{user.phone}</td>
+                  <td className="p-4 text-gray-600">{formatDate(user.date as string)}</td>
                   <td className="p-4">
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-bold shadow-sm ${getRoleStyles((user.roleId as any)?.name || '')}`}
                     >
-                      {(user.roleId as any)?.name || 'N/A'}
+                      {(translateRole(user.roleId?.name as string) as string) || ''}
                     </span>
                   </td>
                   <td className="p-4">
                     <div className="flex items-center gap-2 text-sm">
                       <span
                         className={`w-2.5 h-2.5 rounded-full animate-pulse ${
-                          user.status === 'ACTIVE' ? 'bg-status-progress-text' : 'bg-text-secondary'
+                          user.status === 'ACTIVE' ? 'bg-green-500' : 'bg-gray-400'
                         }`}
                       ></span>
-                      <span
-                        className={
-                          user.status === 'ACTIVE' ? 'text-status-progress-text font-medium' : 'text-text-secondary'
-                        }
-                      >
-                        {user.status}
+                      <span className={user.status === 'ACTIVE' ? 'text-green-700 font-medium' : 'text-gray-500'}>
+                        {user.status === 'ACTIVE' ? 'Đang hoạt động' : 'Ngừng hoạt động'}
                       </span>
                     </div>
                   </td>
@@ -285,15 +364,29 @@ const UserList = () => {
                     <div className="flex items-center justify-center gap-3">
                       <button
                         onClick={() => openEditModal(user._id!)}
-                        className="p-2 text-blue-600 hover:bg-blue-100 rounded-xl transition-all duration-300 hover:scale-110 hover:-translate-y-1 active:scale-95"
+                        className="p-2 text-blue-600 hover:bg-blue-100 rounded-xl transition-all duration-300 hover:scale-110 active:scale-95"
                         title="Sửa"
                       >
                         <Edit2 size={18} />
                       </button>
 
+                      {/* Gắn logic Xóa vào nút Trash */}
                       <button
-                        onClick={() => console.log('Xóa')}
-                        className="p-2 text-red-500 hover:bg-red-100 rounded-xl transition-all duration-300 hover:scale-110 hover:rotate-12 active:scale-95"
+                        onClick={() => {
+                          setConfirmDelete({
+                            isOpen: true,
+                            title: 'Xác nhận xóa tài khoản',
+                            message: `Bạn có chắc chắn muốn xóa tài khoản của ${user.fullName} không?`,
+                            type: 'danger',
+                            confirmText: 'Xác nhận',
+                            cancelText: 'Hủy',
+                            onConfirm: () => {
+                              setConfirmDelete((prev) => ({ ...prev, isOpen: false }));
+                              handleDeleteUser(user._id);
+                            },
+                          });
+                        }}
+                        className="p-2 text-red-500 hover:bg-red-100 rounded-xl transition-all duration-300 hover:scale-110 active:scale-95"
                         title="Xóa"
                       >
                         <Trash2 size={18} />

@@ -180,7 +180,7 @@ const TeacherManager = () => {
         setConfirmDelete({
           isOpen: true,
           title: 'Thành công',
-          message: 'Xóa hồ sơ thành công!',
+          message: data.message,
           type: 'success',
           onConfirm: () => setConfirmDelete({ ...confirmDelete, isOpen: false }),
           cancelText: '',

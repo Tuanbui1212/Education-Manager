@@ -10,6 +10,7 @@ export interface GetUsersParams {
   limit?: number;
   search?: string;
   roleId?: string;
+  status?: string;
 }
 
 export interface IStudentInfo {
@@ -47,6 +48,7 @@ export interface UserResponse {
 export interface UserModalProps {
   roles: IRole[];
   isOpen: boolean;
+  consultants?: IUser[];
   onClose: () => void;
   onSubmit: (data: any) => void;
   initialData?: IUser | null;

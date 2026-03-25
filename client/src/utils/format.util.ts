@@ -102,3 +102,23 @@ export const translateCycle = (cycle: string) => {
       return cycle;
   }
 };
+
+export const translateRole = (roleName?: string): string => {
+  if (!roleName) return 'Chưa phân quyền';
+
+  const normalizedRole = roleName.toLowerCase().trim();
+
+  const roleMap: Record<string, string> = {
+    student: 'Học viên',
+    teacher: 'Giáo viên',
+    consultant: 'Tư vấn viên',
+    sale: 'Nhân viên Sale',
+    'super admin': 'Quản trị viên',
+    manager: 'Quản lý',
+    accountant: 'Kế toán',
+    hr: 'Nhân sự',
+    staff: 'Nhân viên',
+  };
+
+  return roleMap[normalizedRole] || roleName;
+};

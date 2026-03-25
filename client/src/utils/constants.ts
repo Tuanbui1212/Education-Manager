@@ -3,6 +3,11 @@ export const API_ROOT = 'http://localhost:5000/api';
 export const PATHS = {
   HOME: '/',
   LOGIN: '/login',
+  FORGOT_PASSWORD: '/forgot-password',
+  RESET_PASSWORD: '/reset-password',
+
+  PROFILE_STUDENT: '/profile/student',
+  PROFILE_STAFF: '/profile/staff',
 
   //Dashboard
   DASHBOARD: '/',
@@ -11,14 +16,15 @@ export const PATHS = {
   USER: '/dashboard/users',
   USER_ID: '/dashboard/users/:id',
 
-  TRANINING_STUDENT: '/training/students',
-
   //HR
-  HR_TEACHERS: '/hr/trachers',
-  HR_TEACHERS_ID: '/hr/trachers/:id',
+  HR_TEACHERS: '/hr/teachers',
+  HR_TEACHERS_ID: '/hr/teachers/:id',
 
   HR_TUTORS: '/hr/tutors',
+
   HR_STAFFS: '/hr/staffs',
+  HR_STAFFS_ID: '/hr/staffs/:id',
+
   HR_CONTRACTS: '/hr/contracts',
 
   //Settings
@@ -27,11 +33,24 @@ export const PATHS = {
   SETTINGS_FIXED_COSTS: '/settings/fixed-costs',
   SETTINGS_EXPENDITURES: '/settings/expenditures',
   SETTINGS_ROOMS: '/settings/rooms',
+  SETTINGS_ROOMS_ID: '/settings/rooms/:id',
   SETTINGS_NOTIFICATION_TEMPLATES: '/settings/notification-templates',
 
   //Training
+  TRANINING_STUDENT: '/training/students',
+  TRANINING_STUDENT_ID: '/training/students/:id',
   TRAINING_COURSES: '/training/courses',
   TRAINING_CLASSES: '/training/classes',
+  TRAINING_CLASSES_ID: '/training/classes/:id',
+  TRAINING_SCHEDULES: '/training/schedules',
+  TRAINING_ATTENDANCES: '/training/attendances',
+  TRAINING_ATTENDANCES_ID: '/training/attendances/:id',
+  //Finace
+  FINANCE_INVOICES: '/finance/invoices',
+  FINANCE_INVOICES_ID: '/finance/invoices/:id',
+
+  FINANCE_TRANSACTIONS: '/finance/transactions',
+  FINANCE_TRANSACTIONS_ID: '/finance/transactions/:id',
 };
 
 export const STATUS_OPTIONS = [
@@ -42,8 +61,23 @@ export const STATUS_OPTIONS = [
   { value: 'INACTIVE', label: 'Đã nghỉ' },
 ];
 
+export const STATUS_USER_OPTIONS = [
+  { value: 'ACTIVE', label: 'Hoạt Động' },
+  { value: 'INACTIVE', label: 'Ngừng hoạt động' },
+];
+
 export const TEACHER_STATUS_OPTIONS = [
   { value: 'ALL', label: 'Tất cả trạng thái' },
   { value: 'ACTIVE', label: 'Đang giảng dạy' },
   { value: 'INACTIVE', label: 'Đã nghỉ' },
+];
+
+export const DAYS_OF_WEEK = [
+  { label: 'T2', value: 1 },
+  { label: 'T3', value: 2 },
+  { label: 'T4', value: 3 },
+  { label: 'T5', value: 4 },
+  { label: 'T6', value: 5 },
+  { label: 'T7', value: 6 },
+  { label: 'CN', value: 0 },
 ];

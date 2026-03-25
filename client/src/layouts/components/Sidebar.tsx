@@ -9,8 +9,11 @@ import {
   PanelRightClose,
   ChevronDown,
   ChevronRight,
+  LogOut,
+  User,
+  KeyRound,
 } from 'lucide-react';
-import { useState, memo } from 'react';
+import { useState, memo, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import SidebarItem from '../../components/SidebarItem';
 import RequirePermission from '../../components/RequirePermission';
@@ -28,23 +31,67 @@ function Sidebar() {
     finance: false,
     settings: false,
   });
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
+  const profileMenuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
   const currentUser = getDecodedToken();
   const userName = currentUser?.name;
   const userEmail = currentUser?.email;
-
   const currentPath = location.pathname;
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setIsProfileMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const toggleMenu = (menuKey: string) => {
     if (!expanded) {
       setExpanded(true);
-      setOpenMenus((prev) => ({ ...prev, [menuKey]: true }));
+      setOpenMenus((prev) => {
+        const resetMenus = Object.keys(prev).reduce(
+          (acc, key) => ({ ...acc, [key]: false }),
+          {} as Record<string, boolean>,
+        );
+        return { ...resetMenus, [menuKey]: true };
+      });
       return;
     }
-    setOpenMenus((prev) => ({ ...prev, [menuKey]: !prev[menuKey] }));
+
+    const isTargetOpen = openMenus[menuKey];
+    const isAnyOtherOpen = Object.keys(openMenus).some((key) => key !== menuKey && openMenus[key]);
+
+    if (isAnyOtherOpen && !isTargetOpen) {
+      setOpenMenus((prev) =>
+        Object.keys(prev).reduce((acc, key) => ({ ...acc, [key]: false }), {} as Record<string, boolean>),
+      );
+
+      setTimeout(() => {
+        setOpenMenus((prev) => ({ ...prev, [menuKey]: true }));
+      }, 300);
+    } else {
+      setOpenMenus((prev) => {
+        const resetMenus = Object.keys(prev).reduce(
+          (acc, key) => ({ ...acc, [key]: false }),
+          {} as Record<string, boolean>,
+        );
+        return { ...resetMenus, [menuKey]: !prev[menuKey] };
+      });
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/login');
   };
 
   const menuConfig = [
@@ -68,19 +115,36 @@ function Sidebar() {
         { label: 'Đội ngũ giáo viên', path: PATHS.HR_TEACHERS, permission: PERMISSIONS.USER.VIEW },
         { label: 'Đội ngũ trợ giảng', path: PATHS.HR_TUTORS, permission: PERMISSIONS.USER.VIEW },
         { label: 'Nhân viên văn phòng', path: PATHS.HR_STAFFS, permission: PERMISSIONS.USER.VIEW },
-        { label: 'Hợp đồng & Lương', path: PATHS.HR_CONTRACTS, permission: PERMISSIONS.USER.VIEW },
+        {
+          label: 'Hợp đồng & Lương',
+          path: PATHS.HR_CONTRACTS,
+          permission: PERMISSIONS.SALARY?.VIEW || PERMISSIONS.USER.VIEW,
+        },
       ],
     },
     {
       key: 'training',
       label: 'Quản lý đào tạo',
       icon: <BookOpen size={20} />,
-      permission: PERMISSIONS.ROOM.VIEW,
+      permission: PERMISSIONS.CLASS.VIEW,
       subItems: [
-        { label: 'Quản lý học viên', path: '/training/students', permission: PERMISSIONS.ROOM.VIEW },
-        { label: 'Quản lý khóa học', path: '/training/courses', permission: PERMISSIONS.ROOM.VIEW },
-        { label: 'Quản lý lớp học', path: '/training/classes', permission: PERMISSIONS.ROOM.VIEW },
-        { label: 'Xếp thời khóa biểu', path: '/training/schedule', permission: PERMISSIONS.ROOM.VIEW },
+        { label: 'Quản lý học viên', path: '/training/students', permission: PERMISSIONS.USER.VIEW },
+        {
+          label: 'Quản lý khóa học',
+          path: '/training/courses',
+          permission: PERMISSIONS.COURSE.VIEW || PERMISSIONS.CLASS.VIEW,
+        },
+        { label: 'Quản lý lớp học', path: '/training/classes', permission: PERMISSIONS.CLASS.VIEW },
+        {
+          label: 'Xếp thời khóa biểu',
+          path: '/training/schedules',
+          permission: PERMISSIONS.SHIFT?.VIEW || PERMISSIONS.CLASS.VIEW,
+        },
+        {
+          label: 'Điểm danh',
+          path: PATHS.TRAINING_ATTENDANCES,
+          permission: PERMISSIONS.ATTENDANCE.VIEW
+        },
       ],
     },
     {
@@ -89,8 +153,12 @@ function Sidebar() {
       icon: <BadgeDollarSign size={20} />,
       permission: PERMISSIONS.EXPENDITURE.VIEW,
       subItems: [
-        { label: 'Học phí học viên', path: '/finance/tuition', permission: PERMISSIONS.EXPENDITURE.VIEW },
-        { label: 'Thu chi tổng quát', path: '/finance/transactions', permission: PERMISSIONS.EXPENDITURE.VIEW },
+        {
+          label: 'Học phí học viên',
+          path: PATHS.FINANCE_INVOICES,
+          permission: PERMISSIONS.INVOICE?.VIEW || PERMISSIONS.EXPENDITURE.VIEW,
+        },
+        { label: 'Thu chi tổng quát', path: PATHS.FINANCE_TRANSACTIONS, permission: PERMISSIONS.EXPENDITURE.VIEW },
         { label: 'Báo cáo tài chính', path: '/finance/reports', permission: PERMISSIONS.EXPENDITURE.VIEW },
       ],
     },
@@ -100,7 +168,7 @@ function Sidebar() {
       icon: <Settings size={20} />,
       permission: PERMISSIONS.ROOM.VIEW,
       subItems: [
-        { label: 'Ca học', path: PATHS.SETTINGS_SHIFTS, permission: PERMISSIONS.ROOM.VIEW },
+        { label: 'Ca học', path: PATHS.SETTINGS_SHIFTS, permission: PERMISSIONS.SHIFT?.VIEW || PERMISSIONS.ROOM.VIEW },
         { label: 'Phòng học', path: PATHS.SETTINGS_ROOMS, permission: PERMISSIONS.ROOM.VIEW },
         {
           label: 'Các loại chi phí cố định',
@@ -118,16 +186,16 @@ function Sidebar() {
 
   return (
     <aside
-      className={`h-screen bg-gray-900 text-white flex flex-col transition-all duration-300 ease-in-out top-0 sticky left-0 z-50 ${expanded ? 'w-64' : 'w-20'
-        }`}
+      className={`h-screen bg-gray-900 text-white flex flex-col transition-all duration-300 ease-in-out top-0 sticky left-0 z-50 ${
+        expanded ? 'w-64' : 'w-20'
+      }`}
     >
       <div className="p-4 flex justify-between items-center border-b border-gray-700 h-16">
         <div
-          className={`font-bold text-xl overflow-hidden transition-all duration-300 whitespace-nowrap ${expanded ? 'w-32 opacity-100' : 'w-0 opacity-0'
-            }`}
-        >
-          Admin Portal
-        </div>
+          className={`font-bold text-xl overflow-hidden transition-all duration-300 whitespace-nowrap ${
+            expanded ? 'w-32 opacity-100' : 'w-0 opacity-0'
+          }`}
+        ></div>
 
         <button
           onClick={() => setExpanded(!expanded)}
@@ -137,7 +205,7 @@ function Sidebar() {
         </button>
       </div>
 
-      <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto custom-scrollbar">
+      <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto overflow-x-hidden custom-scrollbar">
         <SidebarItem
           icon={<LayoutDashboard size={20} />}
           text="Dashboard"
@@ -155,14 +223,16 @@ function Sidebar() {
               <div className="flex flex-col space-y-1">
                 <button
                   onClick={() => toggleMenu(menu.key)}
-                  className={`flex items-center justify-between w-full p-2.5 rounded-xl transition-colors ${isChildActive ? 'bg-gray-800 text-blue-400' : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                    }`}
+                  className={`flex items-center justify-between w-full p-2.5 rounded-xl transition-colors ${
+                    isChildActive ? 'bg-gray-800 text-blue-400' : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                  }`}
                 >
                   <div className="flex items-center gap-3">
                     <span className={isChildActive ? 'text-blue-400' : 'text-gray-400'}>{menu.icon}</span>
                     <span
-                      className={`font-medium text-sm whitespace-nowrap transition-all duration-300 ${expanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'
-                        }`}
+                      className={`font-medium text-sm whitespace-nowrap transition-all duration-300 ${
+                        expanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'
+                      }`}
                     >
                       {menu.label}
                     </span>
@@ -176,17 +246,19 @@ function Sidebar() {
                 </button>
 
                 <div
-                  className={`flex flex-col overflow-hidden transition-all duration-300 ${isOpen && expanded ? 'max-h-[500px] opacity-100 mt-1' : 'max-h-0 opacity-0'
-                    }`}
+                  className={`flex flex-col overflow-hidden transition-all duration-300 ${
+                    isOpen && expanded ? 'max-h-[500px] opacity-100 mt-1' : 'max-h-0 opacity-0'
+                  }`}
                 >
                   {menu.subItems.map((subItem) => (
                     <RequirePermission key={subItem.path} required={subItem.permission}>
                       <button
                         onClick={() => navigate(subItem.path)}
-                        className={`flex items-center pl-11 pr-4 py-2 text-sm rounded-lg transition-colors whitespace-nowrap ${currentPath === subItem.path
+                        className={`flex items-center pl-11 pr-4 py-2 text-sm rounded-lg transition-colors whitespace-nowrap ${
+                          currentPath === subItem.path
                             ? 'text-white bg-gray-800/50 font-medium'
                             : 'text-gray-400 hover:text-white hover:bg-gray-800/30'
-                          }`}
+                        }`}
                       >
                         {subItem.label}
                       </button>
@@ -199,17 +271,74 @@ function Sidebar() {
         })}
       </nav>
 
-      <div className="border-t border-gray-700 p-3 flex items-center">
-        <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center font-bold flex-shrink-0">
-          AD
-        </div>
-        <div
-          className={`ml-3 overflow-hidden transition-all duration-300 ${expanded ? 'w-40 opacity-100' : 'w-0 opacity-0'
-            }`}
+      <div className="border-t border-gray-700 p-3 relative" ref={profileMenuRef}>
+        <button
+          onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+          className={`w-full flex items-center gap-3 p-2 rounded-xl hover:bg-gray-800 transition-colors ${
+            expanded ? 'justify-start' : 'justify-center'
+          }`}
         >
-          <p className="text-sm font-medium whitespace-nowrap">{userName}</p>
-          <p className="text-xs text-gray-400 whitespace-nowrap">{userEmail}</p>
-        </div>
+          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 flex items-center justify-center font-bold text-white flex-shrink-0 shadow-md">
+            {userName ? userName.charAt(0).toUpperCase() : 'AD'}
+          </div>
+
+          <div
+            className={`flex flex-col items-start overflow-hidden transition-all duration-300 ${
+              expanded ? 'w-full opacity-100' : 'w-0 opacity-0'
+            }`}
+          >
+            <p className="text-sm font-semibold text-gray-200 whitespace-nowrap truncate w-full">
+              {userName || 'Admin'}
+            </p>
+            <p className="text-xs text-gray-500 whitespace-nowrap truncate w-full">{userEmail || 'Chưa cập nhật'}</p>
+          </div>
+        </button>
+
+        {isProfileMenuOpen && (
+          <div
+            className={`absolute bottom-[calc(100%+10px)] left-3 bg-gray-800 border border-gray-700 rounded-xl shadow-2xl py-2 flex flex-col min-w-[200px] z-50 animate-in fade-in slide-in-from-bottom-2 duration-200 ${
+              !expanded && 'left-14'
+            }`}
+          >
+            {!expanded && (
+              <div className="px-4 py-2 border-b border-gray-700 mb-2">
+                <p className="text-sm font-semibold text-white truncate">{userName}</p>
+                <p className="text-xs text-gray-400 truncate">{userEmail}</p>
+              </div>
+            )}
+
+            <button
+              onClick={() => {
+                navigate('/profile');
+                setIsProfileMenuOpen(false);
+              }}
+              className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-gray-700 transition-colors w-full text-left"
+            >
+              <User size={18} />
+              Thông tin cá nhân
+            </button>
+
+            <button
+              onClick={() => {
+                setIsProfileMenuOpen(false);
+              }}
+              className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-gray-700 transition-colors w-full text-left"
+            >
+              <KeyRound size={18} />
+              Đổi mật khẩu
+            </button>
+
+            <div className="h-px bg-gray-700 my-1 mx-2"></div>
+
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors w-full text-left"
+            >
+              <LogOut size={18} />
+              Đăng xuất
+            </button>
+          </div>
+        )}
       </div>
     </aside>
   );

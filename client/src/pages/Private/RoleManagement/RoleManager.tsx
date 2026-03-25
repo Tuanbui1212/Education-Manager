@@ -48,8 +48,6 @@ const RoleManager = () => {
     refetch: fetchRoles,
   } = useFetch(roleService.getRoles, queryParams, [page, debouncedSearch, limit]);
 
-  console.log(roles);
-
   const sortedRoles = roles?.sort((a: any, b: any) => {
     const isASuperAdmin = a.name?.toLowerCase() === 'super admin';
     const isBSuperAdmin = b.name?.toLowerCase() === 'super admin';

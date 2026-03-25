@@ -6,9 +6,8 @@ import PageHeader from '../../../components/PageHeader';
 import TablePagination from '../../../components/TablePagination';
 import SearchInput from '../../../components/SearchInput';
 import ConfirmModal from '../../../components/ConfirmModal';
-import TableSkeleton from '../../../components/TableSkeleton';
 
-import NotificationTemplateModal from './NotificationTemplateModal';
+import NotificationTemplateModal, { SYSTEM_TEMPLATE_CODES } from './NotificationTemplateModal';
 
 import useFetch from '../../../hooks/useFetch';
 import useDebounce from '../../../hooks/useDebounce';
@@ -35,7 +34,7 @@ const ListNotificationTemplate = () => {
     title: '',
     message: '',
     type: 'success' as 'success' | 'danger' | 'warning' | 'info',
-    onConfirm: () => { },
+    onConfirm: () => {},
   });
 
   const queryParams = {
@@ -53,8 +52,6 @@ const ListNotificationTemplate = () => {
     refetch: fetchTemplates,
   } = useFetch(notificationTemplateService.getTemplates, queryParams, [page, debouncedSearch, type, limit]);
 
-  console.log(templates);
-
   const handleCreateTemplate = async (formData: Partial<INotificationTemplate>) => {
     try {
       const data = await notificationTemplateService.createTemplate(formData);
@@ -71,11 +68,10 @@ const ListNotificationTemplate = () => {
         setPage(1);
       }
     } catch (error: any) {
-      const detailError = error.response?.data?.message || 'Có lỗi xảy ra khi thêm mới!';
       setConfirmConfig({
         isOpen: true,
         title: 'Lỗi',
-        message: detailError,
+        message: error.response?.data?.message || 'Có lỗi xảy ra!',
         type: 'danger',
         onConfirm: () => setConfirmConfig({ ...confirmConfig, isOpen: false }),
       });
@@ -84,7 +80,6 @@ const ListNotificationTemplate = () => {
 
   const handleUpdateTemplate = async (formData: Partial<INotificationTemplate>) => {
     if (!selectedTemplate?._id) return;
-
     try {
       const data = await notificationTemplateService.updateTemplate(selectedTemplate._id, formData);
       if (data.success) {
@@ -95,17 +90,15 @@ const ListNotificationTemplate = () => {
           type: 'success',
           onConfirm: () => setConfirmConfig({ ...confirmConfig, isOpen: false }),
         });
-
         fetchTemplates();
         setShowModalAdd(false);
         setSelectedTemplate(null);
       }
     } catch (error: any) {
-      const detailError = error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật!';
       setConfirmConfig({
         isOpen: true,
         title: 'Lỗi',
-        message: detailError,
+        message: error.response?.data?.message || 'Có lỗi xảy ra!',
         type: 'danger',
         onConfirm: () => setConfirmConfig({ ...confirmConfig, isOpen: false }),
       });
@@ -132,11 +125,10 @@ const ListNotificationTemplate = () => {
             fetchTemplates();
           }
         } catch (error: any) {
-          const detailError = error.response?.data?.message || 'Có lỗi xảy ra khi xóa!';
           setConfirmConfig({
             isOpen: true,
             title: 'Lỗi',
-            message: detailError,
+            message: error.response?.data?.message || 'Lỗi xóa!',
             type: 'danger',
             onConfirm: () => setConfirmConfig({ ...confirmConfig, isOpen: false }),
           });
@@ -151,6 +143,7 @@ const ListNotificationTemplate = () => {
   };
 
   const totalPages = Math.ceil((totalCount || 0) / limit);
+  const getEventName = (code?: string) => SYSTEM_TEMPLATE_CODES.find((c) => c.value === code)?.label || code || 'N/A';
 
   if (error) return <div className="p-8 text-red-500 text-center">Lỗi: {error}</div>;
 
@@ -185,12 +178,10 @@ const ListNotificationTemplate = () => {
             setSearchInput={setSearchInput}
             setPage={setPage}
           />
-
           <div className="relative inline-block">
             <Button variant="outline" icon={<Filter size={18} />} onClick={() => setOpen(!open)}>
               Lọc
             </Button>
-
             {open && (
               <div className="absolute mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
                 {[
@@ -214,7 +205,6 @@ const ListNotificationTemplate = () => {
             )}
           </div>
         </div>
-
         <Button variant="primary" icon={<Plus size={18} />} onClick={() => setShowModalAdd(true)}>
           Thêm mẫu
         </Button>
@@ -225,9 +215,9 @@ const ListNotificationTemplate = () => {
           <thead>
             <tr className="bg-primary text-white text-sm sticky top-0 z-10 ">
               <th className="p-4 font-semibold w-16 text-center rounded-tl-xl">No.</th>
+              <th className="p-4 font-semibold">Sự kiện áp dụng</th>
               <th className="p-4 font-semibold">Tiêu đề mẫu</th>
               <th className="p-4 font-semibold">Loại</th>
-              <th className="p-4 font-semibold">Nội dung (Rút gọn)</th>
               <th className="p-4 font-semibold text-center rounded-tr-xl">Thao tác</th>
             </tr>
           </thead>
@@ -236,6 +226,7 @@ const ListNotificationTemplate = () => {
               templates.map((template, index) => (
                 <tr key={template._id} className="hover:bg-blue-50/50 transition-colors group">
                   <td className="p-4 text-text-secondary font-medium text-center">{index + 1 + (page - 1) * limit}</td>
+                  <td className="p-4 font-medium text-gray-700">{getEventName(template.code)}</td>
                   <td className="p-4 font-semibold text-blue-600">{template.title}</td>
                   <td className="p-4">
                     <span
@@ -244,20 +235,18 @@ const ListNotificationTemplate = () => {
                       {template.type}
                     </span>
                   </td>
-                  <td className="p-4 text-text-main max-w-xs truncate">{template.content}</td>
                   <td className="p-4">
                     <div className="flex items-center justify-center gap-3">
                       <button
                         onClick={() => openEditModal(template)}
-                        className="p-2 text-blue-600 hover:bg-blue-100 rounded-xl transition-all duration-300 hover:scale-110 hover:-translate-y-1 active:scale-95"
+                        className="p-2 text-blue-600 hover:bg-blue-100 rounded-xl transition-all duration-300 hover:scale-110 active:scale-95"
                         title="Sửa"
                       >
                         <Edit2 size={18} />
                       </button>
-
                       <button
                         onClick={() => template._id && handleDeleteTemplate(template._id)}
-                        className="p-2 text-red-500 hover:bg-red-100 rounded-xl transition-all duration-300 hover:scale-110 hover:rotate-12 active:scale-95"
+                        className="p-2 text-red-500 hover:bg-red-100 rounded-xl transition-all duration-300 hover:scale-110 active:scale-95"
                         title="Xóa"
                       >
                         <Trash2 size={18} />
@@ -281,7 +270,6 @@ const ListNotificationTemplate = () => {
             )}
           </tbody>
         </table>
-
         <TablePagination totalPages={totalPages} page={page} setPage={setPage} limit={limit} setLimit={setLimit} />
       </div>
     </div>

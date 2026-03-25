@@ -8,7 +8,6 @@ import { PERMISSIONS } from '../config/permissions.config';
 const router = Router();
 const userController = new UserController();
 
-// [POST] Tạo mới User
 router.post(
   '/',
   verifyToken,
@@ -17,13 +16,10 @@ router.post(
   userController.create,
 );
 
-// [GET] Lấy danh sách Users
 router.get('/', verifyToken, requirePermission(PERMISSIONS.USER.VIEW), userController.getAll);
 
-// [GET] Lấy chi tiết 1 User
 router.get('/:id', verifyToken, requirePermission(PERMISSIONS.USER.VIEW), userController.getOne);
 
-// [PUT] Cập nhật User
 router.put(
   '/:id',
   verifyToken,
@@ -32,7 +28,6 @@ router.put(
   userController.update,
 );
 
-// [DELETE] Xóa User
 router.delete('/:id', verifyToken, requirePermission(PERMISSIONS.USER.DELETE), userController.delete);
 
 export default router;
