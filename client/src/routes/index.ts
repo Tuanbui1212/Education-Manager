@@ -10,6 +10,7 @@ import { roleRoutes } from './role.routes';
 import { courseRoutes } from './course.routes';
 import { classRoutes } from './class.routes';
 import scheduleRoutes from './schedule.routes';
+import attendanceRoutes from './attendance.routes';
 import { invoiceRoutes } from './invoice.routes';
 import { transactionRoutes } from './transaction.routes';
 
@@ -27,6 +28,7 @@ const privateRoutes = [
   ...courseRoutes,
   ...classRoutes,
   ...scheduleRoutes,
+  ...attendanceRoutes,
   ...invoiceRoutes,
   ...transactionRoutes,
 ];
