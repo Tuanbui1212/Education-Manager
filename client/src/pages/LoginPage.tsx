@@ -4,6 +4,7 @@ import { Mail, Lock, Loader2, Eye, EyeOff } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '../services/auth.service';
 import { PATHS } from '../utils/constants';
+import { getDecodedToken } from '../utils/auth';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -26,7 +27,9 @@ const LoginPage = () => {
 
       if (result && result.data) {
         localStorage.setItem('accessToken', result.data);
-        navigate('/');
+        const currentUser = getDecodedToken()
+        if (currentUser?.role?.name.toUpperCase() === 'STUDENT') navigate('/test')
+        else navigate('/')
       }
     } catch (error: any) {
       alert(error.response?.data?.message || 'Đăng nhập thất bại. Vui lòng thử lại!');

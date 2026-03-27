@@ -180,12 +180,16 @@ export class ClassService {
   }
 
   async getClassByStudentId(id: string) {
-    const ClassData = await ClassModel.find({ studentIds: id })
-      .select('-studentIds -documents -__v')
-      .populate('courseId', 'title')
-      .populate('teacherId', 'fullName')
-      .populate('roomId', 'name');
-    return ClassData;
+    const [classesData, totalCount] = await Promise.all([
+      ClassModel.find({ studentIds: id })
+        .select('-studentIds -documents -__v')
+        .populate('courseId', 'title')
+        .populate('teacherId', 'fullName')
+        .populate('roomId', 'name'),
+      ClassModel.countDocuments({ studentIds: id })
+    ])
+
+    return { classesData, totalCount };
   }
 
   async enrollStudent(data: { classId: string; studentId: string; finalAmount: number; dueDate?: string }) {

@@ -84,12 +84,13 @@ export class ClassController {
   getClassByStudentId = async (req: Request<{ id: string }>, res: Response) => {
     try {
       const { id } = req.params;
-      const classData = await this.classService.getClassByStudentId(id);
+      const { classesData, totalCount } = await this.classService.getClassByStudentId(id);
 
       res.status(200).json({
         success: true,
-        data: classData,
+        data: classesData,
         message: 'Lấy danh sách lớp học thành công',
+        totalCount,
       });
     } catch (error) {
       console.error(`[getClassByStudentId] Lỗi: `, error);

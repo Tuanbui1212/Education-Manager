@@ -1,46 +1,21 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   BookOpen,
   Calendar,
   CreditCard,
   User,
-  Bell,
-  LogOut,
-  ChevronDown,
-  Clock,
   MapPin,
   QrCode,
   X,
   CheckCircle2,
-  Phone,
-  Mail,
   ShieldCheck,
-  GraduationCap,
 } from 'lucide-react';
-
-// --- MOCK DATA (DỮ LIỆU GIẢ LẬP) ---
-const MOCK_CHILDREN = [
-  { id: '1', name: 'Nguyễn Văn A', grade: 'Lớp 5', avatar: 'A' },
-  { id: '2', name: 'Nguyễn Thị B', grade: 'Lớp 8', avatar: 'B' },
-];
-
-const MOCK_CLASSES = [
-  {
-    id: 'c1',
-    name: 'Tiếng Anh Giao tiếp Kids 1',
-    teacher: 'Ms. Sarah',
-    schedule: 'T2, T4 (18:00 - 19:30)',
-    room: 'Phòng 201',
-  },
-  {
-    id: 'c2',
-    name: 'Toán Tư duy Nâng cao',
-    teacher: 'Thầy Hùng',
-    schedule: 'T7, CN (08:00 - 09:30)',
-    room: 'Phòng 105',
-  },
-];
-
+import Header from '../layouts/ProfileLayout/Header';
+import Footer from '../layouts/ProfileLayout/Footer';
+import useFetch from '../hooks/useFetch';
+import { classService } from '../services/class.service';
+import { getDecodedToken } from '../utils/auth';
+import ProfileLayout from '../layouts/ProfileLayout';
 const MOCK_INVOICES = [
   { id: 'inv1', title: 'Học phí Tiếng Anh (Tháng 10)', amount: 2500000, dueDate: '2023-10-15', status: 'PENDING' },
   { id: 'inv2', title: 'Giáo trình & Đồng phục', amount: 450000, dueDate: '2023-10-20', status: 'PARTIAL' },
@@ -52,15 +27,14 @@ const formatCurrency = (amount: number) => {
 };
 
 // --- COMPONENT CHÍNH ---
-const ParentPortal = () => {
-  // State quản lý bé đang được chọn (Lấy bé đầu tiên làm mặc định)
-  const [selectedChild, setSelectedChild] = useState(MOCK_CHILDREN[0]);
-  const [showChildDropdown, setShowChildDropdown] = useState(false);
-
-  // State quản lý Modal Thanh toán
+const StudentProfile = () => {
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const currentUser = getDecodedToken()
+  const { data: classesData, totalCount } = useFetch(classService.getClassesByStudentId, currentUser?.id)
+  console.log(classesData, totalCount)
 
   // Hàm mở Modal thanh toán
   const handleOpenPayment = (invoice: any) => {
@@ -79,99 +53,15 @@ const ParentPortal = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
-      {/* 1. HEADER DÀNH RIÊNG CHO PHỤ HUYNH */}
-      <header className="bg-white shadow-sm sticky top-0 z-40 border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            {/* Logo */}
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-blue-600/20">
-                <GraduationCap size={24} />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-800 tracking-tight">EduCenter</h1>
-                <p className="text-[10px] uppercase tracking-widest text-blue-600 font-bold">Parent Portal</p>
-              </div>
-            </div>
-
-            {/* Child Selector & Actions */}
-            <div className="flex items-center gap-6">
-              {/* Chọn bé */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowChildDropdown(!showChildDropdown)}
-                  className="flex items-center gap-3 bg-gray-50 hover:bg-gray-100 py-2 px-4 rounded-full border border-gray-200 transition-colors"
-                >
-                  <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
-                    {selectedChild.avatar}
-                  </div>
-                  <div className="text-left hidden sm:block">
-                    <p className="text-sm font-semibold text-gray-800">Hồ sơ: {selectedChild.name}</p>
-                    <p className="text-xs text-gray-500">{selectedChild.grade}</p>
-                  </div>
-                  <ChevronDown size={16} className="text-gray-400" />
-                </button>
-
-                {/* Dropdown chọn bé */}
-                {showChildDropdown && (
-                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
-                    <div className="p-3 bg-gray-50 border-b border-gray-100">
-                      <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Chuyển đổi hồ sơ</p>
-                    </div>
-                    {MOCK_CHILDREN.map((child) => (
-                      <button
-                        key={child.id}
-                        onClick={() => {
-                          setSelectedChild(child);
-                          setShowChildDropdown(false);
-                        }}
-                        className={`w-full flex items-center gap-3 p-4 hover:bg-blue-50 transition-colors ${selectedChild.id === child.id ? 'bg-blue-50/50' : ''}`}
-                      >
-                        <div
-                          className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${selectedChild.id === child.id ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}
-                        >
-                          {child.avatar}
-                        </div>
-                        <div className="text-left">
-                          <p
-                            className={`text-sm font-bold ${selectedChild.id === child.id ? 'text-blue-700' : 'text-gray-800'}`}
-                          >
-                            {child.name}
-                          </p>
-                          <p className="text-xs text-gray-500">{child.grade}</p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Notification & Logout */}
-              <button className="relative p-2 text-gray-400 hover:text-blue-600 transition-colors">
-                <Bell size={24} />
-                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
-              </button>
-              <div className="w-px h-8 bg-gray-200 hidden sm:block"></div>
-              <button className="hidden sm:flex items-center gap-2 text-gray-500 hover:text-red-600 font-medium transition-colors">
-                <LogOut size={18} /> Đăng xuất
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* 2. MAIN CONTENT */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {/* Lời chào & Thống kê nhanh */}
-        <section className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl p-8 text-white shadow-lg relative overflow-hidden">
-          {/* Họa tiết nền */}
+    <>
+      <ProfileLayout>
+        <section className="bg-linear-to-r from-blue-600 to-indigo-700 rounded-3xl p-8 text-white shadow-lg relative overflow-hidden">
           <div className="absolute top-0 right-0 opacity-10 transform translate-x-1/4 -translate-y-1/4">
             <ShieldCheck size={250} />
           </div>
 
           <div className="relative z-10">
-            <h2 className="text-3xl font-bold mb-2">Xin chào Phụ huynh bé {selectedChild.name}! 👋</h2>
+            <h2 className="text-3xl font-bold mb-2">Xin chào! 👋</h2>
             <p className="text-blue-100 mb-8 max-w-2xl text-lg">
               Chào mừng bạn đến với cổng thông tin. Dưới đây là tình hình học tập và các khoản phí cần lưu ý.
             </p>
@@ -183,7 +73,7 @@ const ParentPortal = () => {
                 </div>
                 <div>
                   <p className="text-blue-100 text-sm font-medium">Đang theo học</p>
-                  <p className="text-2xl font-bold">{MOCK_CLASSES.length} Lớp</p>
+                  <p className="text-2xl font-bold">{totalCount} Lớp</p>
                 </div>
               </div>
               <div className="bg-white/10 backdrop-blur-md border border-white/20 p-5 rounded-2xl flex items-center gap-4">
@@ -201,19 +91,19 @@ const ParentPortal = () => {
           </div>
         </section>
 
-        {/* CÁC LỚP HỌC */}
+        {/* Classes */}
         <section>
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
               <Calendar className="text-blue-600" />
-              Lớp học của bé {selectedChild.name}
+              Lớp học
             </h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {MOCK_CLASSES.map((cls) => (
+            {classesData?.map((cls) => (
               <div
-                key={cls.id}
+                key={cls._id}
                 className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow group"
               >
                 <div className="flex justify-between items-start mb-4">
@@ -227,15 +117,23 @@ const ParentPortal = () => {
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 text-sm text-gray-600">
                     <User size={16} className="text-gray-400" />
-                    <span className="font-medium">{cls.teacher}</span>
+                    <span className="font-medium">
+                      {typeof cls.teacherId === 'object' && cls.teacherId !== null
+                        ? (cls.teacherId as any).fullName
+                        : 'Chưa phân công'}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-3 text-sm text-gray-600">
+                  {/* <div className="flex items-center gap-3 text-sm text-gray-600">
                     <Clock size={16} className="text-gray-400" />
                     <span>{cls.schedule}</span>
-                  </div>
+                  </div> */}
                   <div className="flex items-center gap-3 text-sm text-gray-600">
                     <MapPin size={16} className="text-gray-400" />
-                    <span>{cls.room}</span>
+                    <span>
+                      {typeof cls.roomId === 'object' && cls.roomId !== null
+                        ? (cls.roomId as any).name
+                        : 'Chưa xếp phòng'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -299,60 +197,7 @@ const ParentPortal = () => {
             )}
           </div>
         </section>
-      </main>
-
-      {/* 3. FOOTER */}
-      <footer className="bg-gray-900 text-gray-400 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div>
-            <div className="flex items-center gap-2 mb-4 text-white">
-              <GraduationCap size={28} />
-              <span className="text-xl font-bold">EduCenter</span>
-            </div>
-            <p className="text-sm">
-              Đồng hành cùng sự phát triển toàn diện của học sinh. Mang đến môi trường giáo dục hiện đại và chuyên
-              nghiệp.
-            </p>
-          </div>
-          <div>
-            <h4 className="text-white font-bold mb-4 uppercase tracking-wider text-sm">Hỗ trợ Phụ huynh</h4>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Hướng dẫn thanh toán
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Quy định học phí
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Câu hỏi thường gặp (FAQ)
-                </a>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="text-white font-bold mb-4 uppercase tracking-wider text-sm">Liên hệ</h4>
-            <ul className="space-y-3 text-sm">
-              <li className="flex items-center gap-3">
-                <Phone size={16} /> 1900 1234 (Ext: 1 cho Kế toán)
-              </li>
-              <li className="flex items-center gap-3">
-                <Mail size={16} /> hotrophuhuynh@educenter.edu.vn
-              </li>
-              <li className="flex items-start gap-3">
-                <MapPin size={16} className="shrink-0 mt-1" /> 123 Đường ABC, Quận X, TP. Y
-              </li>
-            </ul>
-          </div>
-        </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 pt-8 border-t border-gray-800 text-sm text-center">
-          &copy; {new Date().getFullYear()} EduCenter. Đã đăng ký bản quyền.
-        </div>
-      </footer>
+      </ProfileLayout>
 
       {/* 4. MODAL THANH TOÁN (GIẢ LẬP MÃ QR) */}
       {isPaymentModalOpen && selectedInvoice && (
@@ -393,7 +238,7 @@ const ParentPortal = () => {
                 </div>
 
                 {/* Hiệu ứng quét mô phỏng */}
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-blue-500/20 to-transparent h-1/2 rounded-3xl animate-[bounce_2s_infinite]"></div>
+                <div className="absolute inset-0 bg-linear-to-b from-transparent via-blue-500/20 to-transparent h-1/2 rounded-3xl animate-[bounce_2s_infinite]"></div>
               </div>
 
               <p className="text-sm text-center text-gray-600 mb-8 max-w-[250px]">
@@ -417,8 +262,8 @@ const ParentPortal = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 
-export default ParentPortal;
+export default StudentProfile;
