@@ -6,6 +6,7 @@ export interface IAttendance extends Document {
     classId: Types.ObjectId;
     homework: HomeworkStatus;
     teacherComment: string;
+    mark: number;
     status: AttendanceStatus;
 }
 

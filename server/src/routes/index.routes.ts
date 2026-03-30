@@ -13,6 +13,7 @@ import scheduleRouter from './schedule.routes';
 import attendanceRouter from './attendance.routes';
 import invoiceRouter from './invoice.route';
 import transactionRoute from './transaction.route';
+import attendanceNotificationRouter from './attendanceNotification.routes';
 
 function router(app: Application) {
   app.use('/api/users', userRouter);
@@ -29,6 +30,7 @@ function router(app: Application) {
   app.use('/api/attendances', attendanceRouter);
   app.use('/api/invoices', invoiceRouter);
   app.use('/api/transactions', transactionRoute);
+  app.use('/api/attendance-notifications', attendanceNotificationRouter);
 }
 
 export default router;

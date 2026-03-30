@@ -9,6 +9,7 @@ export interface IAttendance {
     classId: string;
     homework: HomeworkStatus;
     teacherComment: string;
+    mark?: number;
     status: AttendanceStatus;
 }
 

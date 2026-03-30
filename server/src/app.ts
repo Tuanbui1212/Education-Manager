@@ -4,6 +4,8 @@ import morgan from 'morgan';
 import cors from 'cors';
 import connectDB from './config/db';
 import router from './routes/index.routes';
+import http from 'http';
+import { initSocket } from './lib/socket';
 
 import { CronService } from './services/cron.service';
 
@@ -26,7 +28,11 @@ app.use(morgan('dev'));
 router(app);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const server = http.createServer(app);
+
+initSocket(server);
+
+server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   const cronService = new CronService();
   cronService.init();

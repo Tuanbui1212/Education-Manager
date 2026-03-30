@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   BookOpen,
   Calendar,
@@ -10,8 +10,6 @@ import {
   CheckCircle2,
   ShieldCheck,
 } from 'lucide-react';
-import Header from '../layouts/ProfileLayout/Header';
-import Footer from '../layouts/ProfileLayout/Footer';
 import useFetch from '../hooks/useFetch';
 import { classService } from '../services/class.service';
 import { getDecodedToken } from '../utils/auth';
