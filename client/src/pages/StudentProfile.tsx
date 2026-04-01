@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import {
   BookOpen,
   Calendar,
@@ -9,11 +9,22 @@ import {
   X,
   CheckCircle2,
   ShieldCheck,
+  UserIcon,
+  CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
 } from 'lucide-react';
 import useFetch from '../hooks/useFetch';
 import { classService } from '../services/class.service';
 import { getDecodedToken } from '../utils/auth';
 import ProfileLayout from '../layouts/ProfileLayout';
+import { startOfWeek, addDays, subWeeks, addWeeks, format, isSameDay } from 'date-fns';
+import { scheduleService } from '../services/schedule.service';
+import { vi } from 'date-fns/locale';
+import { shiftService } from '../services/shift.service';
+import { ClassStatus } from '../types/class.type';
+
 const MOCK_INVOICES = [
   { id: 'inv1', title: 'Học phí Tiếng Anh (Tháng 10)', amount: 2500000, dueDate: '2023-10-15', status: 'PENDING' },
   { id: 'inv2', title: 'Giáo trình & Đồng phục', amount: 450000, dueDate: '2023-10-20', status: 'PARTIAL' },
@@ -29,11 +40,63 @@ const StudentProfile = () => {
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
 
   const currentUser = getDecodedToken()
   const { data: classesData, totalCount } = useFetch(classService.getClassesByStudentId, currentUser?.id)
   console.log(classesData, totalCount)
 
+  const handlePrevWeek = () => setCurrentWeekStart((prev) => subWeeks(prev, 1));
+  const handleNextWeek = () => setCurrentWeekStart((prev) => addWeeks(prev, 1));
+  const handleCurrentWeek = () => setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }));
+
+  const weekDays = useMemo(() => {
+    return Array.from({ length: 7 }).map((_, i) => addDays(currentWeekStart, i));
+  }, [currentWeekStart]);
+
+  const { data: shiftsData } = useFetch(shiftService.getShifts, { limit: 100 }, []);
+  const shiftsList = useMemo(() => {
+    const list = Array.isArray(shiftsData) ? shiftsData : (shiftsData as any)?.data || [];
+    return list.sort((a: any, b: any) => a.startTime.localeCompare(b.startTime));
+  }, [shiftsData]);
+
+  const [scheduleData, setScheduleData] = useState<any[]>([]);
+  const [scheduleLoading, setScheduleLoading] = useState(false);
+
+  useEffect(() => {
+    if (!classesData || !Array.isArray(classesData) || classesData.length === 0) {
+      setScheduleData([]);
+      return;
+    }
+    const fetchAllSchedules = async () => {
+      setScheduleLoading(true);
+      try {
+        const promises = classesData.map((cls: any) =>
+          scheduleService.getSchedules({ classId: cls._id, limit: 1000 })
+        );
+        const results = await Promise.all(promises);
+        const allSchedules = results.flatMap((result: any) => {
+          return Array.isArray(result) ? result : result.data || [];
+        });
+        setScheduleData(allSchedules);
+      } catch (error) {
+        console.error('Lỗi tải lịch học:', error);
+      } finally {
+        setScheduleLoading(false);
+      }
+    };
+    fetchAllSchedules();
+  }, [classesData, currentWeekStart]);
+
+  const getScheduleForCell = (date: Date, shiftId: string) => {
+    return scheduleData?.find((schedule: any) => {
+      const scheduleDate = new Date(schedule.date);
+      const isSameDate = isSameDay(scheduleDate, date);
+      const isSameShift =
+        typeof schedule.shiftId === 'object' ? schedule.shiftId._id === shiftId : schedule.shiftId === shiftId;
+      return isSameDate && isSameShift;
+    });
+  };
   // Hàm mở Modal thanh toán
   const handleOpenPayment = (invoice: any) => {
     setSelectedInvoice(invoice);
@@ -108,7 +171,10 @@ const StudentProfile = () => {
                   <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
                     <BookOpen size={24} />
                   </div>
-                  <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full">Đang học</span>
+                  <span className={`bg-${cls.status === ClassStatus.COMPLETED ? 'red' : cls.status === ClassStatus.ACTIVE ? 'blue' : 'green'}-100 text-${cls.status === ClassStatus.COMPLETED
+                    ? 'red' : cls.status === ClassStatus.ACTIVE ? 'blue' : 'green'}-700 text-xs font-bold px-3 py-1 rounded-full`}>
+                    {cls.status === ClassStatus.COMPLETED ? 'Đã hoàn thành' : cls.status === ClassStatus.ACTIVE ? 'Đang học' : 'Sắp diễn ra'}
+                  </span>
                 </div>
                 <h4 className="font-bold text-lg text-gray-800 mb-4 line-clamp-2">{cls.name}</h4>
 
@@ -121,10 +187,6 @@ const StudentProfile = () => {
                         : 'Chưa phân công'}
                     </span>
                   </div>
-                  {/* <div className="flex items-center gap-3 text-sm text-gray-600">
-                    <Clock size={16} className="text-gray-400" />
-                    <span>{cls.schedule}</span>
-                  </div> */}
                   <div className="flex items-center gap-3 text-sm text-gray-600">
                     <MapPin size={16} className="text-gray-400" />
                     <span>
@@ -137,6 +199,147 @@ const StudentProfile = () => {
               </div>
             ))}
           </div>
+        </section>
+
+        <section>
+
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6 flex flex-wrap justify-between items-center gap-4 relative z-10">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-violet-50 text-violet-600 rounded-lg">
+                <CalendarIcon size={20} />
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-800">Lịch học của tôi</h3>
+                <p className="text-xs text-gray-500">Quản lý các lớp học tôi đang tham gia</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 bg-gray-50 p-1.5 rounded-xl border border-gray-200 shadow-inner">
+              <button
+                onClick={handlePrevWeek}
+                className="p-2 hover:bg-white rounded-lg transition-colors text-gray-600 hover:text-violet-600 hover:shadow-sm"
+                title="Tuần trước"
+              >
+                <ChevronLeft size={20} />
+              </button>
+
+              <button
+                onClick={handleCurrentWeek}
+                className="px-4 py-2 font-bold text-sm bg-white text-violet-700 rounded-lg shadow-sm border border-violet-100"
+              >
+                {format(weekDays[0], 'dd/MM/yyyy')} - {format(weekDays[6], 'dd/MM/yyyy')}
+              </button>
+
+              <button
+                onClick={handleNextWeek}
+                className="p-2 hover:bg-white rounded-lg transition-colors text-gray-600 hover:text-violet-600 hover:shadow-sm"
+                title="Tuần sau"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto custom-scrollbar">
+              <table className="w-full text-left border-collapse min-w-[1000px]">
+                <thead>
+                  <tr>
+                    <th className="p-4 border-b border-r border-gray-200 bg-gray-50 w-[100px] text-center font-bold text-gray-600">
+                      <Clock size={18} className="mx-auto text-gray-400" />
+                    </th>
+                    {weekDays.map((day, index) => (
+                      <th
+                        key={index}
+                        className="p-3 border-b border-r border-gray-200 bg-primary text-white text-center w-[12.8%]"
+                      >
+                        <div className="text-sm font-bold uppercase tracking-wider">
+                          {format(day, 'EEEE', { locale: vi })}
+                        </div>
+                        <div className="text-xs text-violet-200 mt-1">{format(day, 'dd/MM/yyyy')}</div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {scheduleLoading ? (
+                    Array.from({ length: 5 }).map((_, rIdx) => (
+                      <tr key={rIdx}>
+                        <td className="p-4 border-b border-r border-gray-200 bg-gray-50/50">
+                          <div className="h-4 bg-gray-200 rounded animate-pulse w-full"></div>
+                        </td>
+                        {Array.from({ length: 7 }).map((_, cIdx) => (
+                          <td key={cIdx} className="p-2 border-b border-r border-gray-100">
+                            <div className="h-24 bg-gray-50 rounded-xl animate-pulse border border-gray-100"></div>
+                          </td>
+                        ))}
+                      </tr>
+                    ))
+                  ) : shiftsList.length > 0 ? (
+                    shiftsList.map((shift: any) => (
+                      <tr key={shift._id} className="group/row">
+                        <td className="p-3 border-b border-r border-gray-200 bg-gray-50 text-center align-middle group-hover/row:bg-gray-100 transition-colors">
+                          <div className="font-bold text-gray-700 text-sm">{shift.name}</div>
+                          <div className="text-[11px] text-gray-500 font-medium mt-1 bg-white px-2 py-0.5 rounded-md border border-gray-200 inline-block shadow-sm">
+                            {shift.startTime} - {shift.endTime}
+                          </div>
+                        </td>
+
+                        {weekDays.map((day, index) => {
+                          const cellSchedule = getScheduleForCell(day, shift._id);
+
+                          return (
+                            <td key={index} className="p-2 border-b border-r border-gray-100 bg-white align-top relative">
+                              {cellSchedule ? (
+                                <div
+                                  className="h-full bg-violet-50 border border-violet-200 rounded-xl p-3 cursor-pointer hover:bg-violet-100 hover:shadow-md transition-all group/card flex flex-col gap-2"
+                                >
+                                  <div className="flex items-start justify-between gap-1">
+                                    <h4 className="font-bold text-sm text-violet-800 line-clamp-2 group-hover/card:text-violet-900">
+                                      {cellSchedule.classId?.name || 'N/A'}
+                                    </h4>
+                                  </div>
+
+                                  <div className="mt-auto space-y-1.5 pt-2 border-t border-violet-200/60">
+                                    <div className="flex items-center gap-1.5 text-xs text-violet-700 font-medium">
+                                      <UserIcon size={12} className="text-violet-500" />
+                                      <span className="truncate">
+                                        {cellSchedule.teacherId?.fullName || 'Chưa phân công'}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 text-[10px] text-gray-500">
+                                      <BookOpen size={12} className="text-gray-400" />
+                                      <span className="truncate uppercase font-bold">{shift.name}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 text-[10px] text-gray-500">
+                                      <MapPin size={12} className="text-gray-400" />
+                                      <span className="truncate uppercase font-bold">{cellSchedule.roomId?.name}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              ) : (
+                                // TRỐNG LỊCH
+                                <div className="h-full min-h-[100px] rounded-xl flex items-center justify-center opacity-0 hover:opacity-100 hover:bg-gray-50 transition-all border border-dashed border-transparent hover:border-gray-300">
+                                  <span className="text-xs text-gray-400 font-medium italic">Trống</span>
+                                </div>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={8} className="p-10 text-center text-gray-500">
+                        Không có dữ liệu ca học. Vui lòng cấu hình ca học trước.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
         </section>
 
         {/* HỌC PHÍ & THANH TOÁN */}

@@ -47,7 +47,7 @@ const ScheduleManagement = () => {
     type: 'danger' as 'success' | 'danger' | 'warning' | 'info',
     confirmText: '',
     cancelText: '',
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   const queryParams: any = {
@@ -141,7 +141,7 @@ const ScheduleManagement = () => {
         type: 'danger',
         confirmText: '',
         cancelText: '',
-        onConfirm: () => {},
+        onConfirm: () => { },
       });
     }
   };
@@ -285,7 +285,7 @@ const ScheduleManagement = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 relative overflow-hidden">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-violet-600 text-white text-sm sticky top-0 z-10">
+            <tr className="bg-primary text-white text-sm sticky top-0 z-10">
               <th className="p-4 font-semibold w-16 text-center">No.</th>
               <th className="p-4 font-semibold">Lớp học</th>
               <th className="p-4 font-semibold">Ngày & Ca học</th>
