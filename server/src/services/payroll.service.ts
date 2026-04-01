@@ -6,6 +6,7 @@ import { UserModel } from '../models/user.model';
 import { ScheduleModel } from '../models/schedule.model';
 import { EmailService } from './email.service';
 import RoleModel from '../models/role.model';
+import { TransactionModel } from '../models/transaction.model';
 
 export class PayrollService {
   private emailService = new EmailService();
@@ -47,6 +48,7 @@ export class PayrollService {
     return await Payroll.findByIdAndDelete(id);
   }
 
+  // Hàm tính số giờ dạy trong tháng cho giáo viên
   async calculateTeachingHours(userId: string, monthStr: string): Promise<number> {
     const [year, month] = monthStr.split('-').map(Number);
     const startDate = new Date(year, month - 1, 1);
@@ -81,6 +83,32 @@ export class PayrollService {
     return teachingHours;
   }
 
+  // Hàm tính tự động hoa hồng cho tư vấn viên dựa trên doanh số tuyển sinh của tháng
+  async calculateCommissionForConsultants(id: string, month: string): Promise<number> {
+    const [year, monthNum] = month.split('-').map(Number);
+    const startDate = new Date(year, monthNum - 1, 1);
+    const endDate = new Date(year, monthNum, 0, 23, 59, 59, 999);
+
+    const students = await UserModel.find({
+      status: UserStatus.ACTIVE,
+      roleId: await RoleModel.findOne({ name: 'Student' }).select('_id'),
+      'student_info.consultantId': id,
+    }).select('_id');
+
+    const transactions = await TransactionModel.find({
+      studentId: { $in: students.map((s) => s._id) },
+      createdAt: { $gte: startDate, $lte: endDate },
+    }).select('amount');
+
+    let totalAmount = 0;
+    for (const transaction of transactions) {
+      totalAmount += transaction.amount;
+    }
+
+    return totalAmount;
+  }
+
+  // Hàm tự động tạo bảng lương cho tất cả nhân sự đang hoạt động vào đầu mỗi tháng
   async generatePayrollForMonth(month: string): Promise<{ success: boolean; count: number; data: any[] }> {
     const studentId = await RoleModel.findOne({ name: 'Student' }).select('_id');
 
@@ -117,6 +145,10 @@ export class PayrollService {
         } else {
           totalSalary = (user.baseSalary || 0) + Math.max(0, teachingHours - 50) * hourlyRate;
         }
+      } else if (role?.name?.toLowerCase().includes('consultant')) {
+        payrollType = PayrollType.STAFF;
+        const commission = await this.calculateCommissionForConsultants(user._id.toString(), month);
+        allowance = commission * 0.1;
       } else {
         totalSalary = user.baseSalary || 0;
       }
@@ -160,6 +192,7 @@ export class PayrollService {
     return { success: true, count: 0, data: bulkOperations };
   }
 
+  // Hàm gửi email thông báo bảng lương cho nhân sự
   async sendPayrollEmail(payrollIds: string[]): Promise<{ successCount: number; failedCount: number }> {
     const payrolls = await Payroll.find({ _id: { $in: payrollIds } }).populate('userId', 'email fullName');
 
