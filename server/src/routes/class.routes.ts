@@ -19,6 +19,7 @@ router.post(
 router.get('/', verifyToken, requirePermission(PERMISSIONS.CLASS.VIEW), classController.getAll);
 router.get('/student/:id', verifyToken, requirePermission(PERMISSIONS.CLASS.VIEW), classController.getClassByStudentId);
 router.post('/enroll', verifyToken, requirePermission(PERMISSIONS.CLASS.CREATE), classController.enroll);
+router.post('/unEnroll', verifyToken, classController.unEnroll);
 router.get(
   '/:id',
   verifyToken,

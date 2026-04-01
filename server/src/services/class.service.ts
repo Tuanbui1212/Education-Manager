@@ -8,7 +8,10 @@ import roleModel from '../models/role.model';
 import { Types } from 'mongoose';
 import { InvoiceService } from './invoice.service';
 import { InvoiceModel } from '../models/invoice.model';
+import { ScheduleModel } from '../models/schedule.model';
+
 import mongoose from 'mongoose';
+import { fi } from 'zod/v4/locales';
 export class ClassService {
   private invoiceService: InvoiceService;
 
@@ -114,7 +117,40 @@ export class ClassService {
   }
 
   async deleteClass(id: string) {
-    return await ClassModel.findByIdAndDelete(id);
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const classData = await ClassModel.findById(id).session(session);
+      if (!classData) {
+        throw new Error('Lớp học không tồn tại');
+      }
+
+      if (classData.studentIds && classData.studentIds.length > 0) {
+        throw new Error(
+          'Không thể xóa lớp học khi còn học viên đang ghi danh. Vui lòng hủy ghi danh tất cả học viên trước khi xóa lớp.',
+        );
+      }
+
+      const invoice = await InvoiceModel.findOne({ classId: id }).session(session);
+      if (invoice) {
+        throw new Error('Không thể xóa lớp học khi còn hóa đơn liên quan. Vui lòng chuyển trạng thái lớp thay vì xóa.');
+      }
+
+      await ScheduleModel.deleteMany({ classId: id }, { session });
+
+      const deletedClass = await ClassModel.findByIdAndDelete(id, { session });
+
+      await session.commitTransaction();
+
+      return deletedClass;
+    } catch (error) {
+      await session.abortTransaction();
+
+      throw error;
+    } finally {
+      session.endSession();
+    }
   }
 
   async getAllStudentByClass(id: string, query: GetStudentsByClassQuery) {
@@ -197,7 +233,9 @@ export class ClassService {
         const currentClass = await ClassModel.findById(data.classId).session(session);
         if (!currentClass) throw new Error('Lớp học không tồn tại');
 
-        if (currentClass.studentIds.includes(new mongoose.Types.ObjectId(data.studentId))) {
+        const exists = currentClass.studentIds.some((id) => id.toString() === data.studentId);
+
+        if (exists) {
           throw new Error('Học viên này đã có tên trong danh sách lớp');
         }
 
@@ -207,6 +245,14 @@ export class ClassService {
 
         const student = await UserModel.findById(data.studentId).session(session);
         if (!student) throw new Error('Không tìm thấy học viên');
+
+        if (student.status === 'INACTIVE') {
+          throw new Error('Học viên đã ngừng hoạt động');
+        }
+
+        if (student.status === 'POTENTIAL') {
+          await UserModel.findByIdAndUpdate(data.studentId, { status: 'ACTIVE' }, { session });
+        }
 
         const consultantId = student.student_info?.consultantId;
 
@@ -236,6 +282,50 @@ export class ClassService {
           invoiceCode,
         };
       } catch (error: any) {
+        await session.abortTransaction();
+        throw error;
+      } finally {
+        session.endSession();
+      }
+    }
+  }
+
+  async unenrollStudent(data: { classId: string; studentId: string }) {
+    {
+      const session = await mongoose.startSession();
+      session.startTransaction();
+
+      try {
+        const student = await UserModel.findById(data.studentId).session(session);
+        if (!student) throw new Error('Không tìm thấy học viên');
+
+        const findClass = await ClassModel.findById(data.classId).session(session);
+        if (!findClass) throw new Error('Không tìm thấy lớp học');
+
+        const invoice = await InvoiceModel.findOne({ classId: data.classId, studentId: data.studentId }).session(
+          session,
+        );
+        if (!invoice) throw new Error('Không tìm thấy hóa đơn');
+
+        if (invoice.debt === invoice.finalAmount) {
+          await InvoiceModel.deleteOne({ classId: data.classId, studentId: data.studentId }, { session });
+        } else {
+          throw new Error(
+            'Học viên đã phát sinh thanh toán cho lớp này. Vui lòng thực hiện hoàn phí (Refund) trước khi hủy ghi danh.',
+          );
+        }
+
+        findClass.studentIds = findClass.studentIds.filter((id: any) => id.toString() !== data.studentId);
+
+        await findClass.save({ session });
+
+        await session.commitTransaction();
+
+        return {
+          success: true,
+          message: 'Hủy ghi danh thành công',
+        };
+      } catch (error) {
         await session.abortTransaction();
         throw error;
       } finally {

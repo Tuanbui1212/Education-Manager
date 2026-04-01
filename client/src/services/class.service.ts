@@ -54,4 +54,12 @@ export const classService = {
     const response = await axios.post('/classes/enroll', data);
     return response.data;
   },
+
+  unErollStudent: async (data: {
+    classId: string;
+    studentId: string;
+  }): Promise<{ success: boolean; message: string }> => {
+    const response = await axios.post('/classes/unenroll', data);
+    return response.data;
+  },
 };

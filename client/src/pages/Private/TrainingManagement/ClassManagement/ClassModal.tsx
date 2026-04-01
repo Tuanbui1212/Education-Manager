@@ -1,10 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { X, BookOpen, UserCheck, DoorOpen, Activity } from 'lucide-react';
 
 import Button from '../../../../components/Button';
 import InputField from '../../../../components/InputField';
-import SelectField from '../../../../components/SelectField';
 import Combobox from '../../../../components/Combobox';
+import SelectField from '../../../../components/SelectField';
 
 import { userService } from '../../../../services/user.service';
 import { roleService } from '../../../../services/role.service';
@@ -12,9 +12,13 @@ import { courseService } from '../../../../services/course.service';
 import { roomService } from '../../../../services/room.service';
 
 import type { IClass, ClassModalProps } from '../../../../types/class.type';
-import { ClassStatus } from '../../../../types/class.type';
-
 import useFetch from '../../../../hooks/useFetch';
+
+const getSafeId = (field: any) => {
+  if (!field) return '';
+  if (typeof field === 'object' && field._id) return field._id;
+  return field;
+};
 
 const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, onSubmit, initialData }) => {
   const [formData, setFormData] = useState<Partial<IClass>>({
@@ -22,13 +26,12 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, onSubmit, init
     courseId: '',
     teacherId: '',
     roomId: '',
-    status: 'UPCOMING' as ClassStatus,
+    status: 'UPCOMING',
   });
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  console.log('Form Data:', formData);
 
-  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
-  const [prevInitialData, setPrevInitialData] = useState(initialData);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const { data: rolesData } = useFetch(roleService.getRoles, {}, []);
   const roles = Array.isArray(rolesData) ? rolesData : (rolesData as any)?.data || [];
@@ -37,30 +40,35 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, onSubmit, init
     return roles.find((r: any) => r.name?.toLowerCase() === 'teacher')?._id || '';
   }, [roles]);
 
-  if (isOpen !== prevIsOpen || initialData !== prevInitialData) {
-    setPrevIsOpen(isOpen);
-    setPrevInitialData(initialData);
+  const currentId = initialData?._id;
+  const [prevId, setPrevId] = useState<string | undefined>(currentId);
+  const [prevIsOpen, setPrevIsOpen] = useState<boolean>(isOpen);
 
-    if (isOpen) {
-      if (initialData) {
-        setFormData({
-          ...initialData,
-          courseId: typeof initialData.courseId === 'object' ? initialData.courseId._id : initialData.courseId,
-          teacherId: typeof initialData.teacherId === 'object' ? initialData.teacherId._id : initialData.teacherId,
-          roomId: typeof initialData.roomId === 'object' ? initialData.roomId._id : initialData.roomId,
-        });
-      } else {
-        setFormData({
-          name: '',
-          courseId: '',
-          teacherId: '',
-          roomId: '',
-          status: 'UPCOMING' as ClassStatus,
-        });
-      }
-      setErrors({});
+  console.log('isOpen:', isOpen, 'prevIsOpen:', prevIsOpen, 'currentId:', currentId, 'prevId:', prevId);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    if (initialData) {
+      setFormData({
+        name: initialData.name || '',
+        courseId: getSafeId(initialData.courseId),
+        teacherId: getSafeId(initialData.teacherId),
+        roomId: getSafeId(initialData.roomId),
+        status: initialData.status || 'UPCOMING',
+      });
+    } else {
+      setFormData({
+        name: '',
+        courseId: '',
+        teacherId: '',
+        roomId: '',
+        status: 'UPCOMING',
+      });
     }
-  }
+
+    setErrors({});
+  }, [isOpen, initialData]);
 
   if (!isOpen) return null;
 
@@ -113,7 +121,7 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, onSubmit, init
   };
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
 
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg z-10 overflow-hidden animate-in zoom-in-95 duration-200">
@@ -144,7 +152,9 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, onSubmit, init
             onFocus={() => clearError('courseId')}
             getDisplayValue={(course) => course?.title}
             error={errors.courseId}
-            initialValue={typeof initialData?.courseId === 'object' ? initialData.courseId.title : ''}
+            initialValue={
+              initialData?.courseId && (initialData.courseId as any).title ? (initialData.courseId as any).title : ''
+            }
           />
 
           <Combobox
@@ -156,7 +166,11 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, onSubmit, init
             onFocus={() => clearError('teacherId')}
             getDisplayValue={(teacher) => teacher?.fullName}
             error={errors.teacherId}
-            initialValue={typeof initialData?.teacherId === 'object' ? initialData.teacherId.fullName : ''}
+            initialValue={
+              initialData?.teacherId && (initialData.teacherId as any).fullName
+                ? (initialData.teacherId as any).fullName
+                : ''
+            }
           />
 
           <Combobox
@@ -168,7 +182,9 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, onSubmit, init
             onFocus={() => clearError('roomId')}
             getDisplayValue={(room) => room?.name}
             error={errors.roomId}
-            initialValue={typeof initialData?.roomId === 'object' ? initialData.roomId.name : ''}
+            initialValue={
+              initialData?.roomId && (initialData.roomId as any).name ? (initialData.roomId as any).name : ''
+            }
           />
 
           {initialData && (
@@ -176,19 +192,13 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, onSubmit, init
               label="Trạng thái lớp"
               icon={<Activity size={16} />}
               value={formData.status || 'UPCOMING'}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value as ClassStatus })}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
             >
-              <option value="UPCOMING">Sắp diễn ra</option>
-              <option value="ACTIVE">Đang hoạt động</option>
-              <option value="COMPLETED">Đã kết thúc</option>
-              <option value="MAINTENANCE">Tạm ngưng / Bảo trì</option>
+              <option value="UPCOMING">Sắp diễn ra (UPCOMING)</option>
+              <option value="ACTIVE">Đang hoạt động (ACTIVE)</option>
+              <option value="COMPLETED">Đã kết thúc (COMPLETED)</option>
+              <option value="MAINTENANCE">Tạm ngưng / Bảo trì (MAINTENANCE)</option>
             </SelectField>
-          )}
-
-          {!initialData && (
-            <div className="bg-blue-50 text-blue-700 p-3 rounded-xl border border-blue-100 text-sm">
-              Lớp học mới sẽ được tự động thiết lập trạng thái <strong>Sắp diễn ra (UPCOMING)</strong>.
-            </div>
           )}
 
           <div className="flex gap-3 pt-4 border-t border-gray-100 mt-2">

@@ -90,7 +90,7 @@ function Sidebar() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem('accessToken');
     navigate('/login');
   };
 
@@ -101,9 +101,9 @@ function Sidebar() {
       icon: <ShieldCheck size={20} />,
       permission: PERMISSIONS.USER.VIEW,
       subItems: [
-        { label: 'Danh sách tài khoản', path: PATHS.USER || '/accounts/list', permission: PERMISSIONS.USER.VIEW },
-        { label: 'Phân quyền (Roles)', path: '/accounts/roles', permission: PERMISSIONS.ROLE.VIEW },
-        { label: 'Lịch sử hoạt động', path: '/accounts/logs', permission: PERMISSIONS.USER.VIEW },
+        { label: 'Danh sách tài khoản', path: PATHS.USER, permission: PERMISSIONS.USER.VIEW },
+        { label: 'Phân quyền (Roles)', path: PATHS.SETTINGS_ROLES, permission: PERMISSIONS.ROLE.VIEW },
+        //{ label: 'Lịch sử hoạt động', path: '/accounts/logs', permission: PERMISSIONS.USER.VIEW },
       ],
     },
     {
@@ -113,11 +113,16 @@ function Sidebar() {
       permission: PERMISSIONS.USER.VIEW,
       subItems: [
         { label: 'Đội ngũ giáo viên', path: PATHS.HR_TEACHERS, permission: PERMISSIONS.USER.VIEW },
-        { label: 'Đội ngũ trợ giảng', path: PATHS.HR_TUTORS, permission: PERMISSIONS.USER.VIEW },
         { label: 'Nhân viên văn phòng', path: PATHS.HR_STAFFS, permission: PERMISSIONS.USER.VIEW },
         {
           label: 'Hợp đồng & Lương',
           path: PATHS.HR_CONTRACTS,
+          permission: PERMISSIONS.SALARY?.VIEW || PERMISSIONS.USER.VIEW,
+        },
+
+        {
+          label: 'Bảng lương',
+          path: PATHS.HR_PAYROLL,
           permission: PERMISSIONS.SALARY?.VIEW || PERMISSIONS.USER.VIEW,
         },
       ],
@@ -128,22 +133,22 @@ function Sidebar() {
       icon: <BookOpen size={20} />,
       permission: PERMISSIONS.CLASS.VIEW,
       subItems: [
-        { label: 'Quản lý học viên', path: '/training/students', permission: PERMISSIONS.USER.VIEW },
+        { label: 'Quản lý học viên', path: PATHS.TRAINING_STUDENT, permission: PERMISSIONS.USER.VIEW },
         {
           label: 'Quản lý khóa học',
-          path: '/training/courses',
+          path: PATHS.TRAINING_COURSES,
           permission: PERMISSIONS.COURSE.VIEW || PERMISSIONS.CLASS.VIEW,
         },
-        { label: 'Quản lý lớp học', path: '/training/classes', permission: PERMISSIONS.CLASS.VIEW },
+        { label: 'Quản lý lớp học', path: PATHS.TRAINING_CLASSES, permission: PERMISSIONS.CLASS.VIEW },
         {
           label: 'Xếp thời khóa biểu',
-          path: '/training/schedules',
-          permission: PERMISSIONS.SHIFT?.VIEW || PERMISSIONS.CLASS.VIEW,
+          path: PATHS.TRAINING_SCHEDULES,
+          permission: PERMISSIONS.SHIFT.VIEW || PERMISSIONS.CLASS.VIEW,
         },
         {
           label: 'Điểm danh',
           path: PATHS.TRAINING_ATTENDANCES,
-          permission: PERMISSIONS.ATTENDANCE.VIEW
+          permission: PERMISSIONS.ATTENDANCE.VIEW,
         },
       ],
     },
@@ -318,7 +323,7 @@ function Sidebar() {
               Thông tin cá nhân
             </button>
 
-            <button
+            {/* <button
               onClick={() => {
                 setIsProfileMenuOpen(false);
               }}
@@ -326,7 +331,7 @@ function Sidebar() {
             >
               <KeyRound size={18} />
               Đổi mật khẩu
-            </button>
+            </button> */}
 
             <div className="h-px bg-gray-700 my-1 mx-2"></div>
 

@@ -1,4 +1,4 @@
-import { Plus, Edit2, Trash2, BookOpen, UserCheck, Filter } from 'lucide-react';
+import { Plus, Edit2, Trash2, BookOpen, UserCheck, Filter, DoorOpen, Calendar, Users } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -16,12 +16,13 @@ import useFetch from '../../../../hooks/useFetch';
 import useDebounce from '../../../../hooks/useDebounce';
 
 import { classService } from '../../../../services/class.service';
-import { ClassStatus } from '../../../../types/class.type';
 import type { IClass } from '../../../../types/class.type';
 import { PATHS } from '../../../../utils/constants';
 
+import { formatDate } from '../../../../utils/format.util';
+
 const ClassManagement = () => {
-  const navigation = useNavigate();
+  const navigate = useNavigate();
 
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(5);
@@ -42,7 +43,7 @@ const ClassManagement = () => {
     title: '',
     message: '',
     type: 'success' as 'success' | 'danger' | 'warning' | 'info',
-    onConfirm: () => { },
+    onConfirm: () => {},
   });
 
   const queryParams = {
@@ -151,6 +152,7 @@ const ClassManagement = () => {
   const openEditModal = (e: React.MouseEvent, classData: IClass) => {
     e.stopPropagation();
     setSelectedClass(classData);
+    console.log(classData);
     setShowClassModal(true);
   };
 
@@ -263,7 +265,7 @@ const ClassManagement = () => {
                   Tất cả trạng thái
                 </div>
 
-                {['ACTIVE', 'PENDING', 'COMPLETED', 'MAINTENANCE', 'INACTIVE'].map((item) => (
+                {['ACTIVE', 'UPCOMING', 'COMPLETED', 'MAINTENANCE', 'INACTIVE'].map((item) => (
                   <div
                     key={item}
                     onClick={() => {
@@ -296,69 +298,119 @@ const ClassManagement = () => {
           <table className="w-full text-left border-separate border-spacing-0">
             <thead>
               <tr className="bg-primary text-white">
-                <th className="p-5 font-bold text-xs uppercase tracking-wider w-16 text-center">No.</th>
-                <th className="p-5 font-bold text-xs uppercase tracking-wider">Tên lớp</th>
-                <th className="p-5 font-bold text-xs uppercase tracking-wider">Giáo viên</th>
-                <th className="p-5 font-bold text-xs uppercase tracking-wider text-center">Trạng thái</th>
-                <th className="p-5 font-bold text-xs uppercase tracking-wider text-center">Thao tác</th>
+                <th className="p-4 font-semibold w-16 text-center">STT</th>
+                <th className="p-4 font-semibold">Thông tin Lớp & Khóa học</th>
+                <th className="p-4 font-semibold">Giảng viên / Phòng</th>
+                <th className="p-4 font-semibold text-center">Sĩ số</th>
+                <th className="p-4 font-semibold">Ngày khai giảng</th>
+                <th className="p-4 font-semibold text-center">Trạng thái</th>
+                <th className="p-4 font-semibold text-center w-28">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 bg-white">
               {loading ? (
                 <TableSkeleton columns={5} rows={limit} />
-              ) : classes && classes.length > 0 ? (
+              ) : classes.length > 0 ? (
                 classes.map((item: any, index: number) => {
-                  const statusInfo = getStatusLabel(item.status);
+                  const courseName = item.courseId?.title || 'Chưa gắn khóa học';
+                  const teacherName = item.teacherId?.fullName || 'Chưa phân công';
+                  const roomName = item.roomId?.name || 'Chưa xếp phòng';
+
                   return (
-                    <tr key={item._id} className="hover:bg-blue-50/40 transition-all group">
-                      <td className="p-5 text-gray-400 font-medium text-center">{index + 1 + (page - 1) * limit}</td>
-                      <td className="p-5">
-                        <div
-                          className="flex items-center gap-3 cursor-pointer group/name inline-flex"
-                          onClick={() => navigation(PATHS.TRAINING_CLASSES_ID.replace(':id', item._id))}
-                        >
-                          <span className="font-bold text-gray-800 text-lg group-hover/name:text-blue-600 transition-colors">
-                            {item.name}
+                    <tr
+                      key={item._id}
+                      className="hover:bg-blue-50/30 transition-colors group cursor-pointer"
+                      onClick={() => navigate(PATHS.TRAINING_CLASSES_ID.replace(':id', item._id))}
+                    >
+                      <td className="p-4 text-center text-gray-500 font-medium">{(page - 1) * limit + index + 1}</td>
+
+                      {/* Thông tin Lớp & Khóa học */}
+                      <td className="p-4">
+                        <div className="font-bold text-gray-800 text-base group-hover:text-blue-600 transition-colors">
+                          {item.name}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-1">
+                          <BookOpen size={12} className="text-blue-400" />
+                          <span className="truncate max-w-[200px]" title={courseName}>
+                            {courseName}
                           </span>
                         </div>
                       </td>
-                      <td className="p-5">
-                        <div
-                          className="flex items-center gap-2 text-gray-600 cursor-pointer group/teacher inline-flex"
-                          onClick={() => navigation(PATHS.HR_TEACHERS_ID.replace(':id', item.teacherId._id))}
-                        >
-                          <UserCheck
-                            size={16}
-                            className="text-gray-400 group-hover/teacher:text-blue-500 transition-colors"
-                          />
-                          <span className="font-medium group-hover/teacher:text-blue-600 group-hover/teacher:underline transition-all">
-                            {typeof item.teacherId === 'object' ? item.teacherId.fullName : item.teacherId}
-                          </span>
+
+                      {/* Giảng viên & Phòng */}
+                      <td className="p-4">
+                        <div className="font-medium text-gray-700 mb-1 flex items-center gap-1.5">
+                          <UserCheck size={14} className="text-emerald-500" />
+                          {teacherName}
+                        </div>
+                        <div className="text-xs text-gray-500 flex items-center gap-1.5">
+                          <DoorOpen size={14} className="text-orange-400" />
+                          Phòng: {roomName}
                         </div>
                       </td>
-                      <td className="p-5 text-center">
-                        <span className={`px-4 py-1.5 rounded-full text-xs font-bold shadow-sm ${statusInfo.class}`}>
-                          {statusInfo.label}
-                        </span>
+
+                      {/* Sĩ số */}
+                      <td className="p-4 text-center">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 rounded-full text-sm font-semibold text-gray-700">
+                          <Users size={14} className="text-blue-500" />
+                          {item.studentIds?.length || 0}
+                        </div>
                       </td>
-                      <td className="p-5">
-                        <div className="flex items-center justify-center gap-4">
+
+                      {/* Ngày khai giảng */}
+                      <td className="p-4">
+                        <div
+                          className={`flex items-center gap-2 text-sm font-medium ${!item.startDate ? 'text-gray-400 italic' : 'text-gray-700'}`}
+                        >
+                          <Calendar size={16} className={!item.startDate ? 'text-gray-300' : 'text-blue-500'} />
+                          {formatDate(item.startDate)}
+                        </div>
+                      </td>
+
+                      {/* Trạng thái */}
+                      <td className="p-4 text-center">
+                        {item.status === 'UPCOMING' && (
+                          <span className="inline-block px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-bold border border-blue-100">
+                            Sắp mở
+                          </span>
+                        )}
+                        {item.status === 'ACTIVE' && (
+                          <span className="inline-block px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-xs font-bold border border-emerald-100">
+                            Đang học
+                          </span>
+                        )}
+                        {item.status === 'COMPLETED' && (
+                          <span className="inline-block px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold border border-gray-200">
+                            Đã kết thúc
+                          </span>
+                        )}
+                        {item.status === 'MAINTENANCE' && (
+                          <span className="inline-block px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-xs font-bold border border-amber-100">
+                            Bảo trì
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="p-4">
+                        <div className="flex items-center justify-center gap-2">
                           <button
-                            onClick={(e) => openEditModal(e, item)}
-                            className="p-2.5 text-blue-600 hover:bg-blue-100 rounded-xl transition-all duration-300 hover:scale-110"
-                            title="Chỉnh sửa"
+                            onClick={(e) => {
+                              openEditModal(e, item);
+                            }}
+                            className="p-2 text-blue-600 hover:bg-blue-100 rounded-xl transition-all hover:scale-110"
+                            title="Sửa lớp"
                           >
-                            <Edit2 size={20} />
+                            <Edit2 size={18} />
                           </button>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDeleteClass(item._id);
                             }}
-                            className="p-2.5 text-red-500 hover:bg-red-100 rounded-xl transition-all duration-300 hover:scale-110"
+                            className="p-2 text-red-500 hover:bg-red-100 rounded-xl transition-all hover:scale-110"
                             title="Xóa lớp"
                           >
-                            <Trash2 size={20} />
+                            <Trash2 size={18} />
                           </button>
                         </div>
                       </td>

@@ -8,6 +8,24 @@ export enum UserStatus {
   POTENTIAL = 'POTENTIAL',
 }
 
+export enum Gender {
+  MALE = 'MALE',
+  FEMALE = 'FEMALE',
+  OTHER = 'OTHER',
+}
+
+export enum TeacherType {
+  FULL_TIME = 'FULL_TIME',
+  PART_TIME = 'PART_TIME',
+}
+
+export interface IBankInfo {
+  bankName: string;
+  bankBin: string;
+  accountNo: string;
+  accountName: string;
+}
+
 export interface IStudentInfo {
   parentsName?: string;
   crmHistory?: string[];
@@ -15,18 +33,23 @@ export interface IStudentInfo {
 }
 
 export interface ITeacherInfo {
+  type?: TeacherType;
   hourlyRate?: number;
-  degrees?: string[];
 }
 
 export interface IUser extends Document {
   email: string;
   phone: string;
+  gender: Gender;
   password?: string;
   fullName: string;
   roleId: Types.ObjectId | IRole;
   date: Date;
   status: UserStatus;
+  degrees?: string[];
+  certificates?: string[];
+  baseSalary?: number;
+  bankInfo?: IBankInfo;
   student_info?: IStudentInfo;
   teacher_info?: ITeacherInfo;
   createdAt: Date;

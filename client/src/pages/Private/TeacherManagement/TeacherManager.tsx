@@ -18,13 +18,11 @@ import PageHeader from '../../../components/PageHeader';
 import TablePagination from '../../../components/TablePagination';
 import SearchInput from '../../../components/SearchInput';
 import ConfirmModal from '../../../components/ConfirmModal';
-import TeacherModal from './TeacherModal';
 
 import useFetch from '../../../hooks/useFetch';
 import useDebounce from '../../../hooks/useDebounce';
 import { userService } from '../../../services/user.service';
 import { roleService } from '../../../services/role.service';
-import type { IUser } from '../../../types/user.type';
 
 import { formatCurrency } from '../../../utils/format.util';
 import { TEACHER_STATUS_OPTIONS, PATHS } from '../../../utils/constants';
@@ -58,9 +56,6 @@ const TeacherManager = () => {
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
 
   const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
-
-  const [showModalAdd, setShowModalAdd] = useState(false);
-  const [selectedTeacher, setSelectedTeacher] = useState<IUser | null>(null);
 
   const debouncedSearch = useDebounce(searchInput, 500);
 
@@ -105,74 +100,6 @@ const TeacherManager = () => {
     refetch: fetchTeachers,
   } = useFetch(userService.getUsers, queryParams, [page, debouncedSearch, teacherRoleId, limit, statusFilter]);
 
-  const handleAddTeacher = async (formData: Partial<IUser>) => {
-    try {
-      const createData = {
-        fullName: formData.fullName,
-        email: formData.email,
-        phone: formData.phone,
-        password: formData.password,
-        status: formData.status,
-        roleId: teacherRoleId,
-        date: formData.date,
-        teacher_info: {
-          hourlyRate: Number(formData.teacher_info?.hourlyRate || 0),
-          degrees: formData.teacher_info?.degrees || [],
-        },
-      };
-      const data: any = await userService.createUser(createData);
-      if (data.success) {
-        setConfirmConfig({ isOpen: true, title: 'Thành công', message: 'Đã thêm giáo viên mới!', type: 'success' });
-        fetchTeachers();
-        setShowModalAdd(false);
-        setPage(1);
-      }
-    } catch (error: any) {
-      const detailError = error.response?.data ? Object.values(error.response?.data?.errors).flat()[0] : null;
-      setConfirmConfig({
-        isOpen: true,
-        title: 'Lỗi',
-        message: (detailError as string) || 'Có lỗi xảy ra!',
-        type: 'danger',
-      });
-    }
-  };
-
-  const handleEditTeacher = async (formData: Partial<IUser>) => {
-    if (!selectedTeacher?._id) return;
-    console.log(formData);
-    delete formData.email;
-    try {
-      const updateData = {
-        fullName: formData.fullName,
-        phone: formData.phone,
-        status: formData.status,
-        roleId: teacherRoleId,
-        date: formData.date,
-        teacher_info: {
-          hourlyRate: Number(formData.teacher_info?.hourlyRate || 0),
-          degrees: formData.teacher_info?.degrees || [],
-        },
-      };
-      const data = await userService.updateUser(selectedTeacher._id, updateData);
-      if (data.success) {
-        setConfirmConfig({ isOpen: true, title: 'Thành công', message: 'Cập nhật hồ sơ thành công!', type: 'success' });
-        fetchTeachers();
-        setShowModalAdd(false);
-        setSelectedTeacher(null);
-        setPage(1);
-      }
-    } catch (error: any) {
-      const detailError = error.response?.data?.errors ? Object.values(error.response.data.errors).flat()[0] : null;
-      setConfirmConfig({
-        isOpen: true,
-        title: 'Lỗi',
-        message: (detailError as string) || 'Có lỗi xảy ra!',
-        type: 'danger',
-      });
-    }
-  };
-
   const handleDeleteTeacher = async (id: string) => {
     try {
       const data = await userService.deleteUser(id);
@@ -187,33 +114,19 @@ const TeacherManager = () => {
           confirmText: 'Xác nhận',
         });
         fetchTeachers();
-        setShowModalAdd(false);
-        setSelectedTeacher(null);
         setPage(1);
       }
     } catch (error: any) {
-      const detailError = error.response?.data?.errors ? Object.values(error.response.data.errors).flat()[0] : null;
+      const detailError = error.response?.data?.errors ? Object.values(error.response.data.errors).flat() : null;
       setConfirmDelete({
         isOpen: true,
         title: 'Lỗi',
-        message: (detailError as string) || 'Có lỗi xảy ra!',
+        message: (detailError?.[0] as string) || 'Có lỗi xảy ra!',
         type: 'danger',
         confirmText: '',
         cancelText: '',
         onConfirm: () => {},
       });
-    }
-  };
-
-  const openEditModal = async (id: string) => {
-    try {
-      const response = await userService.getUserById(id);
-      if (response.success) {
-        setSelectedTeacher(response.data || null);
-        setShowModalAdd(true);
-      }
-    } catch (error) {
-      console.error('Lỗi khi lấy thông tin giáo viên:', error);
     }
   };
 
@@ -223,19 +136,6 @@ const TeacherManager = () => {
 
   return (
     <div className="p-8 w-full">
-      {showModalAdd && (
-        <TeacherModal
-          isOpen={showModalAdd}
-          onClose={() => {
-            setShowModalAdd(false);
-            setSelectedTeacher(null);
-          }}
-          onSubmit={selectedTeacher?._id ? handleEditTeacher : handleAddTeacher}
-          initialData={selectedTeacher || undefined}
-          teacherRoleId={teacherRoleId}
-        />
-      )}
-
       <PageHeader title="Đội ngũ Giáo viên" />
 
       <ConfirmModal
@@ -301,8 +201,7 @@ const TeacherManager = () => {
           variant="primary"
           icon={<Plus size={18} />}
           onClick={() => {
-            setSelectedTeacher(null);
-            setShowModalAdd(true);
+            navigate(PATHS.HR_TEACHERS_CREATE);
           }}
         >
           Thêm Giáo viên
@@ -316,7 +215,7 @@ const TeacherManager = () => {
               <th className="p-4  font-semibold w-16 text-center rounded-tl-xl">No.</th>
               <th className="p-4 font-semibold">Giáo viên</th>
               <th className="p-4 font-semibold">Liên hệ</th>
-              <th className="p-4 font-semibold">Hồ sơ & Bằng cấp</th>
+              <th className="p-4 font-semibold w-56">Hồ sơ & Bằng cấp</th>
               <th className="p-4 font-semibold">Lương (Giờ)</th>
               <th className="p-4 font-semibold min-w-[180px]">Trạng thái</th>
               <th className="p-4 font-semibold text-center rounded-tr-xl">Hành động</th>
@@ -327,22 +226,30 @@ const TeacherManager = () => {
               teachers.map((teacher: any, index: number) => {
                 return (
                   <tr key={teacher._id} className="hover:bg-indigo-50/30 transition-colors group relative">
-                    <td className="p-4 text-text-secondary font-medium text-center">
-                      {index + 1 + (page - 1) * limit}
-                    </td>
+                    <td className="p-4 text-gray-500 font-medium text-center">{index + 1 + (page - 1) * limit}</td>
 
                     <td className="p-4">
                       <div
                         className="flex items-center gap-3"
                         onClick={() => navigate(PATHS.HR_TEACHERS_ID.replace(':id', teacher._id))}
                       >
-                        <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
+                        <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-text-main font-bold">
                           {teacher.fullName?.charAt(0) || 'T'}
                         </div>
                         <div>
-                          <div className="font-semibold text-indigo-700 cursor-pointer group-hover:underline">
+                          <div className="font-semibold text-text-main cursor-pointer group-hover:underline">
                             {teacher.fullName}
                           </div>
+                          {teacher.teacher_info?.type === 'FULL_TIME' && (
+                            <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold uppercase mt-1 inline-block">
+                              Giáo viên FullTime
+                            </span>
+                          )}
+                          {teacher.teacher_info?.type === 'PART_TIME' && (
+                            <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold uppercase mt-1 inline-block">
+                              Giáo viên PartTime
+                            </span>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -362,8 +269,8 @@ const TeacherManager = () => {
 
                     <td className="p-4">
                       <div className="flex flex-wrap gap-1.5">
-                        {teacher.teacher_info?.degrees && teacher.teacher_info.degrees.length > 0 ? (
-                          teacher.teacher_info.degrees.map((degree: string, i: number) => (
+                        {teacher.degrees?.length > 0 ? (
+                          teacher.degrees.map((degree: string, i: number) => (
                             <span
                               key={i}
                               className="px-2 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded border border-blue-100"
@@ -385,7 +292,6 @@ const TeacherManager = () => {
 
                     <td className="p-4">{getTeacherStatusBadge(teacher.status)}</td>
 
-                    {/* --- MENU BA CHẤM (KEBAB MENU) --- */}
                     <td className="p-4 text-center relative">
                       <div className="flex justify-center">
                         <button
@@ -410,7 +316,6 @@ const TeacherManager = () => {
                             <button
                               className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-700 flex items-center gap-3 transition-colors"
                               onClick={() => {
-                                console.log('Mở lịch dạy cho:', teacher.fullName);
                                 setOpenActionMenuId(null);
                               }}
                             >
@@ -421,7 +326,6 @@ const TeacherManager = () => {
                             <button
                               className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 flex items-center gap-3 transition-colors"
                               onClick={() => {
-                                console.log('Tính lương cho:', teacher.fullName);
                                 setOpenActionMenuId(null);
                               }}
                             >
@@ -432,9 +336,9 @@ const TeacherManager = () => {
                             <div className="h-px bg-gray-100 my-1"></div>
 
                             <button
-                              className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 flex items-center gap-3 transition-colors"
+                              className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-indigo-50 hover:text-text-main flex items-center gap-3 transition-colors"
                               onClick={() => {
-                                openEditModal(teacher._id!);
+                                navigate(`${PATHS.HR_TEACHERS_EDIT}`.replace(':id', teacher._id));
                                 setOpenActionMenuId(null);
                               }}
                             >

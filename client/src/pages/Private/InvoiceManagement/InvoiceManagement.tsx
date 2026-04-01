@@ -46,7 +46,6 @@ const InvoiceManagement = () => {
     setInvoices(fetchedList.filter(Boolean));
   }
 
-  // Cập nhật hàm nhận thêm trạng thái remindCount và lastRemindedAt
   const handlePaymentSuccess = (
     id: string,
     newDebt: number,
@@ -114,11 +113,7 @@ const InvoiceManagement = () => {
     }
   };
 
-  // ==========================================
-  // LOGIC HIỂN THỊ BADGE BÊN NGOÀI BẢNG
-  // ==========================================
   const renderNotificationBadge = (inv: IInvoice) => {
-    // Không hiện nhắc nợ nếu đã thanh toán xong hoặc bị hủy
     if (inv.status === 'PAID' || inv.status === ('CANCELLED' as any) || inv.status === ('REFUNDED' as any)) {
       return null;
     }
@@ -247,7 +242,7 @@ const InvoiceManagement = () => {
                         <td className="p-4 text-right font-bold text-red-600">{formatCurrency(inv?.debt || 0)}</td>
                         <td className="p-4 text-center">
                           {renderStatus(inv?.status)}
-                          {/* HIỂN THỊ BADGE BÊN DƯỚI TRẠNG THÁI */}
+
                           {renderNotificationBadge(inv)}
                         </td>
                         <td className="p-4 text-right">

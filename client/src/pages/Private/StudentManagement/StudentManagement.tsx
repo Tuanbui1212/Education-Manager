@@ -1,6 +1,6 @@
 import { Plus, Edit2, Trash2, Mail, Phone, User as UserIcon, Filter, Headset } from 'lucide-react';
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { data, useNavigate } from 'react-router-dom';
 
 import Button from '../../../components/Button';
 import PageHeader from '../../../components/PageHeader';
@@ -147,7 +147,7 @@ const StudentManager = () => {
         setConfirmDelete({
           isOpen: true,
           title: 'Thành công',
-          message: 'Xóa hồ sơ thành công!',
+          message: data.message || 'Đã xóa học viên!',
           type: 'success',
           onConfirm: () => setConfirmDelete({ ...confirmDelete, isOpen: false }),
           cancelText: '',
@@ -162,7 +162,7 @@ const StudentManager = () => {
       setConfirmDelete({
         isOpen: true,
         title: 'Lỗi',
-        message: 'Có lỗi xảy ra!',
+        message: error.response?.data?.message || 'Có lỗi xảy ra khi xóa học viên!',
         type: 'danger',
         confirmText: '',
         cancelText: '',

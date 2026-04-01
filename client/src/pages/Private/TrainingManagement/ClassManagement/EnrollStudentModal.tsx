@@ -24,18 +24,39 @@ const EnrollStudentModal: React.FC<EnrollStudentModalProps> = ({ isOpen, onClose
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedStudentInfo, setSelectedStudentInfo] = useState<any>(null);
 
+  console.log(selectedStudentInfo);
+
   const { data: rolesData } = useFetch(roleService.getRoles, {}, []);
   const roles = Array.isArray(rolesData) ? rolesData : (rolesData as any)?.data || [];
+
+  function StudentInfo({ id }: { id: string }) {
+    const { data } = useFetch(userService.getUserById, id, [id]);
+
+    return <div>{data?.fullName}</div>;
+  }
 
   const studentRoleId = useMemo(() => roles.find((r: any) => r.name?.toLowerCase() === 'student')?._id, [roles]);
 
   if (!isOpen) return null;
 
   const handleStudentSearch = async (query: string) => {
-    const res = await userService.getUsers({ search: query, roleId: studentRoleId, limit: 10 });
-    return res.data;
-  };
+    const [resActive, resPotential] = await Promise.all([
+      userService.getUsers({
+        search: query,
+        roleId: studentRoleId,
+        limit: 10,
+        status: 'ACTIVE',
+      }),
+      userService.getUsers({
+        search: query,
+        roleId: studentRoleId,
+        limit: 10,
+        status: 'POTENTIAL',
+      }),
+    ]);
 
+    return [...resActive.data, ...resPotential.data];
+  };
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -112,7 +133,8 @@ const EnrollStudentModal: React.FC<EnrollStudentModalProps> = ({ isOpen, onClose
               <div className="text-sm text-gray-600 pl-3 py-1.5 border-l-2 border-blue-500 mt-2 bg-gray-50 rounded-r-lg">
                 <span className="font-semibold text-gray-700">Người phụ trách: </span>
                 <span className="text-blue-700 font-medium">
-                  {selectedStudentInfo.consultant?.fullName || 'Chưa phân công (Hệ thống tự quyết định)'}
+                  {(selectedStudentInfo && <StudentInfo id={selectedStudentInfo.student_info.consultantId} />) ||
+                    'Chưa phân công (Hệ thống tự quyết định)'}
                 </span>
               </div>
             )}
