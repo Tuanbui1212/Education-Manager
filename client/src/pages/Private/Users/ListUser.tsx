@@ -1,5 +1,5 @@
 import { Plus, Filter, Edit2, Trash2 } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { getRoleStyles, formatDate, translateRole } from '../../../utils/format.util';
@@ -10,7 +10,6 @@ import PageHeader from '../../../components/PageHeader';
 import TablePagination from '../../../components/TablePagination';
 import SearchInput from '../../../components/SearchInput';
 import ConfirmModal from '../../../components/ConfirmModal';
-import UserModal from './UserModal';
 
 import useFetch from '../../../hooks/useFetch';
 import useDebounce from '../../../hooks/useDebounce';
@@ -26,9 +25,6 @@ const UserList = () => {
   const [searchInput, setSearchInput] = useState('');
   const [role, setRole] = useState('');
   const [open, setOpen] = useState(false);
-
-  const [showModalAdd, setShowModalAdd] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<IUser | null>(null);
 
   const debouncedSearch = useDebounce(searchInput, 500);
 
@@ -46,7 +42,7 @@ const UserList = () => {
     type: 'danger' as 'success' | 'danger' | 'warning' | 'info',
     confirmText: '',
     cancelText: '',
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   const queryParams = {
@@ -67,97 +63,6 @@ const UserList = () => {
   const { data: rolesData } = useFetch(roleService.getRoles, {}, []);
   const roles = Array.isArray(rolesData) ? rolesData : (rolesData as any)?.data || [];
 
-  const consultantRoleId = useMemo(() => {
-    return roles.find((r: any) => r.name?.toLowerCase() === 'consultant')?._id || '';
-  }, [roles]);
-
-  const queryParamsConsultant = {
-    page: 1,
-    limit: 1000,
-    roleId: consultantRoleId,
-    status: 'ACTIVE',
-  };
-
-  const { data: consultants } = useFetch(userService.getUsers, queryParamsConsultant, [consultantRoleId]);
-
-  const handleAddUser = async (formData: Partial<IUser>) => {
-    try {
-      const data: any = await userService.createUser(formData);
-      if (data.success) {
-        setConfirmConfig({
-          isOpen: true,
-          title: 'Thông báo',
-          message: 'Tạo tài khoản thành công!',
-          type: 'success',
-        });
-        fetchUsers();
-        setShowModalAdd(false);
-        setPage(1);
-      }
-    } catch (error: any) {
-      const detailError = error.response?.data ? Object.values(error.response?.data?.errors).flat()[0] : null;
-      setConfirmConfig({
-        isOpen: true,
-        title: 'Lỗi',
-        message: (detailError as string) || 'Có lỗi xảy ra khi thêm mới!',
-        type: 'danger',
-      });
-    }
-  };
-
-  const handleEditUser = async (formData: Partial<IUser>) => {
-    if (!selectedUser?._id) return;
-
-    try {
-      const updateData: any = {
-        fullName: formData.fullName,
-        phone: formData.phone,
-        status: formData.status,
-        roleId: formData.roleId,
-        date: formData.date,
-      };
-
-      const roleName = roles?.find((r: any) => r._id === formData.roleId)?.name;
-
-      if (roleName.toLowerCase() === 'teacher' && formData.teacher_info) {
-        updateData.teacher_info = {
-          hourlyRate: Number(formData.teacher_info.hourlyRate),
-          degrees: Array.isArray(formData.teacher_info.degrees) ? formData.teacher_info.degrees : [],
-        };
-      } else if (roleName.toLowerCase() === 'student' && formData.student_info) {
-        updateData.student_info = {
-          parentsName: formData.student_info.parentsName,
-          consultantId: formData.student_info.consultantId,
-        };
-      }
-
-      const data = await userService.updateUser(selectedUser._id, updateData);
-
-      if (data.success) {
-        setConfirmConfig({
-          isOpen: true,
-          title: 'Thông báo',
-          message: 'Cập nhật tài khoản thành công!',
-          type: 'success',
-        });
-
-        fetchUsers();
-        setShowModalAdd(false);
-        setSelectedUser(null);
-      }
-    } catch (error: any) {
-      const detailError = error.response?.data?.errors ? Object.values(error.response.data.errors).flat()[0] : null;
-
-      setConfirmConfig({
-        isOpen: true,
-        title: 'Lỗi',
-        message: (detailError as string) || 'Có lỗi xảy ra khi thay đổi!',
-        type: 'danger',
-      });
-    }
-  };
-
-  // LOGIC: Xóa người dùng
   const handleDeleteUser = async (id: string) => {
     try {
       const data = await userService.deleteUser(id);
@@ -165,46 +70,31 @@ const UserList = () => {
         setConfirmConfig({
           isOpen: true,
           title: 'Thành công',
-          message: 'Đã xóa tài khoản thành công!',
+          message: data.message || 'Đã xóa tài khoản thành công!',
           type: 'success',
         });
         fetchUsers();
       }
     } catch (error: any) {
-      const detailError = error.response?.data?.errors ? Object.values(error.response.data.errors).flat()[0] : null;
+      const detailError = error.response?.data?.errors ? Object.values(error.response.data.errors).flat() : null;
       setConfirmConfig({
         isOpen: true,
         title: 'Lỗi',
-        message: (detailError as string) || 'Có lỗi xảy ra khi xóa!',
+        message: (detailError?.[0] as string) || 'Có lỗi xảy ra khi xóa!',
         type: 'danger',
       });
     }
   };
 
-  // LOGIC: Điều hướng vào trang chi tiết dựa theo Role
   const navigateToDetail = (user: any) => {
     if (!user?._id) return;
     const roleName = (user.roleId?.name || '').toLowerCase();
-
     if (roleName === 'student') {
-      navigate(PATHS.TRANINING_STUDENT_ID.replace(':id', user._id));
+      navigate(PATHS.TRAINING_STUDENT_ID.replace(':id', user._id));
     } else if (roleName === 'teacher') {
       navigate(PATHS.HR_TEACHERS_ID.replace(':id', user._id));
     } else {
-      // Dành cho Manager, Accountant, Consultant, Admin...
       navigate(PATHS.HR_STAFFS_ID.replace(':id', user._id));
-    }
-  };
-
-  const openEditModal = async (id: string) => {
-    try {
-      const response = await userService.getUserById(id);
-      if (response.success) {
-        setSelectedUser(response.data || null);
-        setShowModalAdd(true);
-      }
-    } catch (error) {
-      console.error(error);
     }
   };
 
@@ -213,24 +103,10 @@ const UserList = () => {
   if (error) return <div className="p-8 text-red-500 text-center">Lỗi: {error}</div>;
 
   return (
-    <div className="p-8 w-full ">
-      {showModalAdd && (
-        <UserModal
-          roles={roles}
-          consultants={consultants}
-          isOpen={showModalAdd}
-          onClose={() => {
-            setShowModalAdd(false);
-            setSelectedUser(null);
-          }}
-          onSubmit={selectedUser?._id ? handleEditUser : handleAddUser}
-          initialData={selectedUser || undefined}
-        />
-      )}
-
+    <div className="p-8 w-full">
       <PageHeader title="Danh sách Tất cả Tài khoản" />
 
-      {/* Modal Thông báo */}
+      {/* Modal thông báo chung */}
       <ConfirmModal
         isOpen={confirmConfig.isOpen}
         onClose={() => setConfirmConfig({ ...confirmConfig, isOpen: false })}
@@ -242,7 +118,7 @@ const UserList = () => {
         cancelText=""
       />
 
-      {/* Modal Xác nhận Xóa */}
+      {/* Modal xác nhận xóa */}
       <ConfirmModal
         isOpen={confirmDelete.isOpen}
         onClose={() => setConfirmDelete({ ...confirmDelete, isOpen: false })}
@@ -254,6 +130,7 @@ const UserList = () => {
         cancelText={confirmDelete.cancelText}
       />
 
+      {/* Toolbar */}
       <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
         <div className="flex gap-4 items-center flex-1 max-w-2xl">
           <SearchInput
@@ -264,11 +141,11 @@ const UserList = () => {
             setPage={setPage}
           />
 
+          {/* Filter Role */}
           <div className="relative inline-block">
             <Button variant="outline" icon={<Filter size={18} />} onClick={() => setOpen(!open)}>
               Filter Role
             </Button>
-
             {open && (
               <div className="absolute mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
                 <div
@@ -299,38 +176,33 @@ const UserList = () => {
           </div>
         </div>
 
-        <Button
-          variant="primary"
-          icon={<Plus size={18} />}
-          onClick={() => {
-            setSelectedUser(null);
-            setShowModalAdd(true);
-          }}
-        >
+        <Button variant="primary" icon={<Plus size={18} />} onClick={() => navigate(PATHS.ACCOUNT_USERS_CREATE)}>
           Thêm User
         </Button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 relative">
-        <table className="w-full text-left border-collapse">
+      {/* Table */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 relative overflow-x-auto">
+        <table className="w-full text-left border-collapse min-w-[1000px]">
           <thead>
             <tr className="bg-primary text-white text-sm sticky top-0 z-10">
-              <th className="p-4 font-semibold w-16 text-center rounded-tl-xl">No.</th>
-              <th className="p-4 font-semibold">Tên người dùng</th>
-              <th className="p-4 font-semibold">Email</th>
-              <th className="p-4 font-semibold">Số điện thoại</th>
-              <th className="p-4 font-semibold">Ngày sinh</th>
-              <th className="p-4 font-semibold">Vai trò</th>
-              <th className="p-4 font-semibold">Trạng thái</th>
-              <th className="p-4 font-semibold text-center rounded-tr-xl">Thao tác</th>
+              <th className="p-3 font-semibold w-16 text-center rounded-tl-xl">No.</th>
+              <th className="p-3 font-semibold">Tên người dùng</th>
+              <th className="p-3 font-semibold w-24">Giới tính</th>
+              <th className="p-3 font-semibold">Email</th>
+              <th className="p-3 font-semibold">Số điện thoại</th>
+              <th className="p-3 font-semibold">Ngày sinh</th>
+              <th className="p-3 font-semibold">Vai trò</th>
+              <th className="p-3 font-semibold">Trạng thái</th>
+              <th className="p-3 font-semibold text-center rounded-tr-xl">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {users && users.length > 0 ? (
               users?.map((user: any, index: number) => (
                 <tr key={user._id} className="hover:bg-blue-50/50 transition-colors group">
-                  <td className="p-4 text-gray-500 font-medium text-center">{index + 1 + (page - 1) * limit}</td>
-                  <td className="p-4">
+                  <td className="p-3 text-gray-500 font-medium text-center">{index + 1 + (page - 1) * limit}</td>
+                  <td className="p-3">
                     <div
                       className="font-semibold text-blue-600 group-hover:underline cursor-pointer inline-block"
                       onClick={() => navigateToDetail(user)}
@@ -338,39 +210,41 @@ const UserList = () => {
                       {user.fullName}
                     </div>
                   </td>
-                  <td className="p-4 text-gray-600">{user.email}</td>
-                  <td className="p-4 text-gray-600">{user.phone}</td>
-                  <td className="p-4 text-gray-600">{formatDate(user.date as string)}</td>
-                  <td className="p-4">
+                  <td className="p-3 text-gray-600">
+                    {user.gender === 'MALE' ? 'Nam' : user.gender === 'FEMALE' ? 'Nữ' : 'Khác'}
+                  </td>
+                  <td className="p-3 text-gray-600">{user.email}</td>
+                  <td className="p-3 text-gray-600">{user.phone}</td>
+                  <td className="p-3 text-gray-600">{formatDate(user.date as string)}</td>
+                  <td className="p-3">
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-bold shadow-sm ${getRoleStyles((user.roleId as any)?.name || '')}`}
                     >
                       {(translateRole(user.roleId?.name as string) as string) || ''}
                     </span>
                   </td>
-                  <td className="p-4">
+                  <td className="p-3">
                     <div className="flex items-center gap-2 text-sm">
                       <span
-                        className={`w-2.5 h-2.5 rounded-full animate-pulse ${
-                          user.status === 'ACTIVE' ? 'bg-green-500' : 'bg-gray-400'
-                        }`}
-                      ></span>
+                        className={`w-2.5 h-2.5 rounded-full animate-pulse ${user.status === 'ACTIVE' ? 'bg-green-500' : 'bg-gray-400'
+                          }`}
+                      />
                       <span className={user.status === 'ACTIVE' ? 'text-green-700 font-medium' : 'text-gray-500'}>
                         {user.status === 'ACTIVE' ? 'Đang hoạt động' : 'Ngừng hoạt động'}
                       </span>
                     </div>
                   </td>
-                  <td className="p-4">
-                    <div className="flex items-center justify-center gap-3">
+                  <td className="p-3">
+                    <div className="flex items-center justify-center gap-1">
                       <button
-                        onClick={() => openEditModal(user._id!)}
+                        onClick={() => navigate(PATHS.ACCOUNT_USERS_EDIT.replace(':id', user._id))}
                         className="p-2 text-blue-600 hover:bg-blue-100 rounded-xl transition-all duration-300 hover:scale-110 active:scale-95"
                         title="Sửa"
                       >
                         <Edit2 size={18} />
                       </button>
 
-                      {/* Gắn logic Xóa vào nút Trash */}
+                      {/* Nút xóa */}
                       <button
                         onClick={() => {
                           setConfirmDelete({
@@ -397,14 +271,14 @@ const UserList = () => {
               ))
             ) : !loading ? (
               <tr>
-                <td colSpan={8} className="p-10 text-center text-gray-500">
+                <td colSpan={9} className="p-10 text-center text-gray-500">
                   Không tìm thấy dữ liệu nào.
                 </td>
               </tr>
             ) : (
               Array.from({ length: limit }).map((_, i) => (
                 <tr key={i} className="animate-pulse">
-                  <td colSpan={8} className="p-8 bg-gray-50/50"></td>
+                  <td colSpan={9} className="p-8 bg-gray-50/50" />
                 </tr>
               ))
             )}

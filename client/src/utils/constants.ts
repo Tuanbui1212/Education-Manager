@@ -7,44 +7,61 @@ export const PATHS = {
   RESET_PASSWORD: '/reset-password',
 
   PROFILE_STUDENT: '/profile/student',
-  PROFILE_STAFF: '/profile/staff',
+  PROFILE_STAFF: '/profile',
+  PROFILE_TEACHER: '/profile/teacher',
 
   //Dashboard
   DASHBOARD: '/',
 
   //Dashboard/User
-  USER: '/dashboard/users',
+  USER: '/accounts/list',
   USER_ID: '/dashboard/users/:id',
+
+  ACCOUNT_USERS_CREATE: '/accounts/users/create',
+  ACCOUNT_USERS_EDIT: '/accounts/users/edit/:id',
+
+  SETTINGS_ROLES: '/accounts/roles',
 
   //HR
   HR_TEACHERS: '/hr/teachers',
   HR_TEACHERS_ID: '/hr/teachers/:id',
-
-  HR_TUTORS: '/hr/tutors',
+  HR_TEACHERS_CREATE: '/hr/teachers/create',
+  HR_TEACHERS_EDIT: '/hr/teachers/edit/:id',
 
   HR_STAFFS: '/hr/staffs',
   HR_STAFFS_ID: '/hr/staffs/:id',
+  HR_STAFFS_CREATE: '/hr/staffs/create',
+  HR_STAFFS_EDIT: '/hr/staffs/edit/:id',
 
   HR_CONTRACTS: '/hr/contracts',
 
+  HR_PAYROLL: '/hr/payroll',
+  HR_PAYROLL_ID: '/hr/payroll/:id',
+
   //Settings
-  SETTINGS_ROLES: '/accounts/roles',
   SETTINGS_SHIFTS: '/settings/shifts',
   SETTINGS_FIXED_COSTS: '/settings/fixed-costs',
   SETTINGS_EXPENDITURES: '/settings/expenditures',
+
   SETTINGS_ROOMS: '/settings/rooms',
   SETTINGS_ROOMS_ID: '/settings/rooms/:id',
   SETTINGS_NOTIFICATION_TEMPLATES: '/settings/notification-templates',
 
   //Training
-  TRANINING_STUDENT: '/training/students',
-  TRANINING_STUDENT_ID: '/training/students/:id',
+  TRAINING_STUDENT: '/training/students',
+  TRAINING_STUDENT_ID: '/training/students/:id',
+
   TRAINING_COURSES: '/training/courses',
+  TRAINING_COURSES_ID: '/training/courses/:id',
+
   TRAINING_CLASSES: '/training/classes',
   TRAINING_CLASSES_ID: '/training/classes/:id',
+
   TRAINING_SCHEDULES: '/training/schedules',
+
   TRAINING_ATTENDANCES: '/training/attendances',
   TRAINING_ATTENDANCES_ID: '/training/attendances/:id',
+
   //Finace
   FINANCE_INVOICES: '/finance/invoices',
   FINANCE_INVOICES_ID: '/finance/invoices/:id',

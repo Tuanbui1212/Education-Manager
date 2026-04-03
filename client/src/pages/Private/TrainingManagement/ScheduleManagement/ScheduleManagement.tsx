@@ -316,7 +316,7 @@ const ScheduleManagement = () => {
                     </td>
                     <td className="p-4">
                       <div className="space-y-1">
-                        <div className="font-semibold text-violet-700">
+                        <div className="font-semibold text-text-main">
                           {schedule.date ? format(new Date(schedule.date), 'EEEE, dd/MM/yyyy', { locale: vi }) : 'N/A'}
                         </div>
                         <div className="text-sm flex items-center gap-1.5 text-gray-600 bg-gray-100 w-fit px-2 py-0.5 rounded-md">
@@ -327,14 +327,14 @@ const ScheduleManagement = () => {
                     </td>
                     <td className="p-4">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center font-bold text-xs">
+                        <div className="w-8 h-8 rounded-full bg-violet-100 text-text-main flex items-center justify-center font-bold text-xs">
                           {teacherData.fullName?.charAt(0) || 'U'}
                         </div>
                         <span className="font-medium text-gray-700">{teacherData.fullName || 'Chưa phân công'}</span>
                       </div>
                     </td>
                     <td className="p-4">
-                      <div className="flex items-center gap-2 text-sm font-medium text-fuchsia-600 bg-fuchsia-50 border border-fuchsia-100 w-fit px-2.5 py-1 rounded-lg">
+                      <div className="flex items-center gap-2 text-sm font-medium text-text-main bg-fuchsia-50 border border-fuchsia-100 w-fit px-2.5 py-1 rounded-lg">
                         <DoorOpen size={14} />
                         {roomData.name || 'Online'}
                       </div>
@@ -346,7 +346,7 @@ const ScheduleManagement = () => {
                             setSelectedSchedule(schedule);
                             setShowModal(true);
                           }}
-                          className="p-2.5 text-violet-600 hover:bg-violet-100 rounded-xl transition-all duration-300 hover:scale-110"
+                          className="p-2.5 text-primary hover:bg-violet-100 rounded-xl transition-all duration-300 hover:scale-110"
                           title="Chỉnh sửa / Đổi giáo viên dạy thay"
                         >
                           <Edit2 size={20} />

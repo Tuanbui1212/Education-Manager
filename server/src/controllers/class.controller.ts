@@ -84,13 +84,12 @@ export class ClassController {
   getClassByStudentId = async (req: Request<{ id: string }>, res: Response) => {
     try {
       const { id } = req.params;
-      const { classesData, totalCount } = await this.classService.getClassByStudentId(id);
+      const classData = await this.classService.getClassByStudentId(id);
 
       res.status(200).json({
         success: true,
-        data: classesData,
+        data: classData,
         message: 'Lấy danh sách lớp học thành công',
-        totalCount,
       });
     } catch (error) {
       console.error(`[getClassByStudentId] Lỗi: `, error);
@@ -102,6 +101,19 @@ export class ClassController {
   enroll = async (req: Request, res: Response) => {
     try {
       const result = await this.classService.enrollStudent(req.body);
+      return res.status(200).json(result);
+    } catch (error: any) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  };
+
+  //[POST] /api/classes/unenroll
+  unEnroll = async (req: Request, res: Response) => {
+    try {
+      const result = await this.classService.unenrollStudent(req.body);
       return res.status(200).json(result);
     } catch (error: any) {
       return res.status(400).json({

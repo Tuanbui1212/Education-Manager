@@ -36,6 +36,7 @@ import EnrollStudentModal from './EnrollStudentModal';
 
 import { PATHS } from '../../../../utils/constants';
 import type { IClass } from '../../../../types/class.type';
+import type { InvoiceStatus } from '../../../../types/invoice.type';
 
 const ClassDetail = () => {
   const { id } = useParams();
@@ -47,6 +48,8 @@ const ClassDetail = () => {
     error,
     refetch: fetchClass,
   } = useFetch(classService.getClassById, id as string, [id]);
+
+  console.log('👉 classData:', classData);
 
   const {
     data: schedulesResponse,
@@ -113,7 +116,7 @@ const ClassDetail = () => {
     title: '',
     message: '',
     type: 'success' as 'success' | 'danger' | 'warning' | 'info',
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   const [confirmDeleteAll, setConfirmDeleteAll] = useState({
@@ -206,6 +209,32 @@ const ClassDetail = () => {
     }
   };
 
+  const handleUnenrollStudent = async (studentId: string, classId: string) => {
+    try {
+      const res = await classService.unErollStudent({ studentId, classId });
+
+      if (res.success) {
+        setConfirmConfig({
+          isOpen: true,
+          title: 'Thành công!',
+          message: res.message,
+          type: 'success',
+          onConfirm: () => setConfirmConfig((prev) => ({ ...prev, isOpen: false })),
+        });
+
+        if (typeof fetchClass === 'function') fetchClass();
+      }
+    } catch (error: any) {
+      setConfirmConfig({
+        isOpen: true,
+        title: 'Lỗi hủy ghi danh',
+        message: error.response?.data?.message || 'Đã có lỗi xảy ra hoặc học viên đã đóng tiền không thể tự ý hủy.',
+        type: 'danger',
+        onConfirm: () => setConfirmConfig((prev) => ({ ...prev, isOpen: false })),
+      });
+    }
+  };
+
   const studentIds = classData?.studentIds;
 
   const filteredStudents = useMemo(() => {
@@ -271,7 +300,6 @@ const ClassDetail = () => {
       className="p-8 bg-gray-50 min-h-screen animate-in fade-in duration-500"
       onClick={() => setOpenDropdownId(null)}
     >
-      {/* Các Modal hiện có */}
       {showClassModal && (
         <ClassModal
           isOpen={showClassModal}
@@ -508,7 +536,7 @@ const ClassDetail = () => {
                     placeholder="Tìm tên, SĐT học viên..."
                     value={searchInput}
                     setSearchInput={setSearchInput}
-                    setPage={() => {}}
+                    setPage={() => { }}
                   />
                 </div>
                 <Button
@@ -546,10 +574,6 @@ const ClassDetail = () => {
 
                       {/* --- UI: Badge Trạng thái & Nút 3 chấm --- */}
                       <div className="flex items-center gap-2 ml-auto shrink-0">
-                        <span className="hidden xl:inline-block px-2 py-1 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
-                          Đã thu đủ
-                        </span>
-
                         <button
                           className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                           onClick={(e) => {
@@ -579,7 +603,7 @@ const ClassDetail = () => {
                             <button
                               className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors text-left border-t border-gray-50 font-medium"
                               onClick={() => {
-                                console.log('👉 HỦY GHI DANH HỌC VIÊN:', student._id);
+                                handleUnenrollStudent(student._id, classData._id);
                                 setOpenDropdownId(null);
                               }}
                             >

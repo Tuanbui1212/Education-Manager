@@ -58,7 +58,7 @@ const StudentModal = ({
       password: '',
       date: undefined,
       roleId: studentRoleId,
-      status: 'ACTIVE' as UserStatus,
+      status: 'POTENTIAL' as UserStatus,
       student_info: { parentsName: '', consultantId: '' },
     };
   });
@@ -212,7 +212,7 @@ const StudentModal = ({
                 value={formData.status}
                 onChange={(e) => handleChange('status', e.target.value)}
               >
-                <option value="LEAD">Tiềm năng (Lead)</option>
+                <option value="POTENTIAL">Tiềm năng (Potential)</option>
                 <option value="ACTIVE">Đang học (Active)</option>
                 <option value="RESERVED">Bảo lưu (Reserved)</option>
                 <option value="INACTIVE">Đã nghỉ (Inactive)</option>

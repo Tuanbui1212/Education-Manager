@@ -1,5 +1,6 @@
 import { Plus, Edit2, Trash2, Search } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import Button from '../../../../components/Button';
 import PageHeader from '../../../../components/PageHeader';
@@ -16,8 +17,10 @@ import useDebounce from '../../../../hooks/useDebounce';
 import { courseService } from '../../../../services/course.service';
 
 import type { ICourse } from '../../../../types/course.type';
+import { PATHS } from '../../../../utils/constants';
 
 const CourseManagement = () => {
+  const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(5);
   const [searchInput, setSearchInput] = useState('');
@@ -32,7 +35,7 @@ const CourseManagement = () => {
     title: '',
     message: '',
     type: 'success' as 'success' | 'danger' | 'warning' | 'info',
-    onConfirm: () => { },
+    onConfirm: () => {},
   });
 
   const queryParams = {
@@ -207,15 +210,16 @@ const CourseManagement = () => {
               courses.map((course, index) => (
                 <tr key={course._id} className="hover:bg-blue-50/50 transition-colors group">
                   <td className="p-4 text-text-secondary font-medium text-center">{index + 1 + (page - 1) * limit}</td>
-                  <td className="p-4 font-semibold text-blue-600">
+                  <td
+                    onClick={() => navigate(PATHS.TRAINING_COURSES_ID.replace(':id', course._id as string))}
+                    className="p-4 font-semibold text-blue-600 cursor-pointer hover:text-blue-800"
+                  >
                     {course.title}
                   </td>
                   <td className="p-4 text-right font-bold text-status-progress-text">
                     {formatCurrency(course.basePrice)}
                   </td>
-                  <td className="p-4 text-text-main max-w-xs truncate">
-                    {course.syllabus}
-                  </td>
+                  <td className="p-4 text-text-main max-w-xs truncate">{course.syllabus}</td>
                   <td className="p-4">
                     <div className="flex items-center justify-center gap-3">
                       <button

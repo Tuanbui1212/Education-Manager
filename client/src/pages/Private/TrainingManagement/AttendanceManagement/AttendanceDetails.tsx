@@ -88,17 +88,6 @@ const AttendanceDetails = () => {
         });
     };
 
-    const updateMark = (studentId: string, markValue: string) => {
-        setRecords(prev => {
-            const newRecords = [...prev];
-            const index = newRecords.findIndex(r => r.studentInfo._id === studentId);
-            if (index > -1) {
-                newRecords[index].attendance.mark = markValue === '' ? undefined : Number(markValue);
-            }
-            return newRecords;
-        });
-    };
-
     const handleSave = async () => {
         setIsSaving(true);
         try {
@@ -138,12 +127,12 @@ const AttendanceDetails = () => {
     };
 
     const renderTableBody = () => {
-        if (loading) return <TableSkeleton columns={6} />;
+        if (loading) return <TableSkeleton columns={5} />;
 
         if (!records || records.length === 0) {
             return (
                 <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
                         <div className="flex flex-col items-center justify-center">
                             <UserIcon className="w-12 h-12 text-gray-300 mb-3" />
                             <p className="text-base font-medium text-gray-900 mb-1">Không có học viên</p>
@@ -198,18 +187,6 @@ const AttendanceDetails = () => {
                         <option value="NOT_DONE">Chưa làm BTVN</option>
                         <option value="NO_HOMEWORK">Không có BTVN</option>
                     </SelectField>
-                </td>
-                <td className="px-4 md:px-6 py-4">
-                    <input
-                        type="number"
-                        min="0"
-                        max="10"
-                        step="0.5"
-                        className="w-16 px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-gray-300 transition-all text-center"
-                        placeholder="Điểm"
-                        value={record.attendance.mark !== undefined ? record.attendance.mark : ''}
-                        onChange={(e) => updateMark(record.studentInfo._id, e.target.value)}
-                    />
                 </td>
                 <td className="px-4 md:px-6 py-4">
                     <input
@@ -278,7 +255,6 @@ const AttendanceDetails = () => {
                                 <th className="px-4 md:px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Học sinh</th>
                                 <th className="px-4 md:px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Trạng thái Điểm danh</th>
                                 <th className="px-4 md:px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Trạng thái BTVN</th>
-                                <th className="px-4 md:px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Điểm</th>
                                 <th className="px-4 md:px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nhận xét của GV</th>
                             </tr>
                         </thead>

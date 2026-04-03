@@ -1,7 +1,4 @@
 import { Types } from 'mongoose';
-import { ICourse } from '../types/course.type';
-import { IUser } from '../types/user.type';
-import { IRoom } from './room.type';
 
 export enum ClassStatus {
   UPCOMING = 'UPCOMING',

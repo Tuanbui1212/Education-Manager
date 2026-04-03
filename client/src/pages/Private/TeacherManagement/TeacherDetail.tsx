@@ -5,13 +5,13 @@ import {
   Mail,
   Phone,
   Calendar as CalendarIcon,
-  Briefcase,
   GraduationCap,
   Banknote,
   Clock,
   CheckCircle2,
   Edit,
   BookOpen,
+  User as UserIcon,
 } from 'lucide-react';
 
 import { formatCurrency, formatDate } from '../../../utils/format.util';
@@ -155,9 +155,11 @@ const TeacherDetail = () => {
                   </div>
                 </div>
                 <h2 className="text-2xl font-bold text-gray-800">{teacher.fullName}</h2>
-                <p className="text-indigo-600 font-semibold text-sm uppercase tracking-wider mt-1">
-                  {(teacher.roleId as any).name}
-                </p>
+                <div className="flex justify-center gap-2 mt-2">
+                  <p className="text-indigo-600 font-semibold text-sm uppercase tracking-wider">
+                    Giáo viên {teacher.teacher_info?.type === 'FULL_TIME' ? 'Cơ hữu' : 'Thỉnh giảng'}
+                  </p>
+                </div>
                 <div className="mt-4 flex justify-center">
                   <span
                     className={`px-4 py-1 rounded-full text-xs font-bold ${teacher.status === 'ACTIVE' ? 'bg-green-50 text-green-600 border border-green-100' : 'bg-red-50 text-red-600 border border-red-100'}`}
@@ -167,6 +169,17 @@ const TeacherDetail = () => {
                 </div>
               </div>
               <div className="border-t border-gray-50 p-6 space-y-4">
+                <div className="flex items-center gap-4 text-gray-600">
+                  <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center shrink-0">
+                    <UserIcon size={18} />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 font-medium uppercase">Giới tính</p>
+                    <p className="font-semibold">
+                      {teacher.gender === 'MALE' ? 'Nam' : teacher.gender === 'FEMALE' ? 'Nữ' : 'Khác'}
+                    </p>
+                  </div>
+                </div>
                 <div className="flex items-center gap-4 text-gray-600">
                   <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center shrink-0">
                     <Mail size={18} />
@@ -201,14 +214,29 @@ const TeacherDetail = () => {
           <div className="lg:col-span-2 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-5">
-                <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center">
+                <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center shrink-0">
                   <Banknote size={28} />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500 font-medium">Lương theo giờ</p>
-                  <p className="text-2xl font-bold text-gray-800">
-                    {formatCurrency(teacher.teacher_info?.hourlyRate || 0)}
-                  </p>
+                  {teacher.teacher_info?.type === 'FULL_TIME' ? (
+                    <>
+                      <p className="text-sm text-gray-500 font-medium">Lương cứng / Lương giờ</p>
+                      <p className="text-lg font-bold text-gray-800">
+                        {formatCurrency(teacher.baseSalary || 0)}{' '}
+                        <span className="text-sm font-normal text-gray-500">/tháng</span>
+                      </p>
+                      <p className="text-sm font-bold text-indigo-600">
+                        + {formatCurrency(teacher.teacher_info?.hourlyRate || 0)}/h
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm text-gray-500 font-medium">Lương theo giờ</p>
+                      <p className="text-2xl font-bold text-gray-800">
+                        {formatCurrency(teacher.teacher_info?.hourlyRate || 0)}
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
               <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-5">
@@ -240,7 +268,7 @@ const TeacherDetail = () => {
                       {day.label}
                     </div>
                     <div className="p-2 flex flex-col gap-2 flex-grow min-h-[220px]">
-                      {day.items.map((item, iIdx) => {
+                      {day.items.map((item: any, iIdx: number) => {
                         if (item.className) {
                           return (
                             <div
@@ -257,7 +285,7 @@ const TeacherDetail = () => {
                         }
                         return null;
                       })}
-                      {day.items.every((item) => !item.className) && (
+                      {day.items.every((item: any) => !item.className) && (
                         <span className="text-[10px] text-gray-300 italic text-center my-auto uppercase font-bold tracking-tighter">
                           Trống
                         </span>
@@ -266,35 +294,48 @@ const TeacherDetail = () => {
                   </div>
                 ))}
               </div>
-
-              <div className="mt-8 flex flex-wrap items-center gap-6 text-[10px] text-gray-400 font-bold uppercase tracking-wider border-t pt-6">
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-indigo-600 shadow-sm shadow-indigo-200"></span>{' '}
-                  <span>Lịch dạy thực tế</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-gray-200"></span> <span>Thời gian chưa có lịch</span>
-                </div>
-              </div>
             </div>
 
             <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
               <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-3">
                 <GraduationCap className="text-indigo-600" /> Bằng cấp & Chứng chỉ
               </h3>
-              <div className="flex flex-wrap gap-3">
-                {teacher.teacher_info?.degrees?.length ? (
-                  teacher.teacher_info.degrees.map((degree, index) => (
-                    <span
-                      key={index}
-                      className="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl text-sm font-bold border border-indigo-100 shadow-sm"
-                    >
-                      {degree}
-                    </span>
-                  ))
-                ) : (
-                  <p className="text-gray-400 italic">Chưa cập nhật bằng cấp</p>
-                )}
+              <div className="flex flex-col gap-4">
+                <div>
+                  <p className="text-sm text-gray-500 font-medium mb-2 uppercase tracking-wide">Bằng cấp đào tạo</p>
+                  <div className="flex flex-wrap gap-3">
+                    {teacher.degrees?.length ? (
+                      teacher.degrees.map((degree, index) => (
+                        <span
+                          key={index}
+                          className="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl text-sm font-bold border border-indigo-100 shadow-sm"
+                        >
+                          {degree}
+                        </span>
+                      ))
+                    ) : (
+                      <p className="text-gray-400 italic text-sm">Chưa cập nhật bằng cấp</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-50 pt-4">
+                  <p className="text-sm text-gray-500 font-medium mb-2 uppercase tracking-wide">Chứng chỉ chuyên môn</p>
+                  <div className="flex flex-wrap gap-3">
+                    {teacher.certificates?.length ? (
+                      teacher.certificates.map((cert, index) => (
+                        <span
+                          key={index}
+                          className="px-4 py-2 bg-amber-50 text-amber-700 rounded-xl text-sm font-bold border border-amber-100 shadow-sm"
+                        >
+                          {cert}
+                        </span>
+                      ))
+                    ) : (
+                      <p className="text-gray-400 italic text-sm">Chưa cập nhật chứng chỉ</p>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

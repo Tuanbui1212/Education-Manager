@@ -18,6 +18,7 @@ export const SYSTEM_TEMPLATE_CODES: { value: string; label: string }[] = [
   { value: 'INSTALLMENT_CREATED', label: 'Thông báo tạo lịch trả góp' },
   { value: 'REMIND_INSTALLMENT', label: 'Thông báo lịch trả góp' },
   { value: 'FORGOT_PASSWORD', label: 'Xác nhận quên mật khẩu' },
+  { value: 'MONTHLY_PAYROLL_NOTICE', label: 'Thông báo bảng lương hàng tháng' },
 ];
 
 const NotificationTemplateModal = ({ isOpen, onClose, onSubmit, initialData }: NotificationTemplateModalProps) => {
@@ -42,11 +43,11 @@ const NotificationTemplateModal = ({ isOpen, onClose, onSubmit, initialData }: N
         initialData
           ? { ...initialData }
           : {
-              code: SYSTEM_TEMPLATE_CODES[0].value,
-              title: '',
-              content: '',
-              type: 'EMAIL',
-            },
+            code: SYSTEM_TEMPLATE_CODES[0].value,
+            title: '',
+            content: '',
+            type: 'EMAIL',
+          },
       );
       setErrors({});
     }
@@ -133,9 +134,8 @@ const NotificationTemplateModal = ({ isOpen, onClose, onSubmit, initialData }: N
               * Mẹo: Dùng biến như {'{{studentName}}'}, {'{{debtAmount}}'}, {'{{dueDate}}'} để điền tự động.
             </p>
             <textarea
-              className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all min-h-[200px] ${
-                errors.content ? 'border-red-500' : 'border-gray-200'
-              }`}
+              className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all min-h-[200px] ${errors.content ? 'border-red-500' : 'border-gray-200'
+                }`}
               value={formData.content || ''}
               onChange={(e) => handleChange('content', e.target.value)}
               placeholder="Nhập nội dung mẫu thông báo..."
