@@ -42,12 +42,17 @@ export const classService = {
     };
   },
 
-  getClassesByStudentId: async (id?: string): Promise<{ success: boolean; message: string; data?: IClass[] }> => {
+  getClassesByStudentId: async (id?: string): Promise<{ success: boolean; message: string; data?: IClass[], totalCount?: number }> => {
     if (!id) {
-      return { success: false, message: 'Thiếu ID học sinh', data: [] };
+      return { success: false, message: 'Thiếu ID học sinh', data: [], totalCount: 0 };
     }
     const response = await axios.get(`/classes/student/${id}`);
-    return response.data;
+    return {
+      success: response.data.success,
+      message: response.data.message,
+      data: response.data.data,
+      totalCount: response.data.total
+    };
   },
 
   enrollStudent: async (data: { classId: string; studentId: string; finalAmount: number }) => {

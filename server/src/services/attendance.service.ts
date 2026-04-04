@@ -284,4 +284,49 @@ export class AttendanceService {
 
         return { success: true, message: "Lưu điểm danh thành công" };
     }
+
+    async getStudentAttendancesByClassId(classId: string, studentId: string) {
+        const attendances = await AttendanceModel.aggregate([
+            {
+                $match: {
+                    classId: new Types.ObjectId(classId),
+                    studentId: new Types.ObjectId(studentId)
+                }
+            },
+            {
+                $lookup: {
+                    from: 'schedules',
+                    localField: 'scheduleId',
+                    foreignField: '_id',
+                    as: 'schedule'
+                }
+            },
+            { $unwind: '$schedule' },
+            {
+                $lookup: {
+                    from: 'shifts',
+                    localField: 'schedule.shiftId',
+                    foreignField: '_id',
+                    as: 'shift'
+                }
+            },
+            { $unwind: { path: '$shift', preserveNullAndEmptyArrays: true } },
+            { $sort: { 'schedule.date': -1 } },
+            {
+                $project: {
+                    _id: 1,
+                    status: 1,
+                    homework: 1,
+                    teacherComment: 1,
+                    mark: 1,
+                    date: '$schedule.date',
+                    shiftName: '$shift.name',
+                    startTime: '$shift.startTime',
+                    endTime: '$shift.endTime',
+                    topic: '$schedule.name'
+                }
+            }
+        ]);
+        return { data: attendances };
+    }
 }

@@ -68,6 +68,9 @@ export const PATHS = {
 
   FINANCE_TRANSACTIONS: '/finance/transactions',
   FINANCE_TRANSACTIONS_ID: '/finance/transactions/:id',
+
+  STUDENT_PORTAL: '/student-portal',
+  STUDENT_ATTENDANCE: '/student-attendance/:id',
 };
 
 export const STATUS_OPTIONS = [

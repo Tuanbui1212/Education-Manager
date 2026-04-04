@@ -26,4 +26,6 @@ router.post("/", verifyToken, requirePermission('attendance.check'),
     validate(UpsertAttendancesSchema, 'body'),
     attendanceController.upsert);
 
+router.get("/student-class/:classId", verifyToken, attendanceController.getStudentAttendancesByClassId);
+
 export default router;

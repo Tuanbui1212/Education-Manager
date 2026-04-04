@@ -216,14 +216,102 @@ export class ClassService {
   }
 
   async getClassByStudentId(id: string) {
+    const studentObjectId = new Types.ObjectId(id);
+
     const [classesData, totalCount] = await Promise.all([
-      ClassModel.find({ studentIds: id })
-        .select('-studentIds -documents -__v')
-        .populate('courseId', 'title')
-        .populate('teacherId', 'fullName')
-        .populate('roomId', 'name'),
+      ClassModel.aggregate([
+        {
+          $match: { studentIds: studentObjectId },
+        },
+        {
+          $lookup: {
+            from: 'schedules',
+            localField: '_id',
+            foreignField: 'classId',
+            as: 'schedulesData',
+          },
+        },
+        {
+          $lookup: {
+            from: 'attendances',
+            let: { class_id: '$_id' },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ['$classId', '$$class_id'] },
+                      { $eq: ['$studentId', studentObjectId] },
+                    ],
+                  },
+                },
+              },
+            ],
+            as: 'studentAttendances',
+          },
+        },
+        {
+          $addFields: {
+            totalSchedules: { $size: '$schedulesData' },
+            presentAttends: {
+              $size: {
+                $filter: {
+                  input: '$studentAttendances',
+                  as: 'att',
+                  cond: { $eq: ['$$att.status', 'PRESENT'] },
+                },
+              },
+            },
+            averageMark: {
+              $avg: '$studentAttendances.mark',
+            },
+          },
+        },
+        {
+          $project: {
+            studentIds: 0,
+            documents: 0,
+            __v: 0,
+            schedulesData: 0,
+            studentAttendances: 0,
+          },
+        },
+        {
+          $lookup: {
+            from: 'courses',
+            localField: 'courseId',
+            foreignField: '_id',
+            as: 'courseId',
+          },
+        },
+        {
+          $unwind: { path: '$courseId', preserveNullAndEmptyArrays: true },
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'teacherId',
+            foreignField: '_id',
+            as: 'teacherId',
+          },
+        },
+        {
+          $unwind: { path: '$teacherId', preserveNullAndEmptyArrays: true },
+        },
+        {
+          $lookup: {
+            from: 'rooms',
+            localField: 'roomId',
+            foreignField: '_id',
+            as: 'roomId',
+          },
+        },
+        {
+          $unwind: { path: '$roomId', preserveNullAndEmptyArrays: true },
+        },
+      ]),
       ClassModel.countDocuments({ studentIds: id })
-    ])
+    ]);
 
     return { classesData, totalCount };
   }

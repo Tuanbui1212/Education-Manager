@@ -4,7 +4,7 @@ import { getDecodedToken } from '../../utils/auth';
 import { useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import { attendanceNotificationService } from '../../services/attendanceNotification.service';
-import { API_ROOT } from '../../utils/constants';
+import { API_ROOT, PATHS } from '../../utils/constants';
 import { toast } from 'react-toastify';
 
 const Header = () => {
@@ -100,7 +100,7 @@ const Header = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-20">
                     {/* Logo */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate(PATHS.STUDENT_PORTAL)}>
                         <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-blue-600/20">
                             <GraduationCap size={24} />
                         </div>

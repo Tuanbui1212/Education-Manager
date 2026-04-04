@@ -31,4 +31,11 @@ export const attendanceService = {
         const response = await axios.post('/attendances', attendanceData);
         return response.data;
     },
+
+    getStudentAttendancesByClass: async (
+        classId: string
+    ): Promise<{ success: boolean; data: any[]; message: string }> => {
+        const response = await axios.get(`/attendances/student-class/${classId}`);
+        return response.data;
+    },
 };

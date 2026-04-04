@@ -39,4 +39,14 @@ export class AttendanceController {
             return res.status(400).json({ success: false, message: error.message });
         }
     }
+
+    getStudentAttendancesByClassId = async (req: Request, res: Response) => {
+        try {
+            const studentId = (req as any).user?.id;
+            const result = await this.attendanceService.getStudentAttendancesByClassId(req.params.classId as string, studentId);
+            return res.status(200).json({ success: true, message: "Lấy danh sách điểm danh thành công", ...result });
+        } catch (error: any) {
+            return res.status(400).json({ success: false, message: error.message });
+        }
+    }
 }
