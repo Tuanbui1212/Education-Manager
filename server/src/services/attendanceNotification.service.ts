@@ -16,12 +16,14 @@ export class AttendanceNotificationService {
             AttendanceNotificationModel.find(match)
                 .sort({ createdAt: -1 })
                 .skip(skip)
-                .limit(Number(limit)),
+                .limit(Number(limit))
+                .populate({ path: 'attendanceId', select: 'classId' }),
             AttendanceNotificationModel.countDocuments(match),
             AttendanceNotificationModel.countDocuments({ userId: new Types.ObjectId(userId), isRead: false })
         ]);
 
         return { data, totalCount, unreadCount };
+
     }
 
     async markAsRead(id: string, userId: string) {

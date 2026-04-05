@@ -68,6 +68,13 @@ const Header = () => {
             }
         }
         setIsDropdownOpen(false);
+
+        const classId = typeof notif.attendanceId === 'object'
+            ? notif.attendanceId?.classId
+            : null;
+        if (classId) {
+            navigate(PATHS.STUDENT_ATTENDANCE.replace(':id', classId));
+        }
     };
 
     const handleMarkAllAsRead = async (e: React.MouseEvent) => {
@@ -93,14 +100,14 @@ const Header = () => {
 
     const handleLogout = () => {
         localStorage.removeItem('token');
-        navigate('/login');
+        navigate(PATHS.LOGIN);
     };
     return (
         <header className="bg-white shadow-sm sticky top-0 z-40 border-b border-gray-100">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-20">
                     {/* Logo */}
-                    <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate(PATHS.STUDENT_PORTAL)}>
+                    <div className="flex items-center gap-3 cursor-pointer">
                         <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-blue-600/20">
                             <GraduationCap size={24} />
                         </div>

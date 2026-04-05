@@ -15,6 +15,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  Search,
+  ClipboardList,
 } from 'lucide-react';
 import useFetch from '../hooks/useFetch';
 import { classService } from '../services/class.service';
@@ -25,6 +27,8 @@ import { vi } from 'date-fns/locale';
 import { shiftService } from '../services/shift.service';
 import { ClassStatus } from '../types/class.type';
 import { PATHS } from '../utils/constants';
+import useDebounce from '../hooks/useDebounce';
+import { CLASS_STATUS_CONFIG } from '../utils/constants';
 
 const MOCK_INVOICES = [
   { id: 'inv1', title: 'Học phí Tiếng Anh (Tháng 10)', amount: 2500000, dueDate: '2023-10-15', status: 'PENDING' },
@@ -45,12 +49,22 @@ const StudentPortal = () => {
   const [currentWeekStart, setCurrentWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [activeTab, setActiveTab] = useState<'classes' | 'timetable' | 'invoices'>('classes');
 
+  const [searchInput, setSearchInput] = useState('');
+  const debouncedSearch = useDebounce(searchInput, 400);
+
   const handleClassClick = (cls: any) => {
     navigate(PATHS.STUDENT_ATTENDANCE.replace(':id', cls._id));
   };
 
-  const currentUser = getDecodedToken()
-  const { data: classesData, totalCount } = useFetch(classService.getClassesByStudentId, currentUser?.id)
+  const currentUser = getDecodedToken();
+  const { data: classesRaw, totalCount } = useFetch(classService.getClassesByStudentId, currentUser?.id);
+
+  const classesData = useMemo(() => {
+    if (!classesRaw) return [];
+    if (!debouncedSearch.trim()) return classesRaw;
+    const q = debouncedSearch.toLowerCase();
+    return classesRaw.filter((cls: any) => cls.name?.toLowerCase().includes(q));
+  }, [classesRaw, debouncedSearch]);
 
   const handlePrevWeek = () => setCurrentWeekStart((prev) => subWeeks(prev, 1));
   const handleNextWeek = () => setCurrentWeekStart((prev) => addWeeks(prev, 1));
@@ -200,58 +214,71 @@ const StudentPortal = () => {
         {activeTab === 'classes' && (
           <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <>
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
                 <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
                   <Calendar className="text-blue-600" />
                   Lớp học
                 </h3>
+                <div className="relative w-full sm:w-72">
+                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Tìm kiếm lớp học..."
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {classesData?.map((cls) => (
-                  <div
-                    key={cls._id}
-                    onClick={() => handleClassClick(cls)}
-                    className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow group cursor-pointer"
-                  >
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <BookOpen size={24} />
-                      </div>
-                      <span className={`bg-${cls.status === ClassStatus.COMPLETED ? 'red' : cls.status === ClassStatus.ACTIVE ? 'blue' : 'green'}-100 text-${cls.status === ClassStatus.COMPLETED
-                        ? 'red' : cls.status === ClassStatus.ACTIVE ? 'blue' : 'green'}-700 text-xs font-bold px-3 py-1 rounded-full`}>
-                        {cls.status === ClassStatus.COMPLETED ? 'Đã hoàn thành' : cls.status === ClassStatus.ACTIVE ? 'Đang học' : 'Sắp diễn ra'}
-                      </span>
-                    </div>
-                    <h4 className="font-bold text-lg text-gray-800 mb-4 line-clamp-2">{cls.name}</h4>
-
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3 text-sm text-gray-600">
-                        <User size={16} className="text-gray-400" />
-                        <span className="font-medium">
-                          {typeof cls.teacherId === 'object' && cls.teacherId !== null
-                            ? (cls.teacherId as any).fullName
-                            : 'Chưa phân công'}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3 text-sm text-gray-600">
-                        <MapPin size={16} className="text-gray-400" />
-                        <span>
-                          {typeof cls.roomId === 'object' && cls.roomId !== null
-                            ? (cls.roomId as any).name
-                            : 'Chưa xếp phòng'}
-                        </span>
-                      </div>
-                    </div>
-                    {/* CTA */}
+                {classesData?.map((cls: any) => {
+                  const statusCfg = CLASS_STATUS_CONFIG[cls.status] ?? CLASS_STATUS_CONFIG[ClassStatus.ACTIVE];
+                  return (
                     <div
-                      className="mt-5 flex items-center justify-between text-sm font-bold text-blue-600 transition-opacity"
+                      key={cls._id}
+                      onClick={() => handleClassClick(cls)}
+                      className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all group cursor-pointer"
                     >
-                      <span>Xem chi tiết buổi học</span>
-                      <ChevronRight size={18} />
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <BookOpen size={24} />
+                        </div>
+                        <span className={`text-xs font-bold px-3 py-1 rounded-full ${statusCfg.bg} ${statusCfg.text}`}>
+                          {statusCfg.label}
+                        </span>
+                      </div>
+
+                      <h4 className="font-bold text-lg text-gray-800 mb-1 line-clamp-1 group-hover:text-blue-600 transition-colors">
+                        {cls.name}
+                      </h4>
+                      <p className="text-sm text-gray-400 font-medium mb-4">{typeof cls.courseId === 'object' && cls.courseId !== null
+                        ? (cls.courseId as any).title
+                        : '—'}</p>
+
+                      <div className="space-y-2 border-t border-gray-50 pt-4">
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <User size={14} className="text-gray-400 shrink-0" />
+                          <span className="truncate">{typeof cls.teacherId === 'object' && cls.teacherId !== null
+                            ? (cls.teacherId as any).fullName
+                            : 'Chưa phân công'}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <MapPin size={14} className="text-gray-400 shrink-0" />
+                          <span className="truncate">{typeof cls.roomId === 'object' && cls.roomId !== null
+                            ? (cls.roomId as any).name
+                            : 'Chưa xếp phòng'}</span>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-end gap-1 text-blue-500 text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
+                        <ClipboardList size={15} />
+                        <span>Xem lịch điểm danh</span>
+                        <ChevronRight size={15} />
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </>
           </section>

@@ -1,3 +1,5 @@
+import { ClassStatus } from "../types/class.type";
+
 export const API_ROOT = 'http://localhost:5000/api';
 
 export const PATHS = {
@@ -71,6 +73,10 @@ export const PATHS = {
 
   STUDENT_PORTAL: '/student-portal',
   STUDENT_ATTENDANCE: '/student-attendance/:id',
+
+  TEACHER_PORTAL: '/teacher-portal',
+  TEACHER_ATTENDANCE_SCHEDULES: '/teacher-attendance/:classId',
+  TEACHER_ATTENDANCE_DETAILS: '/teacher-attendance/:classId/schedule/:scheduleId',
 };
 
 export const STATUS_OPTIONS = [
@@ -101,3 +107,9 @@ export const DAYS_OF_WEEK = [
   { label: 'T7', value: 6 },
   { label: 'CN', value: 0 },
 ];
+
+export const CLASS_STATUS_CONFIG: Record<string, { label: string; bg: string; text: string }> = {
+  [ClassStatus.ACTIVE]: { label: 'Đang học', bg: 'bg-blue-100', text: 'text-blue-700' },
+  [ClassStatus.COMPLETED]: { label: 'Đã kết thúc', bg: 'bg-gray-100', text: 'text-gray-600' },
+  [ClassStatus.UPCOMING]: { label: 'Sắp diễn ra', bg: 'bg-green-100', text: 'text-green-700' },
+};

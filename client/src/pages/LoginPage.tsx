@@ -29,9 +29,13 @@ const LoginPage = () => {
         const decodedToken = getDecodedToken();
         const role = decodedToken?.role;
         if (role?.name.toLowerCase().includes('admin')) {
-          navigate('/');
-        } else {
+          navigate(PATHS.HOME);
+        } else if (role?.name.toLowerCase().includes('teacher')) {
+          navigate(PATHS.TEACHER_PORTAL);
+        } else if (role?.name.toLowerCase().includes('student')) {
           navigate(PATHS.STUDENT_PORTAL);
+        } else {
+          navigate(PATHS.HOME);
         }
       }
     } catch (error: any) {

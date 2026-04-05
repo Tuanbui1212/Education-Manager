@@ -249,6 +249,7 @@ export class AttendanceService {
             {
                 $project: {
                     studentId: 1,
+                    classId: 1,
                     status: 1,
                     homework: 1,
                     teacherComment: 1,
@@ -262,7 +263,7 @@ export class AttendanceService {
         const notifications = updatedAttendances.map(att => {
             return ({
                 userId: att.studentId,
-                title: `Cập nhật điểm danh và nhận xét ngày ${new Date(att.date).toLocaleDateString('vi-VN')}`,
+                title: `Lớp ${att.className} điểm danh ngày ${new Date(att.date).toLocaleDateString('vi-VN')}`,
                 content: `${att.status === AttendanceStatus.PRESENT ? 'Có mặt' : 'Vắng mặt'} - 
                     ${att.homework === HomeworkStatus.DONE ? 'Đã nộp bài tập' : 'Chưa nộp bài tập'} 
                     ${att.mark ? ` - Điểm: ${att.mark}` : ''} 
@@ -272,13 +273,22 @@ export class AttendanceService {
             })
         });
 
+        const classIdMap = new Map<string, string>();
+        updatedAttendances.forEach(att => {
+            classIdMap.set(att._id.toString(), att.classId.toString());
+        });
+
         const savedNotifs = await AttendanceNotificationModel.insertMany(notifications);
         const io = getIO();
 
         savedNotifs.forEach(notif => {
             const socketId = userSocketMap.get(notif.userId.toString());
             if (socketId) {
-                io.to(socketId).emit('new_notification', notif);
+                const classId = classIdMap.get(notif.attendanceId.toString());
+                io.to(socketId).emit('new_notification', {
+                    ...notif.toObject(),
+                    attendanceId: { _id: notif.attendanceId, classId },
+                });
             }
         });
 

@@ -366,7 +366,7 @@ const StudentAttendancePage = () => {
             <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
               <Filter size={24} className="text-gray-400" />
             </div>
-            <p className="font-bold text-gray-600">Bạn chưa có số liệu cho bộ lọc này.</p>
+            <p className="font-bold text-gray-600">Không có dữ liệu</p>
           </div>
         )}
       </div>
