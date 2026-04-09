@@ -168,7 +168,6 @@ const UserForm = () => {
       if (!formData.student_info?.consultantId) newErrors.consultantId = 'Vui lòng chọn nhân viên tư vấn';
     }
 
-    // Validate bankInfo cho các role không phải Student
     if (selectedRoleName !== 'student') {
       if (!formData.bankInfo?.bankBin?.trim()) newErrors.bankBin = 'Vui lòng chọn ngân hàng';
       if (!formData.bankInfo?.accountNo?.trim()) newErrors.accountNo = 'Vui lòng nhập số tài khoản';
@@ -277,7 +276,7 @@ const UserForm = () => {
           onConfirm: () => navigate(-1),
         });
       } else {
-        await userService.createUser(cleanData);
+        await userService.createUser(submitData);
         setConfirmConfig({
           isOpen: true,
           title: 'Thành công',
@@ -402,7 +401,6 @@ const UserForm = () => {
                 </div>
               </div>
 
-              {/* Bằng cấp & Chứng chỉ — chỉ hiện với các role KHÔNG phải Student */}
               {selectedRoleName !== 'student' && (
                 <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
                   <h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2 border-b pb-3">
@@ -443,7 +441,6 @@ const UserForm = () => {
                 </div>
               )}
 
-              {/* Thông tin Học viên — chỉ hiện với Student */}
               {selectedRoleName === 'student' && (
                 <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
                   <h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2 border-b pb-3">
@@ -489,7 +486,6 @@ const UserForm = () => {
                 </div>
               )}
 
-              {/* Thông tin Thanh toán — chỉ hiện với các role KHÔNG phải Student */}
               {selectedRoleName !== 'student' && (
                 <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
                   <h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2 border-b pb-3">
@@ -537,9 +533,7 @@ const UserForm = () => {
               )}
             </div>
 
-            {/* ════════ CỘT PHẢI (1/3) ════════ */}
             <div className="space-y-6">
-              {/* Phân quyền & Trạng thái */}
               <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                 <h3 className="text-md font-bold text-gray-800 mb-4 flex items-center gap-2 border-b pb-3">
                   <ShieldCheck className="text-indigo-600" size={18} /> Phân quyền & Trạng thái
@@ -569,7 +563,6 @@ const UserForm = () => {
                 </div>
               </div>
 
-              {/* Hợp đồng & Lương — chỉ Teacher */}
               {selectedRoleName === 'teacher' && (
                 <div className="bg-indigo-50/50 p-6 rounded-3xl shadow-sm border border-indigo-100">
                   <h3 className="text-md font-bold text-indigo-800 mb-4 flex items-center gap-2 border-b border-indigo-200 pb-3">
@@ -612,7 +605,6 @@ const UserForm = () => {
                 </div>
               )}
 
-              {/* Lương cứng — Staff / Consultant / các role khác (không phải Teacher, không phải Student) */}
               {selectedRoleName && selectedRoleName !== 'teacher' && selectedRoleName !== 'student' && (
                 <div className="bg-emerald-50/50 p-6 rounded-3xl shadow-sm border border-emerald-100">
                   <h3 className="text-md font-bold text-emerald-800 mb-4 flex items-center gap-2 border-b border-emerald-200 pb-3">
@@ -630,7 +622,6 @@ const UserForm = () => {
             </div>
           </div>
 
-          {/* Footer Buttons */}
           <div className="flex justify-end gap-4 mt-8 bg-white p-5 rounded-3xl shadow-sm border border-gray-100 sticky bottom-6 z-10">
             <Button
               variant="outline"
