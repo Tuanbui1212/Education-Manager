@@ -16,6 +16,7 @@ import transactionRoute from './transaction.route';
 import payrollRouter from './payroll.route';
 
 function router(app: Application) {
+  app.get('/', (req, res) => res.send('Server is running!'));
   app.use('/api/users', userRouter);
   app.use('/api/roles', roleRouter);
   app.use('/api/rooms', roomRouter);

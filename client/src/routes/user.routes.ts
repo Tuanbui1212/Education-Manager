@@ -17,11 +17,6 @@ import StaffForm from '../pages/Private/StaffManagement/StaffForm';
 import UserProfileForm from '../pages/Private/MyManagement/UserProfileForm';
 import UserProfile from '../pages/Private/MyManagement/UserProfile';
 
-import StaffManager from '../pages/Private/StaffManagement/StaffManager';
-import StaffDetail from '../pages/Private/StaffManagement/StaffDetail';
-
-import UserProfileForm from '../pages/Private/MyManagement/UserProfileForm';
-
 import DashboardLayout from '../layouts/DashboardLayout';
 import { Fragment } from 'react/jsx-runtime';
 import { Import } from 'lucide-react';
