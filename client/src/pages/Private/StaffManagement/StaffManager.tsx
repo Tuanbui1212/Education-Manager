@@ -43,7 +43,7 @@ const StaffManager = () => {
     type: 'danger' as 'success' | 'danger' | 'warning' | 'info',
     confirmText: '',
     cancelText: '',
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   const { data: rolesData } = useFetch(roleService.getRoles, {}, []);

@@ -4,7 +4,7 @@ import { Mail, Lock, Loader2, Eye, EyeOff } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '../services/auth.service';
 import { PATHS } from '../utils/constants';
-
+import { getDecodedToken } from '../utils/auth';
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -26,7 +26,17 @@ const LoginPage = () => {
 
       if (result && result.data) {
         localStorage.setItem('accessToken', result.data);
-        navigate('/');
+        const decodedToken = getDecodedToken();
+        const role = decodedToken?.role;
+        if (role?.name.toLowerCase().includes('admin')) {
+          navigate(PATHS.HOME);
+        } else if (role?.name.toLowerCase().includes('teacher')) {
+          navigate(PATHS.TEACHER_PORTAL);
+        } else if (role?.name.toLowerCase().includes('student')) {
+          navigate(PATHS.STUDENT_PORTAL);
+        } else {
+          navigate(PATHS.HOME);
+        }
       }
     } catch (error: any) {
       alert(error.response?.data?.message || 'Đăng nhập thất bại. Vui lòng thử lại!');

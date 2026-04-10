@@ -58,13 +58,13 @@ const InvoiceManagement = () => {
       invoices.map((inv) =>
         inv?._id === id
           ? ({
-              ...inv,
-              debt: newDebt,
-              status: newStatus,
-              ...(newConfig && { installmentConfig: newConfig }),
-              ...(newRemindCount !== undefined && { remindCount: newRemindCount }),
-              ...(newLastRemindedAt !== undefined && { lastRemindedAt: newLastRemindedAt as any }),
-            } as unknown as IInvoice)
+            ...inv,
+            debt: newDebt,
+            status: newStatus,
+            ...(newConfig && { installmentConfig: newConfig }),
+            ...(newRemindCount !== undefined && { remindCount: newRemindCount }),
+            ...(newLastRemindedAt !== undefined && { lastRemindedAt: newLastRemindedAt as any }),
+          } as unknown as IInvoice)
           : inv,
       ),
     );

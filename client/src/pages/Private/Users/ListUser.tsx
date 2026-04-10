@@ -42,7 +42,7 @@ const UserList = () => {
     type: 'danger' as 'success' | 'danger' | 'warning' | 'info',
     confirmText: '',
     cancelText: '',
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   const queryParams = {
@@ -226,9 +226,8 @@ const UserList = () => {
                   <td className="p-3">
                     <div className="flex items-center gap-2 text-sm">
                       <span
-                        className={`w-2.5 h-2.5 rounded-full animate-pulse ${
-                          user.status === 'ACTIVE' ? 'bg-green-500' : 'bg-gray-400'
-                        }`}
+                        className={`w-2.5 h-2.5 rounded-full animate-pulse ${user.status === 'ACTIVE' ? 'bg-green-500' : 'bg-gray-400'
+                          }`}
                       />
                       <span className={user.status === 'ACTIVE' ? 'text-green-700 font-medium' : 'text-gray-500'}>
                         {user.status === 'ACTIVE' ? 'Đang hoạt động' : 'Ngừng hoạt động'}

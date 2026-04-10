@@ -4,6 +4,8 @@ import { publicRoutes, privateRoutes } from './routes';
 import ScrollToTop from './hooks/ScrollToTop';
 import PrivateRoute from './hooks/PrivateRoute';
 import DefaultLayout from './layouts/DefaultLayout';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   return (
@@ -11,6 +13,7 @@ function App() {
       <ScrollToTop />
 
       <div className="App">
+        <ToastContainer position="top-right" autoClose={3000} />
         <Routes>
           {/* 🟢 1. XỬ LÝ PUBLIC ROUTES */}
           {publicRoutes.map((route, index) => {

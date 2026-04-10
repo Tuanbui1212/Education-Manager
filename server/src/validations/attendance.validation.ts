@@ -8,6 +8,7 @@ export const UpsertAttendanceItemSchema = z.object({
     classId: z.string().min(1, 'Khóa học là bắt buộc').regex(/^[0-9a-fA-F]{24}$/, 'ID không đúng định dạng ObjectId').transform((val) => new Types.ObjectId(val)),
     homework: z.nativeEnum(HomeworkStatus).default(HomeworkStatus.NO_HOMEWORK),
     teacherComment: z.string().optional().default(''),
+    mark: z.number().min(0, 'Điểm không được âm').max(10, 'Điểm không được vượt quá 10').optional(),
     status: z.nativeEnum(AttendanceStatus).default(AttendanceStatus.PRESENT),
 });
 

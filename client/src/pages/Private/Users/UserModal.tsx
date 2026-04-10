@@ -37,9 +37,9 @@ const UserModal = ({ roles = [], consultants = [], isOpen, onClose, onSubmit, in
         baseSalary: initialData.baseSalary || 0,
         teacher_info: initialData.teacher_info
           ? {
-              type: initialData.teacher_info.type || 'PART_TIME',
-              hourlyRate: initialData.teacher_info.hourlyRate || 0,
-            }
+            type: initialData.teacher_info.type || 'PART_TIME',
+            hourlyRate: initialData.teacher_info.hourlyRate || 0,
+          }
           : { type: 'PART_TIME', hourlyRate: 0 },
       };
     }

@@ -43,11 +43,11 @@ const NotificationTemplateModal = ({ isOpen, onClose, onSubmit, initialData }: N
         initialData
           ? { ...initialData }
           : {
-              code: SYSTEM_TEMPLATE_CODES[0].value,
-              title: '',
-              content: '',
-              type: 'EMAIL',
-            },
+            code: SYSTEM_TEMPLATE_CODES[0].value,
+            title: '',
+            content: '',
+            type: 'EMAIL',
+          },
       );
       setErrors({});
     }
@@ -134,9 +134,8 @@ const NotificationTemplateModal = ({ isOpen, onClose, onSubmit, initialData }: N
               * Mẹo: Dùng biến như {'{{studentName}}'}, {'{{debtAmount}}'}, {'{{dueDate}}'} để điền tự động.
             </p>
             <textarea
-              className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all min-h-[200px] ${
-                errors.content ? 'border-red-500' : 'border-gray-200'
-              }`}
+              className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all min-h-[200px] ${errors.content ? 'border-red-500' : 'border-gray-200'
+                }`}
               value={formData.content || ''}
               onChange={(e) => handleChange('content', e.target.value)}
               placeholder="Nhập nội dung mẫu thông báo..."

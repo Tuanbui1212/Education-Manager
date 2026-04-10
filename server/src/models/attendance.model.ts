@@ -8,6 +8,7 @@ const AttendanceSchema = new Schema<IAttendance>(
         classId: { type: Schema.Types.ObjectId, ref: 'Class', required: true },
         homework: { type: String, required: true, enum: HomeworkStatus },
         teacherComment: { type: String, required: true },
+        mark: { type: Number, required: false },
         status: { type: String, required: true, enum: AttendanceStatus },
     },
     {

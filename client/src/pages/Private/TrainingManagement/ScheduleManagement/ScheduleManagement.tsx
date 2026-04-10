@@ -47,7 +47,7 @@ const ScheduleManagement = () => {
     type: 'danger' as 'success' | 'danger' | 'warning' | 'info',
     confirmText: '',
     cancelText: '',
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   const queryParams: any = {
@@ -141,7 +141,7 @@ const ScheduleManagement = () => {
         type: 'danger',
         confirmText: '',
         cancelText: '',
-        onConfirm: () => {},
+        onConfirm: () => { },
       });
     }
   };

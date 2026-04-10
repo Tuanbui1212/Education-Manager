@@ -224,18 +224,16 @@ const UserProfileForm = () => {
             <div className="flex gap-8 mt-6 border-b border-gray-200">
               <button
                 onClick={() => setActiveTab('info')}
-                className={`pb-3 text-sm font-bold transition-all relative ${
-                  activeTab === 'info' ? 'text-slate-900' : 'text-gray-400 hover:text-gray-600'
-                }`}
+                className={`pb-3 text-sm font-bold transition-all relative ${activeTab === 'info' ? 'text-slate-900' : 'text-gray-400 hover:text-gray-600'
+                  }`}
               >
                 Thông tin chung
                 {activeTab === 'info' && <div className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-slate-900" />}
               </button>
               <button
                 onClick={() => setActiveTab('security')}
-                className={`pb-3 text-sm font-bold transition-all relative ${
-                  activeTab === 'security' ? 'text-slate-900' : 'text-gray-400 hover:text-gray-600'
-                }`}
+                className={`pb-3 text-sm font-bold transition-all relative ${activeTab === 'security' ? 'text-slate-900' : 'text-gray-400 hover:text-gray-600'
+                  }`}
               >
                 Bảo mật & Mật khẩu
                 {activeTab === 'security' && (
@@ -306,17 +304,17 @@ const UserProfileForm = () => {
                 {['consultant', 'accountant', 'manager', 'super admin'].includes(
                   (typeof userInfor?.roleId === 'object' && userInfor.roleId.name?.toLowerCase()) as string,
                 ) && (
-                  <div className="bg-slate-50 rounded-[14px] p-4 border border-slate-200">
-                    <p className="text-xs font-bold text-slate-600 mb-3 uppercase tracking-wide">Thông tin nhân sự</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <InfoRow
-                        label="Vai trò"
-                        value={typeof userInfor?.roleId === 'object' ? userInfor.roleId.name?.toUpperCase() : ''}
-                      />
-                      <InfoRow label="Ngày vào làm" value={formatDate(userInfor?.createdAt)} />
+                    <div className="bg-slate-50 rounded-[14px] p-4 border border-slate-200">
+                      <p className="text-xs font-bold text-slate-600 mb-3 uppercase tracking-wide">Thông tin nhân sự</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <InfoRow
+                          label="Vai trò"
+                          value={typeof userInfor?.roleId === 'object' ? userInfor.roleId.name?.toUpperCase() : ''}
+                        />
+                        <InfoRow label="Ngày vào làm" value={formatDate(userInfor?.createdAt)} />
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 <div className="pt-4 flex justify-end">
                   <Button

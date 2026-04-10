@@ -5,6 +5,8 @@ import { Types } from "mongoose";
 import { AttendanceStatus, HomeworkStatus } from "../types/attendance.type";
 import { z } from "zod";
 import { UpsertAttendanceItemSchema } from "../validations/attendance.validation";
+import { AttendanceNotificationModel } from "../models/attendanceNotification.model";
+import { getIO, userSocketMap } from "../lib/socket";
 
 type UpsertAttendanceData = z.infer<typeof UpsertAttendanceItemSchema>;
 
@@ -198,7 +200,8 @@ export class AttendanceService {
                     classId: classData._id,
                     status: AttendanceStatus.ABSENT,
                     homework: HomeworkStatus.NO_HOMEWORK,
-                    teacherComment: ''
+                    teacherComment: '',
+                    mark: undefined
                 }
             };
         });
@@ -218,6 +221,122 @@ export class AttendanceService {
         }));
 
         await AttendanceModel.bulkWrite(ops);
+
+        const updatedAttendances = await AttendanceModel.aggregate([
+            {
+                $match: {
+                    $or: attendances.map(att => ({ scheduleId: att.scheduleId, studentId: att.studentId }))
+                }
+            },
+            {
+                $lookup: {
+                    from: 'schedules',
+                    localField: 'scheduleId',
+                    foreignField: '_id',
+                    as: 'schedule'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'classes',
+                    localField: 'classId',
+                    foreignField: '_id',
+                    as: 'class'
+                }
+            },
+            { $unwind: '$schedule' },
+            { $unwind: '$class' },
+            {
+                $project: {
+                    studentId: 1,
+                    classId: 1,
+                    status: 1,
+                    homework: 1,
+                    teacherComment: 1,
+                    mark: 1,
+                    date: '$schedule.date',
+                    className: '$class.name'
+                }
+            }
+        ]);
+
+        const notifications = updatedAttendances.map(att => {
+            return ({
+                userId: att.studentId,
+                title: `Lớp ${att.className} điểm danh ngày ${new Date(att.date).toLocaleDateString('vi-VN')}`,
+                content: `${att.status === AttendanceStatus.PRESENT ? 'Có mặt' : 'Vắng mặt'} - 
+                    ${att.homework === HomeworkStatus.DONE ? 'Đã nộp bài tập' : 'Chưa nộp bài tập'} 
+                    ${att.mark ? ` - Điểm: ${att.mark}` : ''} 
+                    ${att.teacherComment ? ` - Nhận xét: ${att.teacherComment}` : ''}`,
+                attendanceId: att._id,
+                isRead: false
+            })
+        });
+
+        const classIdMap = new Map<string, string>();
+        updatedAttendances.forEach(att => {
+            classIdMap.set(att._id.toString(), att.classId.toString());
+        });
+
+        const savedNotifs = await AttendanceNotificationModel.insertMany(notifications);
+        const io = getIO();
+
+        savedNotifs.forEach(notif => {
+            const socketId = userSocketMap.get(notif.userId.toString());
+            if (socketId) {
+                const classId = classIdMap.get(notif.attendanceId.toString());
+                io.to(socketId).emit('new_notification', {
+                    ...notif.toObject(),
+                    attendanceId: { _id: notif.attendanceId, classId },
+                });
+            }
+        });
+
         return { success: true, message: "Lưu điểm danh thành công" };
+    }
+
+    async getStudentAttendancesByClassId(classId: string, studentId: string) {
+        const attendances = await AttendanceModel.aggregate([
+            {
+                $match: {
+                    classId: new Types.ObjectId(classId),
+                    studentId: new Types.ObjectId(studentId)
+                }
+            },
+            {
+                $lookup: {
+                    from: 'schedules',
+                    localField: 'scheduleId',
+                    foreignField: '_id',
+                    as: 'schedule'
+                }
+            },
+            { $unwind: '$schedule' },
+            {
+                $lookup: {
+                    from: 'shifts',
+                    localField: 'schedule.shiftId',
+                    foreignField: '_id',
+                    as: 'shift'
+                }
+            },
+            { $unwind: { path: '$shift', preserveNullAndEmptyArrays: true } },
+            { $sort: { 'schedule.date': -1 } },
+            {
+                $project: {
+                    _id: 1,
+                    status: 1,
+                    homework: 1,
+                    teacherComment: 1,
+                    mark: 1,
+                    date: '$schedule.date',
+                    shiftName: '$shift.name',
+                    startTime: '$shift.startTime',
+                    endTime: '$shift.endTime',
+                    topic: '$schedule.name'
+                }
+            }
+        ]);
+        return { data: attendances };
     }
 }

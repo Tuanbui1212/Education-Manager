@@ -14,10 +14,12 @@ import attendanceRoutes from './attendance.routes';
 import { invoiceRoutes } from './invoice.routes';
 import { transactionRoutes } from './transaction.routes';
 import { payrollRoutes } from './payroll.routes';
+import { mainRoutes } from './main.routes';
 
 const publicRoutes = [...authRoutes];
 
 const privateRoutes = [
+  ...mainRoutes,
   ...dashboardRoutes,
   ...userRoutes,
   ...shiftRoutes,

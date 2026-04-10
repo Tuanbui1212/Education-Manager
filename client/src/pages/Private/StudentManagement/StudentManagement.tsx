@@ -45,7 +45,7 @@ const StudentManager = () => {
     type: 'danger' as 'success' | 'danger' | 'warning' | 'info',
     confirmText: '',
     cancelText: '',
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   const [openStatus, setOpenStatus] = useState(false);
@@ -166,7 +166,7 @@ const StudentManager = () => {
         type: 'danger',
         confirmText: '',
         cancelText: '',
-        onConfirm: () => {},
+        onConfirm: () => { },
       });
     }
   };

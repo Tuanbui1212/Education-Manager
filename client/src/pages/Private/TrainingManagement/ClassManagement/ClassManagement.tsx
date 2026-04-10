@@ -43,7 +43,7 @@ const ClassManagement = () => {
     title: '',
     message: '',
     type: 'success' as 'success' | 'danger' | 'warning' | 'info',
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   const queryParams = {

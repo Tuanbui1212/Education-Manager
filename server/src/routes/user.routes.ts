@@ -17,8 +17,9 @@ router.post(
 );
 
 router.get('/', verifyToken, requirePermission(PERMISSIONS.USER.VIEW), userController.getAll);
+
+router.get('/:id', verifyToken, requirePermission(PERMISSIONS.USER.VIEW), userController.getOne);
 router.get('/staff', verifyToken, userController.getStaff);
-router.get('/:id', verifyToken, userController.getOne);
 router.put(
   '/:id',
   verifyToken,

@@ -116,7 +116,7 @@ const ClassDetail = () => {
     title: '',
     message: '',
     type: 'success' as 'success' | 'danger' | 'warning' | 'info',
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   const [confirmDeleteAll, setConfirmDeleteAll] = useState({
@@ -536,7 +536,7 @@ const ClassDetail = () => {
                     placeholder="Tìm tên, SĐT học viên..."
                     value={searchInput}
                     setSearchInput={setSearchInput}
-                    setPage={() => {}}
+                    setPage={() => { }}
                   />
                 </div>
                 <Button
