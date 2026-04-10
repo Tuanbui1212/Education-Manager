@@ -46,7 +46,6 @@ const InvoiceManagement = () => {
     setInvoices(fetchedList.filter(Boolean));
   }
 
-  // Cập nhật hàm nhận thêm trạng thái remindCount và lastRemindedAt
   const handlePaymentSuccess = (
     id: string,
     newDebt: number,
@@ -247,7 +246,6 @@ const InvoiceManagement = () => {
                         <td className="p-4 text-right font-bold text-red-600">{formatCurrency(inv?.debt || 0)}</td>
                         <td className="p-4 text-center">
                           {renderStatus(inv?.status)}
-                          {/* HIỂN THỊ BADGE BÊN DƯỚI TRẠNG THÁI */}
                           {renderNotificationBadge(inv)}
                         </td>
                         <td className="p-4 text-right">

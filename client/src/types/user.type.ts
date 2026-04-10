@@ -1,8 +1,18 @@
 export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'POTENTIAL' | 'BLOCKED';
+export type Gender = 'MALE' | 'FEMALE' | 'OTHER';
+export type TypeTeacher = 'FULL_TIME' | 'PART_TIME';
+
 export interface IRole {
   _id: string;
   name: string;
-  permissions: string[];
+  permissions?: string[];
+}
+
+export interface IBankInfo {
+  bankName: string;
+  bankBin: string;
+  accountNo: string;
+  accountName: string;
 }
 
 export interface GetUsersParams {
@@ -20,23 +30,30 @@ export interface IStudentInfo {
 }
 
 export interface ITeacherInfo {
+  type?: TypeTeacher;
   hourlyRate?: number;
-  degrees?: string[];
 }
 
 export interface IUser {
   _id?: string;
   email: string;
   phone: string;
+  gender: Gender;
   password?: string;
   fullName: string;
   roleId: IRole | string;
   date: string | Date;
   status: UserStatus;
+  degrees?: string[];
+  certificates?: string[];
+  baseSalary?: number;
+  bankInfo?: IBankInfo;
   student_info?: IStudentInfo;
   teacher_info?: ITeacherInfo;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+  passwordResetToken?: string;
+  passwordResetExpires?: Date;
 }
 export interface UserResponse {
   success: boolean;

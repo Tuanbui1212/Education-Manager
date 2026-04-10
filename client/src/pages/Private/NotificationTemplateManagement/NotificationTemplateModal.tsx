@@ -18,6 +18,7 @@ export const SYSTEM_TEMPLATE_CODES: { value: string; label: string }[] = [
   { value: 'INSTALLMENT_CREATED', label: 'Thông báo tạo lịch trả góp' },
   { value: 'REMIND_INSTALLMENT', label: 'Thông báo lịch trả góp' },
   { value: 'FORGOT_PASSWORD', label: 'Xác nhận quên mật khẩu' },
+  { value: 'MONTHLY_PAYROLL_NOTICE', label: 'Thông báo bảng lương hàng tháng' },
 ];
 
 const NotificationTemplateModal = ({ isOpen, onClose, onSubmit, initialData }: NotificationTemplateModalProps) => {

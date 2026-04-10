@@ -1,204 +1,293 @@
-import { useState } from 'react';
-import { ArrowLeft, Mail, Phone, Calendar as CalendarIcon, Edit, ShieldCheck, Briefcase, KeyRound } from 'lucide-react';
+import {
+  ArrowLeft,
+  Mail,
+  Phone,
+  Calendar as CalendarIcon,
+  Edit,
+  ShieldCheck,
+  Briefcase,
+  KeyRound,
+  CreditCard,
+  Banknote,
+  GraduationCap,
+  Award,
+  User,
+  CheckCircle2,
+  XCircle,
+  Building,
+} from 'lucide-react';
 import { formatDate, getStatusUserStyles } from '../../../utils/format.util';
 import useFetch from '../../../hooks/useFetch';
 import { useParams, useNavigate } from 'react-router-dom';
 import { userService } from '../../../services/user.service';
-import { roleService } from '../../../services/role.service';
 import Button from '../../../components/Button';
-import StaffModal from './StaffModal';
-import ConfirmModal from '../../../components/ConfirmModal';
-import type { IUser, IRole } from '../../../types/user.type';
-import { STATUS_OPTIONS } from '../../../utils/constants';
+import type { IRole } from '../../../types/user.type';
+import { PATHS, STATUS_OPTIONS } from '../../../utils/constants';
+
+// ─── Helper: format tiền VNĐ ─────────────────────────────────────────────────
+const formatCurrency = (amount?: number) => {
+  if (!amount || amount === 0) return 'Chưa cập nhật';
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+};
 
 const StaffDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const { data: staff, loading, error, refetch: fetchStaff } = useFetch(userService.getUserById, id as string, [id]);
-
-  // Lấy Roles để đưa vào Modal
-  const { data: rolesData } = useFetch(roleService.getRoles, {}, []);
-  const roles = Array.isArray(rolesData) ? rolesData : (rolesData as any)?.data || [];
-  const officeRoles = roles.filter((r: any) => !['student', 'teacher'].includes(r.name?.toLowerCase()));
-
-  const [showModalEdit, setShowModalEdit] = useState(false);
-  const [confirmConfig, setConfirmConfig] = useState({
-    isOpen: false,
-    title: '',
-    message: '',
-    type: 'success' as 'success' | 'danger' | 'warning' | 'info',
-  });
+  const { data: staff, loading, error } = useFetch(userService.getUserById, id as string, [id]);
 
   if (loading) return <div className="p-8 text-center text-gray-500 animate-pulse">Đang tải thông tin...</div>;
   if (error) return <div className="p-8 text-center text-red-500">Lỗi: {error}</div>;
   if (!staff) return <div className="p-8 text-center text-gray-500">Không tìm thấy hồ sơ nhân sự.</div>;
 
-  const handleEditStaff = async (formData: Partial<IUser>) => {
-    if (!staff?._id) return;
-    const updateData = {
-      fullName: formData.fullName,
-      phone: formData.phone,
-      date: formData.date,
-      status: formData.status,
-      roleId: formData.roleId,
-    };
-    try {
-      const data = await userService.updateUser(staff._id, updateData);
-      if (data.success) {
-        setConfirmConfig({ isOpen: true, title: 'Thành công', message: 'Cập nhật hồ sơ thành công!', type: 'success' });
-        fetchStaff();
-        setShowModalEdit(false);
-      }
-    } catch (error: any) {
-      const detailError = error.response?.data?.errors ? Object.values(error.response.data.errors).flat()[0] : null;
-      setConfirmConfig({
-        isOpen: true,
-        title: 'Lỗi',
-        message: (detailError as string) || 'Có lỗi xảy ra!',
-        type: 'danger',
-      });
-    }
-  };
-
   const staffRole = staff.roleId as IRole;
+  const hasBankInfo = staff.bankInfo?.accountNo && staff.bankInfo?.bankName;
+  const hasDegrees = (staff.degrees?.length ?? 0) > 0;
+  const hasCertificates = (staff.certificates?.length ?? 0) > 0;
+  const genderLabel = staff.gender === 'MALE' ? 'Nam' : staff.gender === 'FEMALE' ? 'Nữ' : 'Khác';
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
-      {showModalEdit && (
-        <StaffModal
-          officeRoles={officeRoles}
-          isOpen={showModalEdit}
-          onClose={() => setShowModalEdit(false)}
-          onSubmit={handleEditStaff}
-          initialData={staff}
-        />
-      )}
-
-      <ConfirmModal
-        isOpen={confirmConfig.isOpen}
-        onClose={() => setConfirmConfig({ ...confirmConfig, isOpen: false })}
-        onConfirm={() => setConfirmConfig({ ...confirmConfig, isOpen: false })}
-        title={confirmConfig.title}
-        message={confirmConfig.message}
-        type={confirmConfig.type}
-        confirmText="Đóng"
-        cancelText=""
-      />
-
+      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
           <button
-            className="p-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-100 transition-colors shadow-sm"
-            title="Quay lại"
+            className="p-2 bg-white border border-gray-200 rounded-xl hover:bg-violet-50 hover:text-violet-600 transition-colors shadow-sm"
             onClick={() => navigate(-1)}
+            title="Quay lại"
           >
             <ArrowLeft size={20} className="text-gray-600" />
           </button>
           <div>
             <h1 className="text-2xl font-bold text-gray-800">Hồ sơ Nhân sự</h1>
-            <p className="text-sm text-gray-500 mt-1">Chi tiết thông tin nhân viên khối văn phòng</p>
+            <p className="text-sm text-gray-500 mt-0.5">Chi tiết thông tin nhân viên khối văn phòng</p>
           </div>
         </div>
         <Button
           variant="primary"
           className="bg-violet-600 hover:bg-violet-700 border-violet-600"
           icon={<Edit size={18} />}
-          onClick={() => setShowModalEdit(true)}
+          onClick={() => navigate(PATHS.HR_STAFFS_EDIT.replace(':id', id || ''))}
         >
           Chỉnh sửa hồ sơ
         </Button>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* CỘT TRÁI */}
+        {/* ════════ CỘT TRÁI ════════ */}
         <div className="space-y-6">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col items-center text-center relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-br from-violet-500 to-fuchsia-600 opacity-10"></div>
-            <div className="w-24 h-24 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-3xl font-bold border-4 border-white shadow-md relative z-10 mt-4">
-              {staff.fullName.charAt(0).toUpperCase()}
-            </div>
-            <h2 className="text-xl font-bold text-gray-800 mt-4">{staff.fullName}</h2>
-            <div className="flex items-center gap-2 text-sm text-slate-600 font-medium mt-2 bg-slate-50 border border-slate-100 px-3 py-1 rounded-md">
-              <Briefcase size={14} className="text-slate-400" />
-              {staffRole?.name || 'N/A'}
-            </div>
-            <div className="mt-4">
-              <span className={getStatusUserStyles(staff.status as string)}>
-                {STATUS_OPTIONS.find((opt) => opt.value === staff.status)?.label || staff.status}
-              </span>
-            </div>
+          {/* Card Profile */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            {/* Banner */}
+            <div className="h-20 bg-gradient-to-br from-violet-500 to-fuchsia-600" />
 
-            <div className="w-full h-px bg-gray-100 my-6"></div>
+            <div className="px-6 pb-6 -mt-10">
+              {/* Avatar */}
+              <div className="w-20 h-20 rounded-2xl bg-white border-4 border-white shadow-md flex items-center justify-center text-3xl font-bold text-violet-600 mb-3">
+                {staff.fullName.charAt(0).toUpperCase()}
+              </div>
 
-            <div className="w-full space-y-4 text-left">
-              <div className="flex items-center gap-3 text-gray-600">
-                <div className="p-2 bg-violet-50 rounded-lg">
-                  <Phone size={16} className="text-violet-500" />
-                </div>
-                <span className="font-medium">{staff.phone}</span>
+              <h2 className="text-xl font-bold text-gray-800">{staff.fullName}</h2>
+
+              {/* Role badge */}
+              <div className="flex items-center gap-1.5 mt-1.5 text-sm text-slate-600 font-medium bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-lg w-fit">
+                <Building size={13} className="text-slate-400" />
+                {staffRole?.name || 'N/A'}
               </div>
-              <div className="flex items-center gap-3 text-gray-600">
-                <div className="p-2 bg-violet-50 rounded-lg">
-                  <Mail size={16} className="text-violet-500" />
-                </div>
-                <span className="font-medium">{staff.email}</span>
-              </div>
-              <div className="flex items-center gap-3 text-gray-600">
-                <div className="p-2 bg-violet-50 rounded-lg">
-                  <CalendarIcon size={16} className="text-violet-500" />
-                </div>
-                <span>
-                  Sinh ngày: <span className="font-medium">{formatDate(staff.date as string)}</span>
+
+              {/* Status badge */}
+              <div className="mt-3">
+                <span className={getStatusUserStyles(staff.status as string)}>
+                  {STATUS_OPTIONS.find((opt) => opt.value === staff.status)?.label || staff.status}
                 </span>
+              </div>
+
+              {/* Divider */}
+              <div className="w-full h-px bg-gray-100 my-5" />
+
+              {/* Thông tin liên hệ */}
+              <div className="space-y-3">
+                <InfoRow icon={<Phone size={15} className="text-violet-500" />} value={staff.phone} />
+                <InfoRow icon={<Mail size={15} className="text-violet-500" />} value={staff.email} />
+                <InfoRow
+                  icon={<CalendarIcon size={15} className="text-violet-500" />}
+                  label="Ngày sinh"
+                  value={formatDate(staff.date as string)}
+                />
+                <InfoRow icon={<User size={15} className="text-violet-500" />} label="Giới tính" value={genderLabel} />
+                <InfoRow
+                  icon={<CalendarIcon size={15} className="text-violet-500" />}
+                  label="Ngày tạo TK"
+                  value={formatDate(staff.createdAt as string)}
+                />
               </div>
             </div>
           </div>
+
+          {/* Card Bằng cấp & Chứng chỉ */}
+          {(hasDegrees || hasCertificates) && (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2 border-b pb-3 mb-4">
+                <GraduationCap size={16} className="text-violet-500" /> Bằng cấp & Chứng chỉ
+              </h3>
+              {hasDegrees && (
+                <div className="mb-4">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Bằng cấp</p>
+                  <div className="flex flex-wrap gap-2">
+                    {staff.degrees!.map((d, i) => (
+                      <span
+                        key={i}
+                        className="text-xs bg-violet-50 text-violet-700 border border-violet-100 px-2.5 py-1 rounded-lg font-medium"
+                      >
+                        {d}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {hasCertificates && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+                    <Award size={12} /> Chứng chỉ
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {staff.certificates!.map((c, i) => (
+                      <span
+                        key={i}
+                        className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-100 px-2.5 py-1 rounded-lg font-medium"
+                      >
+                        {c}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* CỘT PHẢI */}
+        {/* ════════ CỘT PHẢI ════════ */}
         <div className="xl:col-span-2 space-y-6">
+          {/* Card Thông tin công tác */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <div className="flex items-center justify-between mb-6 border-b border-gray-100 pb-4">
-              <div className="flex items-center gap-2">
-                <ShieldCheck size={22} className="text-violet-600" />
-                <h3 className="text-lg font-bold text-gray-800">Quyền hạn hệ thống</h3>
+            <h3 className="text-base font-bold text-gray-800 flex items-center gap-2 border-b pb-3 mb-5">
+              <Briefcase size={18} className="text-violet-600" /> Thông tin công tác
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <StatCard
+                label="Phòng ban"
+                value={staffRole?.name || 'N/A'}
+                icon={<Building size={18} className="text-violet-500" />}
+                bg="bg-violet-50"
+              />
+              <StatCard
+                label="Mức lương"
+                value={formatCurrency(staff.baseSalary)}
+                icon={<Banknote size={18} className="text-emerald-500" />}
+                bg="bg-emerald-50"
+              />
+              <StatCard
+                label="Số quyền hạn"
+                value={`${staffRole?.permissions?.length || 0} quyền`}
+                icon={<ShieldCheck size={18} className="text-blue-500" />}
+                bg="bg-blue-50"
+              />
+            </div>
+          </div>
+
+          {/* Card Thông tin Ngân hàng */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <h3 className="text-base font-bold text-gray-800 flex items-center gap-2 border-b pb-3 mb-5">
+              <CreditCard size={18} className="text-violet-600" /> Thông tin Thanh toán
+            </h3>
+            {hasBankInfo ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <BankInfoItem label="Ngân hàng" value={staff.bankInfo!.bankName || '—'} />
+                <BankInfoItem label="Số tài khoản" value={staff.bankInfo!.accountNo || '—'} mono />
+                <BankInfoItem label="Chủ tài khoản" value={staff.bankInfo!.accountName || '—'} />
               </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-gray-400 gap-2">
+                <CreditCard size={36} className="opacity-20" />
+                <p className="text-sm">Chưa có thông tin ngân hàng.</p>
+                <button
+                  onClick={() => navigate(PATHS.HR_STAFFS_EDIT.replace(':id', id || ''))}
+                  className="text-xs text-violet-600 hover:underline mt-1"
+                >
+                  Thêm thông tin ngân hàng →
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Card Quyền hạn hệ thống */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div className="flex items-center justify-between border-b pb-3 mb-5">
+              <h3 className="text-base font-bold text-gray-800 flex items-center gap-2">
+                <ShieldCheck size={18} className="text-violet-600" /> Quyền hạn hệ thống
+              </h3>
               <span className="text-xs font-semibold bg-violet-100 text-violet-700 px-3 py-1 rounded-full">
                 {staffRole?.permissions?.length || 0} quyền
               </span>
             </div>
 
-            <div className="space-y-4">
-              <p className="text-sm text-gray-500 mb-4">
-                Nhân viên này đang được cấp các quyền thao tác dựa trên chức vụ <strong>{staffRole?.name}</strong>. Dưới
-                đây là các Module được phép truy cập:
-              </p>
-
-              {staffRole?.permissions && staffRole.permissions.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {staffRole?.permissions && staffRole.permissions.length > 0 ? (
+              <>
+                <p className="text-sm text-gray-500 mb-4">
+                  Các module nhân viên <strong className="text-gray-700">{staffRole.name}</strong> được phép truy cập:
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {staffRole.permissions.map((perm, idx) => (
                     <div
                       key={idx}
-                      className="flex items-start gap-3 p-3 bg-slate-50 border border-slate-100 rounded-xl"
+                      className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-100 rounded-xl hover:bg-violet-50 hover:border-violet-100 transition-colors"
                     >
-                      <KeyRound size={16} className="text-slate-400 mt-0.5 shrink-0" />
+                      <CheckCircle2 size={15} className="text-violet-400 shrink-0" />
                       <span className="text-sm font-medium text-slate-700 break-all">{perm}</span>
                     </div>
                   ))}
                 </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-8 text-gray-400">
-                  <ShieldCheck size={40} className="mb-3 opacity-20" />
-                  <p className="text-sm">Chưa có quyền hạn nào được cấp.</p>
-                </div>
-              )}
-            </div>
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-10 text-gray-400 gap-3">
+                <XCircle size={40} className="opacity-20" />
+                <p className="text-sm">Chức vụ này chưa được cấp quyền hạn nào.</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
     </div>
   );
 };
+
+// ─── Sub-components ──────────────────────────────────────────────────────────
+
+const InfoRow = ({ icon, label, value }: { icon: React.ReactNode; label?: string; value?: string }) => (
+  <div className="flex items-center gap-3 text-gray-600">
+    <div className="p-1.5 bg-violet-50 rounded-lg shrink-0">{icon}</div>
+    <span className="text-sm">
+      {label && <span className="text-gray-400">{label}: </span>}
+      <span className="font-medium">{value || '—'}</span>
+    </span>
+  </div>
+);
+
+const StatCard = ({ label, value, icon, bg }: { label: string; value: string; icon: React.ReactNode; bg: string }) => (
+  <div className={`${bg} rounded-xl p-4 flex flex-col gap-2`}>
+    <div className="flex items-center gap-2">
+      {icon}
+      <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{label}</span>
+    </div>
+    <p className="text-sm font-bold text-gray-800 break-words">{value}</p>
+  </div>
+);
+
+const BankInfoItem = ({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) => (
+  <div className="bg-slate-50 border border-slate-100 rounded-xl p-4">
+    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">{label}</p>
+    <p className={`text-sm font-bold text-gray-800 ${mono ? 'font-mono tracking-widest' : ''}`}>{value}</p>
+  </div>
+);
 
 export default StaffDetail;

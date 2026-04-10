@@ -158,6 +158,7 @@ export class ScheduleService {
     today.setHours(0, 0, 0, 0);
 
     const firstSchedule = schedules[0];
+    const lastSchedule = schedules[schedules.length - 1];
 
     try {
       if (firstSchedule && firstSchedule.classId) {
@@ -166,6 +167,15 @@ export class ScheduleService {
 
         if (startDate <= today) {
           await ClassModel.findByIdAndUpdate(firstSchedule.classId, { status: 'ACTIVE' }, { session });
+        }
+      }
+
+      if (lastSchedule && lastSchedule.classId) {
+        const endDate = new Date(lastSchedule.date);
+        endDate.setHours(23, 59, 59, 999);
+
+        if (endDate <= today) {
+          await ClassModel.findByIdAndUpdate(lastSchedule.classId, { status: 'COMPLETED' }, { session });
         }
       }
 

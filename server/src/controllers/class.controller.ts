@@ -109,4 +109,17 @@ export class ClassController {
       });
     }
   };
+
+  //[POST] /api/classes/unenroll
+  unEnroll = async (req: Request, res: Response) => {
+    try {
+      const result = await this.classService.unenrollStudent(req.body);
+      return res.status(200).json(result);
+    } catch (error: any) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  };
 }

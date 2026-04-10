@@ -1,13 +1,15 @@
 import mongoose, { Schema } from 'mongoose';
-import { IUser, UserStatus } from '../types/user.type';
+import { IUser, UserStatus, TeacherType, Gender } from '../types/user.type';
 
 const UserSchema = new Schema<IUser>(
   {
     email: { type: String, required: true, unique: true, trim: true },
+    gender: { type: String, enum: Object.values(Gender), default: Gender.OTHER },
     phone: { type: String, required: true, trim: true },
     password: { type: String, required: true },
     fullName: { type: String, required: true, trim: true },
     date: { type: Date, required: true },
+
     status: {
       type: String,
       required: true,
@@ -21,6 +23,16 @@ const UserSchema = new Schema<IUser>(
       required: true,
     },
 
+    degrees: [{ type: String }],
+    certificates: [{ type: String }],
+    baseSalary: { type: Number, default: 0 },
+    bankInfo: {
+      bankName: { type: String, default: '' },
+      bankBin: { type: String, default: '' },
+      accountNo: { type: String, default: '' },
+      accountName: { type: String, default: '' },
+    },
+
     student_info: {
       parentsName: { type: String },
       crmHistory: [{ type: String }],
@@ -28,8 +40,12 @@ const UserSchema = new Schema<IUser>(
     },
 
     teacher_info: {
-      hourlyRate: { type: Number },
-      degrees: [{ type: String }],
+      type: {
+        type: String,
+        enum: Object.values(TeacherType),
+        default: TeacherType.PART_TIME,
+      },
+      hourlyRate: { type: Number, default: 0 },
     },
 
     passwordResetToken: { type: String },

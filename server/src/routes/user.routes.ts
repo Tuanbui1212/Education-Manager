@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { UserController } from '../controllers/user.controller';
 import { validate } from '../middlewares/validate.middleware';
-import { CreateUserSchema, UpdateUserSchema } from '../validations/users.validation';
+import { CreateUserSchema, updatePasswordSchema, UpdateUserSchema } from '../validations/users.validation';
 import { verifyToken, requirePermission } from '../middlewares/auth.middleware';
 import { PERMISSIONS } from '../config/permissions.config';
 
@@ -17,9 +17,8 @@ router.post(
 );
 
 router.get('/', verifyToken, requirePermission(PERMISSIONS.USER.VIEW), userController.getAll);
-
-router.get('/:id', verifyToken, requirePermission(PERMISSIONS.USER.VIEW), userController.getOne);
-
+router.get('/staff', verifyToken, userController.getStaff);
+router.get('/:id', verifyToken, userController.getOne);
 router.put(
   '/:id',
   verifyToken,
@@ -27,7 +26,7 @@ router.put(
   validate(UpdateUserSchema),
   userController.update,
 );
-
 router.delete('/:id', verifyToken, requirePermission(PERMISSIONS.USER.DELETE), userController.delete);
+router.post('/:id/password', verifyToken, validate(updatePasswordSchema), userController.updatePassword);
 
 export default router;

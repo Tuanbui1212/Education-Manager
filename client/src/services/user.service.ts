@@ -34,8 +34,24 @@ export const userService = {
     return response.data;
   },
 
+  updatePassword: async (
+    id: string,
+    passwordData: { oldPassword: string; newPassword: string },
+  ): Promise<{ success: boolean; message: string }> => {
+    const response = await axios.post(`/users/${id}/password`, passwordData);
+    return response.data;
+  },
+
   deleteUser: async (id: string): Promise<{ success: boolean; message: string }> => {
     const response = await axios.delete(`/users/${id}`);
+    return response.data;
+  },
+
+  getStaff: async (
+    params?: GetUsersParams,
+  ): Promise<{ success: boolean; message: string; data: IUser[]; totalCount: number }> => {
+    const response = await axios.get('/users/staff', { params });
+
     return response.data;
   },
 };

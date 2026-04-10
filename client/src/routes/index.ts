@@ -13,6 +13,7 @@ import scheduleRoutes from './schedule.routes';
 import attendanceRoutes from './attendance.routes';
 import { invoiceRoutes } from './invoice.routes';
 import { transactionRoutes } from './transaction.routes';
+import { payrollRoutes } from './payroll.routes';
 
 const publicRoutes = [...authRoutes];
 
@@ -31,6 +32,7 @@ const privateRoutes = [
   ...attendanceRoutes,
   ...invoiceRoutes,
   ...transactionRoutes,
+  ...payrollRoutes,
 ];
 
 export { publicRoutes, privateRoutes };
