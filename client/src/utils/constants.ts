@@ -1,6 +1,7 @@
-import { ClassStatus } from "../types/class.type";
+import { ClassStatus } from '../types/class.type';
 
-export const API_ROOT = 'http://localhost:5000/api';
+export const API_ROOT = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+export const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
 
 export const PATHS = {
   HOME: '/',
