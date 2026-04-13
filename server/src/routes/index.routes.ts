@@ -15,6 +15,7 @@ import invoiceRouter from './invoice.route';
 import transactionRoute from './transaction.route';
 import attendanceNotificationRouter from './attendanceNotification.routes';
 import payrollRouter from './payroll.route';
+import paymentRouter from './payment.route';
 
 function router(app: Application) {
   app.get('/', (req, res) => res.send('Server is running!'));
@@ -34,6 +35,7 @@ function router(app: Application) {
   app.use('/api/transactions', transactionRoute);
   app.use('/api/attendance-notifications', attendanceNotificationRouter);
   app.use('/api/payrolls', payrollRouter);
+  app.use('/api/payments', paymentRouter);
 }
 
 export default router;

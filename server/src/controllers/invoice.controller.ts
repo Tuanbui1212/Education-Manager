@@ -29,6 +29,24 @@ export class InvoiceController {
     }
   };
 
+  // [GET] /api/invoices/student/:studentId
+  getByStudentId = async (req: Request, res: Response) => {
+    try {
+      const { invoices, total } = await this.invoiceService.getInvoicesByStudentId(
+        req.params.studentId as string,
+        req.query,
+      );
+      return res.status(200).json({
+        success: true,
+        message: 'Lấy danh sách hóa đơn thành công',
+        data: invoices,
+        totalCount: total,
+      });
+    } catch (error: any) {
+      return res.status(400).json({ success: false, message: error.message });
+    }
+  };
+
   // [GET] /api/invoices/:id
   getOne = async (req: Request, res: Response) => {
     try {

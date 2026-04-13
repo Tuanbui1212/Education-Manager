@@ -2,6 +2,7 @@ import { PATHS } from '../utils/constants';
 
 import ListUser from '../pages/Private/Users/ListUser';
 import UserForm from '../pages/Private/Users/UserForm';
+import AccountLogs from '../pages/Private/AccountManagement/ActivityLog/ActivityLog';
 
 import StudentManager from '../pages/Private/StudentManagement/StudentManagement';
 import StudentDetail from '../pages/Private/StudentManagement/StudentDetail';
@@ -21,14 +22,18 @@ import UserProfileForm from '../pages/Private/MyManagement/UserProfileForm';
 
 import DashboardLayout from '../layouts/DashboardLayout';
 import { Fragment } from 'react/jsx-runtime';
+import StudentForm from '../pages/Private/StudentManagement/StudentForm';
 
 export const userRoutes = [
   { path: PATHS.USER, component: ListUser, layout: DashboardLayout },
   { path: PATHS.ACCOUNT_USERS_CREATE, component: UserForm, layout: DashboardLayout },
   { path: PATHS.ACCOUNT_USERS_EDIT, component: UserForm, layout: DashboardLayout },
+  { path: PATHS.ACCOUNT_LOGS, component: AccountLogs, layout: DashboardLayout },
 
   { path: PATHS.TRAINING_STUDENT, component: StudentManager, layout: DashboardLayout },
   { path: PATHS.TRAINING_STUDENT_ID, component: StudentDetail, layout: DashboardLayout },
+  { path: PATHS.TRAINING_STUDENT_CREATE, component: StudentForm, layout: DashboardLayout },
+  { path: PATHS.TRAINING_STUDENT_EDIT, component: StudentForm, layout: DashboardLayout },
 
   { path: PATHS.HR_TEACHERS, component: TeacherManager, layout: DashboardLayout },
   { path: PATHS.HR_TEACHERS_ID, component: TeacherDetail, layout: DashboardLayout },

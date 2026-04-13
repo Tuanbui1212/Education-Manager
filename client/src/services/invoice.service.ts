@@ -9,6 +9,14 @@ export const invoiceService = {
     return response.data;
   },
 
+  getInvoicesByStudentId: async (
+    params?: any,
+  ): Promise<{ success: boolean; message: string; data?: IInvoice[]; totalCount: number }> => {
+    const { studentId, ...queryParams } = params || {};
+    const response = await axios.get(`/invoices/student/${studentId}`, { params: queryParams });
+    return response.data;
+  },
+
   getInvoiceById: async (id: any): Promise<{ success: boolean; message: string; data?: IInvoice }> => {
     const response = await axios.get(`/invoices/${id}`);
     return response.data;

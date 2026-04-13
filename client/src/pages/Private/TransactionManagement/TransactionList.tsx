@@ -2,21 +2,26 @@ import React, { useEffect, useState } from 'react';
 import { transactionService } from '../../../services/transaction.service';
 import type { ITransaction } from '../../../types/transaction.type';
 import { formatCurrency } from '../../../utils/format.util';
-import { format } from 'date-fns'; // Hoặc dùng .toLocaleDateString()
+import { format } from 'date-fns';
+import TablePagination from '../../../components/TablePagination';
 import { Search, FileText, Printer, User, Calendar } from 'lucide-react';
 
 const TransactionList: React.FC = () => {
   const [transactions, setTransactions] = useState<ITransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   useEffect(() => {
     fetchTransactions();
   }, []);
 
   const fetchTransactions = async () => {
+    setLoading(true);
     try {
-      const res = await transactionService.getTransactions();
+      // 4. Đảm bảo transactionService hỗ trợ nhận tham số { page, limit }
+      const res = await transactionService.getTransactions({ page, limit });
       if (res.success) {
         setTransactions(res.data);
         setTotal(res.total);
@@ -27,6 +32,12 @@ const TransactionList: React.FC = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [page, limit]);
+
+  const totalPages = Math.ceil(total / limit);
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -131,6 +142,8 @@ const TransactionList: React.FC = () => {
             )}
           </tbody>
         </table>
+
+        <TablePagination totalPages={totalPages} page={page} setPage={setPage} limit={limit} setLimit={setLimit} />
       </div>
     </div>
   );

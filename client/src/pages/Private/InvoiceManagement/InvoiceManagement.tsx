@@ -8,6 +8,7 @@ import useFetch from '../../../hooks/useFetch';
 import { invoiceService } from '../../../services/invoice.service';
 
 import PaymentWizardModal from './PaymentWizardModal';
+import TablePagination from '../../../components/TablePagination';
 
 const TABS: { id: InvoiceStatus | 'ALL'; label: string }[] = [
   { id: 'ALL', label: 'Tất cả' },
@@ -21,12 +22,23 @@ const InvoiceManagement = () => {
   const [activeTab, setActiveTab] = useState<InvoiceStatus | 'ALL'>('ALL');
   const [selectedInvoice, setSelectedInvoice] = useState<IInvoice | null>(null);
 
-  const queryParams = activeTab === 'ALL' ? { limit: 20 } : { status: activeTab, limit: 20 };
-  const { data: response, loading } = useFetch(invoiceService.getInvoices, queryParams, [activeTab]);
-
   const [invoices, setInvoices] = useState<IInvoice[]>([]);
   const [prevResponse, setPrevResponse] = useState<any>(null);
 
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+
+  const queryParams = {
+    page,
+    limit,
+    ...(activeTab !== 'ALL' && { status: activeTab }),
+  };
+  const {
+    data: response,
+    loading,
+    totalCount,
+  } = useFetch(invoiceService.getInvoices, queryParams, [activeTab, page, limit]);
+  const totalPages = Math.ceil((totalCount || 0) / limit);
   if (response !== prevResponse) {
     setPrevResponse(response);
 
@@ -58,13 +70,13 @@ const InvoiceManagement = () => {
       invoices.map((inv) =>
         inv?._id === id
           ? ({
-            ...inv,
-            debt: newDebt,
-            status: newStatus,
-            ...(newConfig && { installmentConfig: newConfig }),
-            ...(newRemindCount !== undefined && { remindCount: newRemindCount }),
-            ...(newLastRemindedAt !== undefined && { lastRemindedAt: newLastRemindedAt as any }),
-          } as unknown as IInvoice)
+              ...inv,
+              debt: newDebt,
+              status: newStatus,
+              ...(newConfig && { installmentConfig: newConfig }),
+              ...(newRemindCount !== undefined && { remindCount: newRemindCount }),
+              ...(newLastRemindedAt !== undefined && { lastRemindedAt: newLastRemindedAt as any }),
+            } as unknown as IInvoice)
           : inv,
       ),
     );
@@ -187,7 +199,10 @@ const InvoiceManagement = () => {
             {TABS.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setPage(1);
+                }}
                 className={`whitespace-nowrap pb-4 text-sm font-semibold transition-colors relative ${activeTab === tab.id ? 'text-blue-600' : 'text-gray-500 hover:text-gray-800'}`}
               >
                 {tab.label}
@@ -274,6 +289,8 @@ const InvoiceManagement = () => {
                 )}
               </tbody>
             </table>
+
+            <TablePagination totalPages={totalPages} page={page} setPage={setPage} limit={limit} setLimit={setLimit} />
           </div>
         </div>
 

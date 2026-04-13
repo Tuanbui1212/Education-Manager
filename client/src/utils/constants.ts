@@ -20,8 +20,14 @@ export const PATHS = {
   USER: '/accounts/list',
   USER_ID: '/dashboard/users/:id',
 
+  //Account Management
   ACCOUNT_USERS_CREATE: '/accounts/users/create',
   ACCOUNT_USERS_EDIT: '/accounts/users/edit/:id',
+
+  ACCOUNT_ROLES_CREATE: '/accounts/roles/create',
+  ACCOUNT_ROLES_EDIT: '/accounts/roles/edit/:id',
+
+  ACCOUNT_LOGS: '/accounts/logs',
 
   SETTINGS_ROLES: '/accounts/roles',
 
@@ -53,6 +59,8 @@ export const PATHS = {
   //Training
   TRAINING_STUDENT: '/training/students',
   TRAINING_STUDENT_ID: '/training/students/:id',
+  TRAINING_STUDENT_CREATE: '/training/students/create',
+  TRAINING_STUDENT_EDIT: '/training/students/edit/:id',
 
   TRAINING_COURSES: '/training/courses',
   TRAINING_COURSES_ID: '/training/courses/:id',

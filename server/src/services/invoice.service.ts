@@ -51,6 +51,30 @@ export class InvoiceService {
     return { invoices, total };
   }
 
+  async getInvoicesByStudentId(studentId: string, query: any) {
+    const { page = 1, limit = 10, status, search } = query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const filter: any = { studentId };
+    if (status) filter.status = status;
+    if (search) {
+      filter.code = { $regex: search, $options: 'i' };
+    }
+
+    const [invoices, total] = await Promise.all([
+      InvoiceModel.find(filter)
+        .populate('studentId', 'fullName email phone')
+        .populate('classId', 'name')
+        .populate('consultantId', 'fullName')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(limit)),
+      InvoiceModel.countDocuments(filter),
+    ]);
+
+    return { invoices, total };
+  }
+
   async getInvoiceById(id: string) {
     const invoice = await InvoiceModel.findById(id)
       .populate('studentId', 'fullName email phone')

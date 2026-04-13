@@ -15,6 +15,7 @@ import { invoiceRoutes } from './invoice.routes';
 import { transactionRoutes } from './transaction.routes';
 import { payrollRoutes } from './payroll.routes';
 import { mainRoutes } from './main.routes';
+import { contactRoutes } from './contact.routes';
 
 const publicRoutes = [...authRoutes];
 
@@ -35,6 +36,7 @@ const privateRoutes = [
   ...invoiceRoutes,
   ...transactionRoutes,
   ...payrollRoutes,
+  ...contactRoutes,
 ];
 
 export { publicRoutes, privateRoutes };

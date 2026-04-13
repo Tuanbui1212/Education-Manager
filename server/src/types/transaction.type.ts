@@ -4,6 +4,7 @@ export enum PaymentMethod {
   CASH = 'CASH',
   TRANSFER = 'TRANSFER',
   CARD = 'CARD',
+  BANK_TRANSFER = 'BANK_TRANSFER',
 }
 
 export interface ITransaction {
