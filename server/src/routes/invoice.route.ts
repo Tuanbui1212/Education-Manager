@@ -9,6 +9,7 @@ const invoiceController = new InvoiceController();
 
 router.post('/', validate(createInvoiceSchema), invoiceController.create);
 router.get('/', invoiceController.getAll);
+router.get('/student/:studentId', invoiceController.getByStudentId);
 router.get('/:id', invoiceController.getOne);
 router.patch('/:id', validate(updateInvoiceSchema), invoiceController.update);
 router.delete('/:id', validate(invoiceIdSchema), invoiceController.delete);

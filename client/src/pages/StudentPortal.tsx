@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import {
   BookOpen,
   Calendar,
@@ -18,17 +19,23 @@ import {
   Search,
   ClipboardList,
 } from 'lucide-react';
-import useFetch from '../hooks/useFetch';
-import { classService } from '../services/class.service';
-import { getDecodedToken } from '../utils/auth';
 import { startOfWeek, addDays, subWeeks, addWeeks, format, isSameDay } from 'date-fns';
-import { scheduleService } from '../services/schedule.service';
+
 import { vi } from 'date-fns/locale';
-import { shiftService } from '../services/shift.service';
 import { ClassStatus } from '../types/class.type';
+
 import { PATHS } from '../utils/constants';
-import useDebounce from '../hooks/useDebounce';
 import { CLASS_STATUS_CONFIG } from '../utils/constants';
+import { getDecodedToken } from '../utils/auth';
+
+import useFetch from '../hooks/useFetch';
+import useDebounce from '../hooks/useDebounce';
+
+import { classService } from '../services/class.service';
+import { scheduleService } from '../services/schedule.service';
+import { shiftService } from '../services/shift.service';
+import { invoiceService } from '../services/invoice.service';
+import { paymentService } from '../services/payment.service';
 
 const MOCK_INVOICES = [
   { id: 'inv1', title: 'Học phí Tiếng Anh (Tháng 10)', amount: 2500000, dueDate: '2023-10-15', status: 'PENDING' },
@@ -38,11 +45,10 @@ const MOCK_INVOICES = [
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 
-
-
 // --- COMPONENT CHÍNH ---
 const StudentPortal = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -57,7 +63,9 @@ const StudentPortal = () => {
   };
 
   const currentUser = getDecodedToken();
-  const { data: classesRaw, totalCount } = useFetch(classService.getClassesByStudentId, currentUser?.id);
+  const { data: classesRaw, totalCount } = useFetch(classService.getClassesByStudentId, currentUser?.id, [
+    currentUser?.id,
+  ]);
 
   const classesData = useMemo(() => {
     if (!classesRaw) return [];
@@ -83,6 +91,23 @@ const StudentPortal = () => {
   const [scheduleData, setScheduleData] = useState<any[]>([]);
   const [scheduleLoading, setScheduleLoading] = useState(false);
 
+  const {
+    data: invoicesRaw,
+    loading: invoiceLoading,
+    refetch: fetchInvoices,
+  } = useFetch(invoiceService.getInvoicesByStudentId, { studentId: currentUser?.id }, [currentUser?.id]);
+
+  const pendingInvoices = useMemo(() => {
+    if (!invoicesRaw) return [];
+
+    return invoicesRaw.filter((inv: any) => ['UNPAID', 'PARTIAL', 'OVERDUE'].includes(inv.status));
+  }, [invoicesRaw]);
+
+  console.log('classesRaw', pendingInvoices);
+
+  console.log('invoicesRaw', invoicesRaw);
+  console.log('pendingInvoices', pendingInvoices);
+
   useEffect(() => {
     if (!classesData || !Array.isArray(classesData) || classesData.length === 0) {
       setScheduleData([]);
@@ -91,9 +116,7 @@ const StudentPortal = () => {
     const fetchAllSchedules = async () => {
       setScheduleLoading(true);
       try {
-        const promises = classesData.map((cls: any) =>
-          scheduleService.getSchedules({ classId: cls._id, limit: 1000 })
-        );
+        const promises = classesData.map((cls: any) => scheduleService.getSchedules({ classId: cls._id, limit: 1000 }));
         const results = await Promise.all(promises);
         const allSchedules = results.flatMap((result: any) => {
           return Array.isArray(result) ? result : result.data || [];
@@ -132,6 +155,55 @@ const StudentPortal = () => {
       alert('Hệ thống đang xác nhận thanh toán của bạn. Cảm ơn bạn!');
     }, 1500);
   };
+
+  const handlePaymentWithVNPAY = async (invoiceId: string) => {
+    try {
+      setIsProcessing(true);
+      const response = await paymentService.createVnpayUrl(invoiceId);
+      const paymentUrl = response.data?.paymentUrl;
+      if (paymentUrl) {
+        window.location.href = paymentUrl;
+      } else {
+        toast.error('Lỗi: Không lấy được đường dẫn thanh toán!');
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi kết nối VNPAY');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  useEffect(() => {
+    const rspCode = searchParams.get('vnp_ResponseCode');
+
+    if (rspCode) {
+      if (rspCode === '00') {
+        toast.success('Thanh toán học phí thành công! Hệ thống đã ghi nhận.');
+        fetchInvoices();
+      } else {
+        toast.error('Giao dịch thanh toán đã bị hủy hoặc thất bại.');
+      }
+
+      const paramsToClear = [
+        'vnp_Amount',
+        'vnp_BankCode',
+        'vnp_BankTranNo',
+        'vnp_CardType',
+        'vnp_OrderInfo',
+        'vnp_PayDate',
+        'vnp_ResponseCode',
+        'vnp_TmnCode',
+        'vnp_TransactionNo',
+        'vnp_TransactionStatus',
+        'vnp_TxnRef',
+        'vnp_SecureHash',
+      ];
+
+      paramsToClear.forEach((param) => searchParams.delete(param));
+
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams, fetchInvoices]);
 
   return (
     <>
@@ -177,10 +249,11 @@ const StudentPortal = () => {
           <div className="bg-white border border-gray-200 p-1.5 rounded-2xl flex items-center gap-1.5 shadow-xs">
             <button
               onClick={() => setActiveTab('classes')}
-              className={`px-6 py-2.5 cursor-pointer rounded-xl justify-center min-w-[140px] text-sm font-bold transition-all duration-300 flex items-center gap-2 ${activeTab === 'classes'
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
-                : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600 active:scale-95'
-                }`}
+              className={`px-6 py-2.5 cursor-pointer rounded-xl justify-center min-w-[140px] text-sm font-bold transition-all duration-300 flex items-center gap-2 ${
+                activeTab === 'classes'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600 active:scale-95'
+              }`}
             >
               <BookOpen size={18} />
               Lớp học
@@ -188,10 +261,11 @@ const StudentPortal = () => {
 
             <button
               onClick={() => setActiveTab('timetable')}
-              className={`px-6 py-2.5 cursor-pointer rounded-xl justify-center min-w-[140px] text-sm font-bold transition-all duration-300 flex items-center gap-2 ${activeTab === 'timetable'
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
-                : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600 active:scale-95'
-                }`}
+              className={`px-6 py-2.5 cursor-pointer rounded-xl justify-center min-w-[140px] text-sm font-bold transition-all duration-300 flex items-center gap-2 ${
+                activeTab === 'timetable'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600 active:scale-95'
+              }`}
             >
               <CalendarIcon size={18} />
               Lịch học
@@ -199,10 +273,11 @@ const StudentPortal = () => {
 
             <button
               onClick={() => setActiveTab('invoices')}
-              className={`px-6 py-2.5 cursor-pointer rounded-xl justify-center min-w-[140px] text-sm font-bold transition-all duration-300 flex items-center gap-2 ${activeTab === 'invoices'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                : 'text-gray-600 hover:bg-gray-50 hover:text-indigo-600 active:scale-95'
-                }`}
+              className={`px-6 py-2.5 cursor-pointer rounded-xl justify-center min-w-[140px] text-sm font-bold transition-all duration-300 flex items-center gap-2 ${
+                activeTab === 'invoices'
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-indigo-600 active:scale-95'
+              }`}
             >
               <CreditCard size={18} />
               Học phí
@@ -252,22 +327,26 @@ const StudentPortal = () => {
                       <h4 className="font-bold text-lg text-gray-800 mb-1 line-clamp-1 group-hover:text-blue-600 transition-colors">
                         {cls.name}
                       </h4>
-                      <p className="text-sm text-gray-400 font-medium mb-4">{typeof cls.courseId === 'object' && cls.courseId !== null
-                        ? (cls.courseId as any).title
-                        : '—'}</p>
+                      <p className="text-sm text-gray-400 font-medium mb-4">
+                        {typeof cls.courseId === 'object' && cls.courseId !== null ? (cls.courseId as any).title : '—'}
+                      </p>
 
                       <div className="space-y-2 border-t border-gray-50 pt-4">
                         <div className="flex items-center gap-2 text-sm text-gray-500">
                           <User size={14} className="text-gray-400 shrink-0" />
-                          <span className="truncate">{typeof cls.teacherId === 'object' && cls.teacherId !== null
-                            ? (cls.teacherId as any).fullName
-                            : 'Chưa phân công'}</span>
+                          <span className="truncate">
+                            {typeof cls.teacherId === 'object' && cls.teacherId !== null
+                              ? (cls.teacherId as any).fullName
+                              : 'Chưa phân công'}
+                          </span>
                         </div>
                         <div className="flex items-center gap-2 text-sm text-gray-500">
                           <MapPin size={14} className="text-gray-400 shrink-0" />
-                          <span className="truncate">{typeof cls.roomId === 'object' && cls.roomId !== null
-                            ? (cls.roomId as any).name
-                            : 'Chưa xếp phòng'}</span>
+                          <span className="truncate">
+                            {typeof cls.roomId === 'object' && cls.roomId !== null
+                              ? (cls.roomId as any).name
+                              : 'Chưa xếp phòng'}
+                          </span>
                         </div>
                       </div>
 
@@ -282,7 +361,6 @@ const StudentPortal = () => {
               </div>
             </>
           </section>
-
         )}
 
         {/* Timetable */}
@@ -374,11 +452,12 @@ const StudentPortal = () => {
                             const cellSchedule = getScheduleForCell(day, shift._id);
 
                             return (
-                              <td key={index} className="p-2 border-b border-r border-gray-100 bg-white align-top relative">
+                              <td
+                                key={index}
+                                className="p-2 border-b border-r border-gray-100 bg-white align-top relative"
+                              >
                                 {cellSchedule ? (
-                                  <div
-                                    className="h-full bg-violet-50 border border-violet-200 rounded-xl p-3 cursor-pointer hover:bg-violet-100 hover:shadow-md transition-all group/card flex flex-col gap-2"
-                                  >
+                                  <div className="h-full bg-violet-50 border border-violet-200 rounded-xl p-3 cursor-pointer hover:bg-violet-100 hover:shadow-md transition-all group/card flex flex-col gap-2">
                                     <div className="flex items-start justify-between gap-1">
                                       <h4 className="font-bold text-sm text-violet-800 line-clamp-2 group-hover/card:text-violet-900">
                                         {cellSchedule.classId?.name || 'N/A'}
@@ -398,7 +477,9 @@ const StudentPortal = () => {
                                       </div>
                                       <div className="flex items-center gap-1.5 text-[10px] text-gray-500">
                                         <MapPin size={12} className="text-gray-400" />
-                                        <span className="truncate uppercase font-bold">{cellSchedule.roomId?.name}</span>
+                                        <span className="truncate uppercase font-bold">
+                                          {cellSchedule.roomId?.name}
+                                        </span>
                                       </div>
                                     </div>
                                   </div>
@@ -424,9 +505,7 @@ const StudentPortal = () => {
                 </table>
               </div>
             </div>
-
           </section>
-
         )}
 
         {/* HỌC PHÍ & THANH TOÁN */}
@@ -440,11 +519,11 @@ const StudentPortal = () => {
             </div>
 
             <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-              {MOCK_INVOICES.length > 0 ? (
+              {pendingInvoices.length > 0 ? (
                 <div className="divide-y divide-gray-100">
-                  {MOCK_INVOICES.map((invoice, index) => (
+                  {pendingInvoices?.map((invoice, index) => (
                     <div
-                      key={invoice.id}
+                      key={invoice._id}
                       className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-gray-50/50 transition-colors"
                     >
                       <div className="flex items-start gap-4">
@@ -452,23 +531,23 @@ const StudentPortal = () => {
                           <span className="font-bold">{index + 1}</span>
                         </div>
                         <div>
-                          <h4 className="font-bold text-gray-800 text-lg">{invoice.title}</h4>
+                          <h4 className="font-bold text-gray-800 text-lg">{invoice.classId?.name}</h4>
                           <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-500">
                             <span className="flex items-center gap-1">
                               <Calendar size={14} /> Hạn chót: {invoice.dueDate}
                             </span>
                             <span className="flex items-center gap-1">
                               Mã HĐ:{' '}
-                              <span className="font-mono text-gray-700 font-medium">#{invoice.id.toUpperCase()}</span>
+                              <span className="font-mono text-gray-700 font-medium">#{invoice.code.toUpperCase()}</span>
                             </span>
                           </div>
                         </div>
                       </div>
 
                       <div className="flex flex-col md:items-end gap-3 md:min-w-[200px]">
-                        <p className="font-black text-2xl text-red-600">{formatCurrency(invoice.amount)}</p>
+                        <p className="font-black text-2xl text-red-600">{formatCurrency(invoice.finalAmount)}</p>
                         <button
-                          onClick={() => handleOpenPayment(invoice)}
+                          onClick={() => handlePaymentWithVNPAY(invoice._id)}
                           className="w-full md:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-md shadow-blue-600/20"
                         >
                           <QrCode size={18} /> Thanh toán ngay
@@ -491,7 +570,7 @@ const StudentPortal = () => {
 
       {/* 4. MODAL THANH TOÁN (GIẢ LẬP MÃ QR) */}
       {isPaymentModalOpen && selectedInvoice && (
-        <div className="fixed inset-0 z- flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-gray-900/70 backdrop-blur-sm"
             onClick={() => setIsPaymentModalOpen(false)}
@@ -521,7 +600,6 @@ const StudentPortal = () => {
 
               {/* KHU VỰC MÃ QR GIẢ LẬP */}
               <div className="p-4 bg-white border-2 border-dashed border-gray-300 rounded-3xl mb-6 relative group">
-                {/* Thay thế ảnh này bằng thẻ <img> chứa mã VietQR hoặc ZaloPay thực tế khi tích hợp */}
                 <div className="w-48 h-48 bg-gray-100 rounded-xl flex flex-col items-center justify-center text-gray-400">
                   <QrCode size={64} className="mb-2" />
                   <span className="text-xs font-medium">Mã QR VietQR/ZaloPay</span>
