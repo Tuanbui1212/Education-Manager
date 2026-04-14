@@ -8,7 +8,9 @@ export class PaymentController {
   createUrl = async (req: Request, res: Response) => {
     try {
       const { invoiceId, bankCode } = req.body;
-      const ipAddr = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+      const forwarded = req.headers['x-forwarded-for'];
+      const ipAddr =
+        (Array.isArray(forwarded) ? forwarded[0] : forwarded?.split(',')[0]) || req.socket.remoteAddress || '127.0.0.1';
 
       const paymentUrl = await paymentService.generateVnpayUrl(invoiceId, String(ipAddr), bankCode);
 

@@ -9,6 +9,7 @@ import { invoiceService } from '../../../services/invoice.service';
 
 import PaymentWizardModal from './PaymentWizardModal';
 import TablePagination from '../../../components/TablePagination';
+import useDebounce from '../../../hooks/useDebounce';
 
 const TABS: { id: InvoiceStatus | 'ALL'; label: string }[] = [
   { id: 'ALL', label: 'Tất cả' },
@@ -16,28 +17,52 @@ const TABS: { id: InvoiceStatus | 'ALL'; label: string }[] = [
   { id: 'PARTIAL', label: 'Đang trả góp' },
   { id: 'OVERDUE', label: 'Quá hạn' },
   { id: 'PAID', label: 'Đã hoàn thành' },
+  { id: 'CANCELLED', label: 'Đã hủy' },
+  { id: 'REFUNDED', label: 'Đã hoàn tiền' },
 ];
 
 const InvoiceManagement = () => {
   const [activeTab, setActiveTab] = useState<InvoiceStatus | 'ALL'>('ALL');
   const [selectedInvoice, setSelectedInvoice] = useState<IInvoice | null>(null);
-
   const [invoices, setInvoices] = useState<IInvoice[]>([]);
   const [prevResponse, setPrevResponse] = useState<any>(null);
-
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+  const [showFilter, setShowFilter] = useState(false);
+  const [filterMinDebt, setFilterMinDebt] = useState('');
+  const [filterMaxDebt, setFilterMaxDebt] = useState('');
+  const [filterDueDateFrom, setFilterDueDateFrom] = useState('');
+  const [filterDueDateTo, setFilterDueDateTo] = useState('');
+
+  const debouncedMinDebt = useDebounce(filterMinDebt, 500);
+  const debouncedMaxDebt = useDebounce(filterMaxDebt, 500);
+  const debouncedDueDateFrom = useDebounce(filterDueDateFrom, 500);
+  const debouncedDueDateTo = useDebounce(filterDueDateTo, 500);
 
   const queryParams = {
     page,
     limit,
     ...(activeTab !== 'ALL' && { status: activeTab }),
+    ...(debouncedMinDebt && { minDebt: debouncedMinDebt }),
+    ...(debouncedMaxDebt && { maxDebt: debouncedMaxDebt }),
+    ...(debouncedDueDateFrom && { dueDateFrom: debouncedDueDateFrom }),
+    ...(debouncedDueDateTo && { dueDateTo: debouncedDueDateTo }),
   };
+
   const {
     data: response,
     loading,
     totalCount,
-  } = useFetch(invoiceService.getInvoices, queryParams, [activeTab, page, limit]);
+  } = useFetch(invoiceService.getInvoices, queryParams, [
+    activeTab,
+    page,
+    limit,
+    debouncedMinDebt,
+    debouncedMaxDebt,
+    debouncedDueDateFrom,
+    debouncedDueDateTo,
+  ]);
+
   const totalPages = Math.ceil((totalCount || 0) / limit);
   if (response !== prevResponse) {
     setPrevResponse(response);
@@ -125,11 +150,7 @@ const InvoiceManagement = () => {
     }
   };
 
-  // ==========================================
-  // LOGIC HIỂN THỊ BADGE BÊN NGOÀI BẢNG
-  // ==========================================
   const renderNotificationBadge = (inv: IInvoice) => {
-    // Không hiện nhắc nợ nếu đã thanh toán xong hoặc bị hủy
     if (inv.status === 'PAID' || inv.status === ('CANCELLED' as any) || inv.status === ('REFUNDED' as any)) {
       return null;
     }
@@ -171,6 +192,8 @@ const InvoiceManagement = () => {
     }
   };
 
+  const isFiltering = filterMinDebt || filterMaxDebt || filterDueDateFrom || filterDueDateTo;
+
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -180,8 +203,16 @@ const InvoiceManagement = () => {
             <p className="text-sm text-gray-500 mt-1">Hệ thống theo dõi dòng tiền kế toán</p>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
-            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50">
-              <Filter size={16} /> Lọc
+            <button
+              onClick={() => setShowFilter(!showFilter)}
+              className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${
+                isFiltering ? 'bg-blue-600 text-white border-blue-600' : 'bg-white border-gray-200 hover:bg-gray-50'
+              }`}
+            >
+              <Filter size={16} />
+              Lọc{' '}
+              {isFiltering &&
+                `(${[filterMinDebt, filterMaxDebt, filterDueDateFrom, filterDueDateTo].filter(Boolean).length})`}
             </button>
             <div className="relative flex-1 sm:w-64">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -193,6 +224,81 @@ const InvoiceManagement = () => {
             </div>
           </div>
         </div>
+
+        {showFilter && (
+          <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+            <div className="flex flex-wrap gap-4 items-end">
+              {/* Khoảng nợ */}
+              <div className="flex flex-col gap-1 min-w-[140px]">
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Nợ tối thiểu</label>
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={filterMinDebt}
+                  onChange={(e) => {
+                    setFilterMinDebt(e.target.value);
+                    setPage(1);
+                  }}
+                  className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              <div className="flex flex-col gap-1 min-w-[140px]">
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Nợ tối đa</label>
+                <input
+                  type="number"
+                  placeholder="∞"
+                  value={filterMaxDebt}
+                  onChange={(e) => {
+                    setFilterMaxDebt(e.target.value);
+                    setPage(1);
+                  }}
+                  className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Khoảng hạn chót */}
+              <div className="flex flex-col gap-1 min-w-[160px]">
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Hạn chót từ</label>
+                <input
+                  type="date"
+                  value={filterDueDateFrom}
+                  onChange={(e) => {
+                    setFilterDueDateFrom(e.target.value);
+                    setPage(1);
+                  }}
+                  className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              <div className="flex flex-col gap-1 min-w-[160px]">
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Hạn chót đến</label>
+                <input
+                  type="date"
+                  value={filterDueDateTo}
+                  onChange={(e) => {
+                    setFilterDueDateTo(e.target.value);
+                    setPage(1);
+                  }}
+                  className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Xóa bộ lọc */}
+              {isFiltering && (
+                <button
+                  onClick={() => {
+                    setFilterMinDebt('');
+                    setFilterMaxDebt('');
+                    setFilterDueDateFrom('');
+                    setFilterDueDateTo('');
+                  }}
+                  className="px-4 py-2 text-sm font-semibold text-red-500 hover:bg-red-50 rounded-lg border border-red-200 transition-colors"
+                >
+                  Xóa bộ lọc
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="border-b border-gray-200 mt-4 overflow-x-auto custom-scrollbar">
           <div className="flex gap-8 px-2">

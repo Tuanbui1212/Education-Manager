@@ -154,13 +154,17 @@ const PaymentWizardModal: React.FC<PaymentWizardModalProps> = ({ invoice, onClos
           amount: amountToPay,
           paymentMethod: paymentMethod,
           processedBy: currentUserId,
-          note: 'Thanh toán trả góp định kỳ',
+          note: `Thanh toán trả góp - Kỳ ${(invoice.installmentConfig?.paidMonths || 0) + 1}`,
         });
 
         if (res.success) {
           const newDebt = invoice.debt - amountToPay;
+
+          const newConfig = res.data?.updatedConfig || invoice.installmentConfig;
+
           setMessage(`Đã thu thành công kỳ tiếp theo: ${formatCurrency(amountToPay)}`);
-          onSuccess(invoice._id as string, newDebt, newDebt <= 0 ? 'PAID' : 'PARTIAL', invoice.installmentConfig);
+
+          onSuccess(invoice._id as string, newDebt, newDebt <= 0 ? 'PAID' : 'PARTIAL', newConfig);
           setStep(4);
         }
       }
@@ -277,9 +281,17 @@ const PaymentWizardModal: React.FC<PaymentWizardModalProps> = ({ invoice, onClos
                     </div>
                     <div>
                       <h3 className="font-black text-lg uppercase tracking-tight">Hóa đơn đang trả góp</h3>
-                      <p className="text-xs font-medium">
-                        Lộ trình: {invoice.installmentConfig?.totalMonths} kỳ thanh toán
-                      </p>
+                      <div className="mt-1">
+                        <p className="text-sm font-black text-amber-700">
+                          Tiến độ: Đã thu {invoice.installmentConfig?.paidMonths || 0} /{' '}
+                          {invoice.installmentConfig?.totalMonths} kỳ
+                        </p>
+                        <p className="text-xs font-medium mt-1 text-amber-600 bg-amber-100/50 inline-block px-2 py-1 rounded">
+                          Đang chờ thu Kỳ {(invoice.installmentConfig?.paidMonths || 0) + 1}
+                          {invoice.installmentConfig?.nextDueDate &&
+                            ` (Hạn chót: ${new Date(invoice.installmentConfig.nextDueDate).toLocaleDateString('vi-VN')})`}
+                        </p>
+                      </div>
                     </div>
                   </div>
 
@@ -322,7 +334,7 @@ const PaymentWizardModal: React.FC<PaymentWizardModalProps> = ({ invoice, onClos
                       onClick={() => handleProcess('pay_next_period')}
                       className="p-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold flex flex-col items-center justify-center gap-2 shadow-md transition-all disabled:opacity-50"
                     >
-                      <Banknote size={24} /> Thu định kỳ kỳ này
+                      <Banknote size={24} /> Thu tiền Kỳ {(invoice.installmentConfig?.paidMonths || 0) + 1}
                     </button>
                     <button
                       disabled={isLoading}

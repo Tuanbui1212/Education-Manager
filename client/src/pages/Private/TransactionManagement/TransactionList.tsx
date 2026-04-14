@@ -13,6 +13,13 @@ const TransactionList: React.FC = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
+  const paymentMethodConfig: Record<string, { label: string; color: string }> = {
+    CASH: { label: 'TIỀN MẶT', color: 'bg-orange-100 text-orange-600' },
+    TRANSFER: { label: 'CHUYỂN KHOẢN', color: 'bg-blue-100 text-blue-600' },
+    CARD: { label: 'QUẸT THẺ', color: 'bg-purple-100 text-purple-600' },
+    VNPAY: { label: 'VNPAY', color: 'bg-sky-100 text-sky-700' },
+  };
+
   useEffect(() => {
     fetchTransactions();
   }, []);
@@ -115,13 +122,18 @@ const TransactionList: React.FC = () => {
                     <span className="font-bold text-emerald-600">{formatCurrency(tx.amount)}</span>
                   </td>
                   <td className="px-6 py-4">
-                    <span
-                      className={`px-2 py-1 rounded-md text-[10px] font-bold ${
-                        tx.paymentMethod === 'CASH' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'
-                      }`}
-                    >
-                      {tx.paymentMethod === 'CASH' ? 'TIỀN MẶT' : 'CHUYỂN KHOẢN'}
-                    </span>
+                    {(() => {
+                      const config = paymentMethodConfig[tx.paymentMethod] || {
+                        label: 'KHÁC',
+                        color: 'bg-gray-100 text-gray-600',
+                      };
+
+                      return (
+                        <span className={`px-2 py-1 rounded-md text-[10px] font-bold ${config.color}`}>
+                          {config.label}
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">
                     <div className="flex items-center gap-1">

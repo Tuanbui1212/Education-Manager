@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import {
   BookOpen,
@@ -48,6 +48,7 @@ const formatCurrency = (amount: number) =>
 // --- COMPONENT CHÍNH ---
 const StudentPortal = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -139,11 +140,6 @@ const StudentPortal = () => {
         typeof schedule.shiftId === 'object' ? schedule.shiftId._id === shiftId : schedule.shiftId === shiftId;
       return isSameDate && isSameShift;
     });
-  };
-  // Hàm mở Modal thanh toán
-  const handleOpenPayment = (invoice: any) => {
-    setSelectedInvoice(invoice);
-    setIsPaymentModalOpen(true);
   };
 
   // Hàm giả lập bấm "Tôi đã thanh toán"
