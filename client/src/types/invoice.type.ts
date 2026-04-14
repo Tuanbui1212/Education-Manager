@@ -3,6 +3,8 @@ export type InvoiceStatus = 'PAID' | 'PARTIAL' | 'UNPAID' | 'CANCELLED' | 'REFUN
 export interface InvoiceConfig {
   totalMonths: number;
   amountPerMonth: number;
+  paidMonths: number;
+  nextDueDate: Date;
 }
 
 export interface IInvoice {

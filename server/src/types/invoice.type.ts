@@ -12,6 +12,8 @@ export enum InvoiceStatus {
 export interface IInstallmentConfig {
   totalMonths: number;
   amountPerMonth: number;
+  paidMonths: number;
+  nextDueDate: Date;
 }
 
 export interface IInvoice {

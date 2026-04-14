@@ -78,7 +78,7 @@ export class PaymentService {
           invoiceId: invoice._id,
           studentId: invoice.studentId,
           amount: paidAmount,
-          paymentMethod: PaymentMethod.BANK_TRANSFER,
+          paymentMethod: PaymentMethod.VNPAY,
           note: `Thanh toán qua VNPAY (Ngân hàng: ${query.vnp_BankCode})`,
           processedBy: invoice.studentId,
         });

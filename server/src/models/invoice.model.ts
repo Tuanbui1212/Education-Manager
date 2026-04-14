@@ -21,6 +21,8 @@ const invoiceSchema = new Schema<InvoiceDocument>(
     installmentConfig: {
       totalMonths: { type: Number },
       amountPerMonth: { type: Number },
+      paidMonths: { type: Number, default: 0 },
+      nextDueDate: { type: Date },
     },
 
     dueDate: { type: Date },

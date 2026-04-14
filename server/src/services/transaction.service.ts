@@ -4,6 +4,7 @@ import type { CreateTransactionDTO } from '../types/transaction.type';
 import { InvoiceStatus } from '../types/invoice.type';
 
 export class TransactionService {
+  // Xử lý thanh toán cho một hóa đơn
   async processPayment(data: CreateTransactionDTO, processedBy: string) {
     const invoice = await InvoiceModel.findById(data.invoiceId);
     if (!invoice) throw new Error('Không tìm thấy hóa đơn');
@@ -14,6 +15,9 @@ export class TransactionService {
       throw new Error(`Số tiền thu (${data.amount}) vượt quá công nợ hiện tại (${invoice.debt})`);
     }
 
+    // ==========================================
+    // BƯỚC A: TẠO GIAO DỊCH (LƯU VẾT LỊCH SỬ)
+    // ==========================================
     const year = new Date().getFullYear();
     const lastTx = await TransactionModel.findOne({ code: new RegExp(`^PT-${year}-`) }).sort({ createdAt: -1 });
     let nextNumber = 1;
@@ -33,17 +37,32 @@ export class TransactionService {
       processedBy,
     });
 
-    const newDebt = invoice.debt - data.amount;
-    const newStatus = newDebt === 0 ? InvoiceStatus.PAID : InvoiceStatus.PARTIAL;
+    // ==========================================
+    // BƯỚC B: XỬ LÝ CÔNG NỢ & TRẠNG THÁI GỘP CHUNG
+    // ==========================================
 
-    invoice.debt = newDebt;
-    invoice.status = newStatus;
+    const newDebt = invoice.debt - data.amount;
+    invoice.debt = newDebt < 0 ? 0 : newDebt;
+
+    invoice.status = invoice.debt === 0 ? InvoiceStatus.PAID : InvoiceStatus.PARTIAL;
+
+    if (invoice.debt > 0 && invoice.installmentConfig && invoice.installmentConfig.totalMonths > 0) {
+      invoice.installmentConfig.paidMonths = (invoice.installmentConfig.paidMonths || 0) + 1;
+      const baseDate = invoice.installmentConfig.nextDueDate
+        ? new Date(invoice.installmentConfig.nextDueDate)
+        : new Date();
+
+      baseDate.setDate(baseDate.getDate() + 30);
+      invoice.installmentConfig.nextDueDate = baseDate;
+    }
+
     await invoice.save();
 
     return {
       transaction: newTransaction,
-      remainingDebt: newDebt,
-      invoiceStatus: newStatus,
+      remainingDebt: invoice.debt,
+      invoiceStatus: invoice.status,
+      updatedConfig: invoice.installmentConfig,
     };
   }
 

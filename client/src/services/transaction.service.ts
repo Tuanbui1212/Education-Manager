@@ -7,7 +7,7 @@ export const transactionService = {
   ): Promise<{
     success: boolean;
     message: string;
-    data?: { transaction: ITransaction; remainingDebt: number; invoiceStatus: string };
+    data?: { transaction: ITransaction; remainingDebt: number; invoiceStatus: string; updatedConfig?: any };
   }> => {
     const response = await axios.post('/transactions', data);
     return response.data;

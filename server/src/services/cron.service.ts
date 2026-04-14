@@ -1,17 +1,27 @@
 import cron from 'node-cron';
 import { ClassModel } from '../models/class.model';
 import { ScheduleModel } from '../models/schedule.model';
+import { InvoiceModel } from '../models/invoice.model';
 
 export class CronService {
   public init() {
     console.log('⏰ Cron Job đã được kích hoạt. Sẵn sàng quét trạng thái lớp học...');
 
-    // Cấu hình chạy vào đúng 00:01 sáng mỗi ngày ('1 0 * * *')
-    // Nếu bạn muốn test ngay bây giờ, hãy đổi thành '* * * * *' (Chạy mỗi phút)
+    // Chạy ngay khi khởi động để đảm bảo trạng thái luôn được cập nhật chính xác
+    this.runJobsImmediately();
+
+    // Lên lịch chạy vào lúc 00:01 hàng ngày
     cron.schedule('1 0 * * *', async () => {
       console.log('🔄 Bắt đầu tiến trình cập nhật trạng thái lớp học tự động...');
       await this.updateClassStatuses();
+      await this.updateOverdueInvoices();
     });
+  }
+
+  private async runJobsImmediately() {
+    console.log('🚀 Chạy cron ngay khi start server...');
+    await this.updateClassStatuses();
+    await this.updateOverdueInvoices();
   }
 
   private async updateClassStatuses() {
@@ -52,6 +62,28 @@ export class CronService {
       console.log('✅ Hoàn thành tiến trình cập nhật trạng thái lớp học.');
     } catch (error) {
       console.error('❌ Lỗi khi cập nhật trạng thái lớp học tự động:', error);
+    }
+  }
+
+  private async updateOverdueInvoices() {
+    try {
+      const today = new Date();
+
+      const overdueUnpaid = await InvoiceModel.updateMany(
+        { status: 'UNPAID', dueDate: { $lt: today } },
+        { $set: { status: 'OVERDUE' } },
+      );
+
+      const overduePartial = await InvoiceModel.updateMany(
+        { status: 'PARTIAL', 'installmentConfig.nextDueDate': { $lt: today } },
+        { $set: { status: 'OVERDUE' } },
+      );
+
+      console.log(
+        `✅ Cập nhật quá hạn: ${overdueUnpaid.modifiedCount} UNPAID, ${overduePartial.modifiedCount} PARTIAL → OVERDUE`,
+      );
+    } catch (error) {
+      console.error('❌ Lỗi cập nhật invoice quá hạn:', error);
     }
   }
 }

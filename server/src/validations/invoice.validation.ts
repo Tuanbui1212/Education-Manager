@@ -6,6 +6,8 @@ const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 const installmentConfigSchema = z.object({
   totalMonths: z.number().int().min(2, 'Số kỳ trả góp tối thiểu là 2'),
   amountPerMonth: z.number().min(0, 'Số tiền mỗi kỳ không được âm'),
+  paidMonths: z.number().int().min(0, 'Số kỳ đã trả không được âm').optional(),
+  nextDueDate: z.string().datetime().optional(),
 });
 
 export const createInvoiceSchema = z.object({
