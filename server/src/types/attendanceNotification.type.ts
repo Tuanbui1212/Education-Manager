@@ -4,7 +4,8 @@ export interface IAttendanceNotification extends Document {
     userId: Types.ObjectId;
     title: string;
     content: string;
-    attendanceId: Types.ObjectId;
+    attendanceId?: Types.ObjectId;
+    examId?: Types.ObjectId;
     isRead: boolean;
 }
 

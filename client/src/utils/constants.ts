@@ -83,6 +83,8 @@ export const PATHS = {
   TEACHER_PORTAL: '/teacher-portal',
   TEACHER_ATTENDANCE_SCHEDULES: '/teacher-attendance/:classId',
   TEACHER_ATTENDANCE_DETAILS: '/teacher-attendance/:classId/schedule/:scheduleId',
+
+  STUDENT_EXAM_TAKING: '/student-exam/:examId',
 };
 
 export const STATUS_OPTIONS = [
