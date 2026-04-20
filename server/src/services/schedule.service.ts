@@ -145,7 +145,7 @@ export class ScheduleService {
     return await ScheduleModel.findByIdAndDelete(id);
   }
 
-  async createSchedulesBulk(schedules: CreateScheduleType[]) {
+  async createSchedulesBulk(schedules: CreateScheduleType[], startClass: string) {
     if (!Array.isArray(schedules)) {
       throw new Error('Dữ liệu đầu vào không phải là một danh sách hợp lệ');
     }
@@ -166,7 +166,17 @@ export class ScheduleService {
         startDate.setHours(0, 0, 0, 0);
 
         if (startDate <= today) {
-          await ClassModel.findByIdAndUpdate(firstSchedule.classId, { status: 'ACTIVE' }, { session });
+          await ClassModel.findByIdAndUpdate(
+            firstSchedule.classId,
+            { status: 'ACTIVE', startDate: startClass },
+            { session },
+          );
+        } else if (startDate > today) {
+          await ClassModel.findByIdAndUpdate(
+            firstSchedule.classId,
+            { status: 'UPCOMING', startDate: startClass },
+            { session },
+          );
         }
       }
 
@@ -241,7 +251,7 @@ export class ScheduleService {
     try {
       const result = await ScheduleModel.deleteMany({ _id: { $in: ids } }, { session });
 
-      await ClassModel.findByIdAndUpdate(classId, { status: 'UPCOMING' }, { session });
+      await ClassModel.findByIdAndUpdate(classId, { status: 'PENDING' }, { session });
 
       await session.commitTransaction();
       return result;
@@ -251,5 +261,10 @@ export class ScheduleService {
     } finally {
       session.endSession();
     }
+  }
+
+  async getStartDateClass(classData: any) {
+    const startDate = await ScheduleModel.find({ classId: classData._id }).sort({ date: 1 }).limit(1);
+    return startDate;
   }
 }

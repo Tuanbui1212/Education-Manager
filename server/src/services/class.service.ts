@@ -75,6 +75,7 @@ export class ClassService {
         .populate('teacherId', 'fullName')
         .populate('roomId', 'name'),
     ]);
+
     return { classes, total };
   }
 
@@ -239,10 +240,7 @@ export class ClassService {
               {
                 $match: {
                   $expr: {
-                    $and: [
-                      { $eq: ['$classId', '$$class_id'] },
-                      { $eq: ['$studentId', studentObjectId] },
-                    ],
+                    $and: [{ $eq: ['$classId', '$$class_id'] }, { $eq: ['$studentId', studentObjectId] }],
                   },
                 },
               },
@@ -310,7 +308,7 @@ export class ClassService {
           $unwind: { path: '$roomId', preserveNullAndEmptyArrays: true },
         },
       ]),
-      ClassModel.countDocuments({ studentIds: id })
+      ClassModel.countDocuments({ studentIds: id }),
     ]);
 
     return { classesData, totalCount };

@@ -15,6 +15,7 @@ router.post('/', validate(CreateScheduleSchema), scheduleController.create);
 router.get('', validate(GetSchedulesSchema, 'query'), scheduleController.getAll);
 router.post('/bulk', scheduleController.createBulk);
 router.delete('/bulk', scheduleController.deleteBulk);
+router.get('/class/:classId/start-date', scheduleController.getStartDateClass);
 router.get('/:id', validate(ScheduleIdSchema, 'params'), scheduleController.getOne);
 router.put('/:id', validate(ScheduleIdSchema, 'params'), validate(UpdateScheduleSchema), scheduleController.update);
 router.delete('/:id', validate(ScheduleIdSchema, 'params'), scheduleController.delete);

@@ -1,3 +1,4 @@
+import { UserModel } from '../models/user.model';
 import { InvoiceModel } from '../models/invoice.model';
 import { InvoiceStatus } from '../types/invoice.type';
 import type { IInvoice, CreateInvoiceType } from '../types/invoice.type';
@@ -37,7 +38,9 @@ export class InvoiceService {
     const filter: any = {};
     if (status) filter.status = status;
     if (search) {
-      filter.code = { $regex: search, $options: 'i' };
+      const listUserId = await UserModel.find({ fullName: { $regex: search, $options: 'i' } }).select('_id');
+
+      filter.$or = [{ code: { $regex: search, $options: 'i' } }, { studentId: { $in: listUserId } }];
     }
 
     if (minDebt || maxDebt) {

@@ -53,15 +53,15 @@ export class ScheduleController {
     }
   };
 
-  createBulk = async (req: Request<{}, {}, { schedules: CreateScheduleType[] }>, res: Response) => {
+  createBulk = async (req: Request<{}, {}, { schedules: CreateScheduleType[]; startDate: string }>, res: Response) => {
     try {
-      const { schedules } = req.body;
+      const { schedules, startDate } = req.body;
 
       if (!schedules || schedules.length === 0) {
         return res.status(400).json({ success: false, message: 'Danh sách lịch học trống' });
       }
 
-      const results = await this.scheduleService.createSchedulesBulk(schedules);
+      const results = await this.scheduleService.createSchedulesBulk(schedules, startDate);
 
       return res.status(201).json({
         success: true,
@@ -87,6 +87,16 @@ export class ScheduleController {
         message: `Đã xóa thành công ${result.deletedCount} buổi học`,
         data: result,
       });
+    } catch (error: any) {
+      return res.status(400).json({ success: false, message: error.message });
+    }
+  };
+
+  //[GET] /schedules/class/:classId/start-date
+  getStartDateClass = async (req: Request<{ classId: string }>, res: Response) => {
+    try {
+      const startDate = await this.scheduleService.getStartDateClass({ _id: req.params.classId });
+      return res.status(200).json({ success: true, message: 'Lấy ngày bắt đầu lớp học thành công', data: startDate });
     } catch (error: any) {
       return res.status(400).json({ success: false, message: error.message });
     }
