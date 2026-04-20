@@ -45,6 +45,8 @@ const UserForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [roles, setRoles] = useState<any[]>([]);
   const [bankList, setBankList] = useState<IVietQRBank[]>([]);
+  const [degreesInput, setDegreesInput] = useState('');
+  const [certificatesInput, setCertificatesInput] = useState('');
 
   const [confirmConfig, setConfirmConfig] = useState({
     isOpen: false,
@@ -410,14 +412,15 @@ const UserForm = () => {
                     <InputField
                       label="Bằng cấp đào tạo"
                       icon={<GraduationCap size={18} className="text-gray-400" />}
-                      value={formData.degrees?.join(', ') || ''}
-                      placeholder="Vd: Thạc sĩ Ngôn ngữ Anh, Cử nhân Sư phạm..."
-                      onChange={(e) =>
+                      value={degreesInput}
+                      placeholder="Vd: Thạc sĩ Ngôn ngữ Anh, Cử nhân Sư phạm"
+                      onChange={(e) => setDegreesInput(e.target.value)}
+                      onBlur={() =>
                         handleChange(
                           'degrees',
-                          e.target.value
+                          degreesInput
                             .split(',')
-                            .map((d) => d.trim())
+                            .map((d) => d)
                             .filter(Boolean),
                         )
                       }
@@ -425,14 +428,15 @@ const UserForm = () => {
                     <InputField
                       label="Chứng chỉ chuyên môn"
                       icon={<Award size={18} className="text-gray-400" />}
-                      value={formData.certificates?.join(', ') || ''}
+                      value={certificatesInput}
                       placeholder="Vd: IELTS, TOEIC, Chứng chỉ Tin học..."
-                      onChange={(e) =>
+                      onChange={(e) => setCertificatesInput(e.target.value)}
+                      onBlur={() =>
                         handleChange(
                           'certificates',
-                          e.target.value
+                          certificatesInput
                             .split(',')
-                            .map((d) => d.trim())
+                            .map((d) => d)
                             .filter(Boolean),
                         )
                       }
@@ -459,16 +463,17 @@ const UserForm = () => {
                       label="Trường đang học"
                       icon={<GraduationCap size={18} />}
                       placeholder="Vd: THPT Nguyễn Du..."
-                      value={formData.degrees?.join(', ') || ''}
-                      onChange={(e) =>
+                      value={degreesInput}
+                      onChange={(e) => setDegreesInput(e.target.value)}
+                      onBlur={() => {
                         handleChange(
                           'degrees',
-                          e.target.value
+                          degreesInput
                             .split(',')
-                            .map((d) => d.trim())
+                            .map((d) => d)
                             .filter(Boolean),
-                        )
-                      }
+                        );
+                      }}
                     />
                     <div>
                       <Combobox

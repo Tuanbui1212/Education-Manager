@@ -20,6 +20,7 @@ import type { IClass } from '../../../../types/class.type';
 import { PATHS } from '../../../../utils/constants';
 
 import { formatDate } from '../../../../utils/format.util';
+import { scheduleService } from '../../../../services/schedule.service';
 
 const ClassManagement = () => {
   const navigate = useNavigate();
@@ -43,7 +44,7 @@ const ClassManagement = () => {
     title: '',
     message: '',
     type: 'success' as 'success' | 'danger' | 'warning' | 'info',
-    onConfirm: () => { },
+    onConfirm: () => {},
   });
 
   const queryParams = {
@@ -60,6 +61,8 @@ const ClassManagement = () => {
     totalCount,
     refetch: fetchClasses,
   } = useFetch(classService.getClasses, queryParams, [page, debouncedSearch, limit, statusFilter]);
+
+  console.log('classes', classes);
 
   const handleCreateClass = async (formData: Partial<IClass>) => {
     try {
@@ -178,10 +181,15 @@ const ClassManagement = () => {
           label: 'Bảo trì',
           class: 'bg-amber-100 text-amber-700 border border-amber-200',
         };
-      case 'INACTIVE':
+      // case 'INACTIVE':
+      //   return {
+      //     label: 'Ngừng hoạt động',
+      //     class: 'bg-rose-100 text-rose-700 border border-rose-200',
+      //   };
+      case 'PENDING':
         return {
-          label: 'Ngừng hoạt động',
-          class: 'bg-rose-100 text-rose-700 border border-rose-200',
+          label: 'Đang chờ',
+          class: 'bg-yellow-100 text-yellow-700 border border-yellow-200',
         };
       default:
         return {
@@ -265,7 +273,7 @@ const ClassManagement = () => {
                   Tất cả trạng thái
                 </div>
 
-                {['ACTIVE', 'UPCOMING', 'COMPLETED', 'MAINTENANCE', 'INACTIVE'].map((item) => (
+                {['ACTIVE', 'UPCOMING', 'COMPLETED', 'MAINTENANCE', 'PENDING'].map((item) => (
                   <div
                     key={item}
                     onClick={() => {
@@ -387,6 +395,11 @@ const ClassManagement = () => {
                         {item.status === 'MAINTENANCE' && (
                           <span className="inline-block px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-xs font-bold border border-amber-100">
                             Bảo trì
+                          </span>
+                        )}
+                        {item.status === 'PENDING' && (
+                          <span className="inline-block px-3 py-1 bg-yellow-50 text-yellow-600 rounded-full text-xs font-bold border border-yellow-100">
+                            Đang chờ
                           </span>
                         )}
                       </td>

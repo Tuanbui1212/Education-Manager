@@ -87,7 +87,7 @@ const AutoScheduleModal: React.FC<AutoScheduleModalProps> = ({ isOpen, onClose, 
     }
 
     try {
-      const res = await scheduleService.createSchedulesBulk(schedules);
+      const res = await scheduleService.createSchedulesBulk(schedules, startDate);
 
       if (res.success) {
         setIsSuccess(true);

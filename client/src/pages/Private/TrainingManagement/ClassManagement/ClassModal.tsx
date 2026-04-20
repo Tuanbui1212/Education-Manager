@@ -26,7 +26,7 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, onSubmit, init
     courseId: '',
     teacherId: '',
     roomId: '',
-    status: 'UPCOMING',
+    status: 'PENDING',
   });
 
   console.log('Form Data:', formData);
@@ -63,7 +63,7 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, onSubmit, init
         courseId: '',
         teacherId: '',
         roomId: '',
-        status: 'UPCOMING',
+        status: 'PENDING',
       });
     }
 
@@ -191,13 +191,14 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, onSubmit, init
             <SelectField
               label="Trạng thái lớp"
               icon={<Activity size={16} />}
-              value={formData.status || 'UPCOMING'}
+              value={formData.status || 'PENDING'}
               onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
             >
               <option value="UPCOMING">Sắp diễn ra (UPCOMING)</option>
               <option value="ACTIVE">Đang hoạt động (ACTIVE)</option>
               <option value="COMPLETED">Đã kết thúc (COMPLETED)</option>
               <option value="MAINTENANCE">Tạm ngưng / Bảo trì (MAINTENANCE)</option>
+              <option value="PENDING">Đang chờ (PENDING)</option>
             </SelectField>
           )}
 

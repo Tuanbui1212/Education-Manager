@@ -7,7 +7,6 @@ import {
   User as UserIcon,
   Users,
   Edit,
-  FileText,
   CheckCircle2,
   Clock,
   Calendar,
@@ -20,6 +19,7 @@ import {
   MoreVertical,
   Receipt,
   UserMinus,
+  CalendarDays,
 } from 'lucide-react';
 
 import useFetch from '../../../../hooks/useFetch';
@@ -36,7 +36,7 @@ import EnrollStudentModal from './EnrollStudentModal';
 
 import { PATHS } from '../../../../utils/constants';
 import type { IClass } from '../../../../types/class.type';
-import type { InvoiceStatus } from '../../../../types/invoice.type';
+import { formatDate } from '../../../../utils/format.util';
 
 const ClassDetail = () => {
   const { id } = useParams();
@@ -48,8 +48,6 @@ const ClassDetail = () => {
     error,
     refetch: fetchClass,
   } = useFetch(classService.getClassById, id as string, [id]);
-
-  console.log('👉 classData:', classData);
 
   const {
     data: schedulesResponse,
@@ -116,7 +114,7 @@ const ClassDetail = () => {
     title: '',
     message: '',
     type: 'success' as 'success' | 'danger' | 'warning' | 'info',
-    onConfirm: () => { },
+    onConfirm: () => {},
   });
 
   const [confirmDeleteAll, setConfirmDeleteAll] = useState({
@@ -424,10 +422,10 @@ const ClassDetail = () => {
               </div>
 
               <div className="flex flex-col gap-1">
-                <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider">Tài liệu đính kèm</span>
+                <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider">Ngày khai giảng</span>
                 <div className="flex items-center gap-2 text-gray-800 font-medium">
-                  <FileText size={16} className="text-emerald-400" />
-                  <span>{classData.documents?.length || 0} tài liệu</span>
+                  <CalendarDays size={16} className="text-emerald-400" />
+                  <span>{formatDate(classData.startDate)}</span>
                 </div>
               </div>
             </div>
@@ -536,7 +534,7 @@ const ClassDetail = () => {
                     placeholder="Tìm tên, SĐT học viên..."
                     value={searchInput}
                     setSearchInput={setSearchInput}
-                    setPage={() => { }}
+                    setPage={() => {}}
                   />
                 </div>
                 <Button

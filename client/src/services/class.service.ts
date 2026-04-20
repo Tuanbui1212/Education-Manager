@@ -42,7 +42,9 @@ export const classService = {
     };
   },
 
-  getClassesByStudentId: async (id?: string): Promise<{ success: boolean; message: string; data?: IClass[], totalCount?: number }> => {
+  getClassesByStudentId: async (
+    id?: string,
+  ): Promise<{ success: boolean; message: string; data?: IClass[]; totalCount?: number }> => {
     if (!id) {
       return { success: false, message: 'Thiếu ID học sinh', data: [], totalCount: 0 };
     }
@@ -51,7 +53,7 @@ export const classService = {
       success: response.data.success,
       message: response.data.message,
       data: response.data.data,
-      totalCount: response.data.total
+      totalCount: response.data.total,
     };
   },
 

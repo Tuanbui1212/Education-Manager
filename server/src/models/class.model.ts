@@ -9,6 +9,7 @@ const ClassSchema = new Schema<IClass>(
     roomId: { type: Schema.Types.ObjectId, ref: 'Room', required: [true, 'Phòng học là bắt buộc'] },
     documents: { type: [String], default: [] },
     studentIds: { type: [Schema.Types.ObjectId], ref: 'User', default: [] },
+    startDate: { type: String },
     status: {
       type: String,
       enum: { values: Object.values(ClassStatus), message: '{VALUE} không hợp lệ' },

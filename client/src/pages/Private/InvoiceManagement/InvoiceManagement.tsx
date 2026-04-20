@@ -33,16 +33,19 @@ const InvoiceManagement = () => {
   const [filterMaxDebt, setFilterMaxDebt] = useState('');
   const [filterDueDateFrom, setFilterDueDateFrom] = useState('');
   const [filterDueDateTo, setFilterDueDateTo] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const debouncedMinDebt = useDebounce(filterMinDebt, 500);
   const debouncedMaxDebt = useDebounce(filterMaxDebt, 500);
   const debouncedDueDateFrom = useDebounce(filterDueDateFrom, 500);
   const debouncedDueDateTo = useDebounce(filterDueDateTo, 500);
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   const queryParams = {
     page,
     limit,
     ...(activeTab !== 'ALL' && { status: activeTab }),
+    ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
     ...(debouncedMinDebt && { minDebt: debouncedMinDebt }),
     ...(debouncedMaxDebt && { maxDebt: debouncedMaxDebt }),
     ...(debouncedDueDateFrom && { dueDateFrom: debouncedDueDateFrom }),
@@ -61,6 +64,7 @@ const InvoiceManagement = () => {
     debouncedMaxDebt,
     debouncedDueDateFrom,
     debouncedDueDateTo,
+    debouncedSearchTerm,
   ]);
 
   const totalPages = Math.ceil((totalCount || 0) / limit);
@@ -220,6 +224,8 @@ const InvoiceManagement = () => {
                 type="text"
                 placeholder="Tìm HD, Tên HV..."
                 className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
           </div>

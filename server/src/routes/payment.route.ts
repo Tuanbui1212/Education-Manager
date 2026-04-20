@@ -5,6 +5,7 @@ const router = Router();
 const paymentController = new PaymentController();
 
 router.post('/create-url', paymentController.createUrl);
+router.post('/create-url-installment', paymentController.createUrlForInstallment);
 router.get('/vnpay-ipn', paymentController.vnpayIpn);
 
 export default router;

@@ -20,6 +20,7 @@ export interface IClass {
   roomId: string | { _id: string; name: string };
   documents?: string[];
   studentIds?: (string | { _id: string; fullName: string })[];
+  startDate?: string | Date;
   status: ClassStatus;
   createdAt?: string;
   updatedAt?: string;
@@ -54,6 +55,7 @@ export interface IPopulatedClass {
   documents: string[];
   name: string;
   status: ClassStatus;
+  startDate?: string | Date;
   createdAt?: string;
   updatedAt?: string;
 }

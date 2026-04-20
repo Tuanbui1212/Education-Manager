@@ -104,10 +104,7 @@ const StudentPortal = () => {
     return invoicesRaw.filter((inv: any) => ['UNPAID', 'PARTIAL', 'OVERDUE'].includes(inv.status));
   }, [invoicesRaw]);
 
-  console.log('classesRaw', pendingInvoices);
-
   console.log('invoicesRaw', invoicesRaw);
-  console.log('pendingInvoices', pendingInvoices);
 
   useEffect(() => {
     if (!classesData || !Array.isArray(classesData) || classesData.length === 0) {
@@ -142,20 +139,27 @@ const StudentPortal = () => {
     });
   };
 
-  // Hàm giả lập bấm "Tôi đã thanh toán"
-  const handleConfirmPayment = () => {
-    setIsProcessing(true);
-    setTimeout(() => {
-      setIsProcessing(false);
-      setIsPaymentModalOpen(false);
-      alert('Hệ thống đang xác nhận thanh toán của bạn. Cảm ơn bạn!');
-    }, 1500);
-  };
-
   const handlePaymentWithVNPAY = async (invoiceId: string) => {
     try {
       setIsProcessing(true);
       const response = await paymentService.createVnpayUrl(invoiceId);
+      const paymentUrl = response.data?.paymentUrl;
+      if (paymentUrl) {
+        window.location.href = paymentUrl;
+      } else {
+        toast.error('Lỗi: Không lấy được đường dẫn thanh toán!');
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi kết nối VNPAY');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handlePayInstallment = async (invoiceId: string) => {
+    try {
+      setIsProcessing(true);
+      const response = await paymentService.createVnpayUrlForInstallment(invoiceId);
       const paymentUrl = response.data?.paymentUrl;
       if (paymentUrl) {
         window.location.href = paymentUrl;
@@ -523,31 +527,85 @@ const StudentPortal = () => {
                       className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-gray-50/50 transition-colors"
                     >
                       <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center shrink-0">
-                          <span className="font-bold">{index + 1}</span>
+                        <div
+                          className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 font-bold
+                ${invoice.status === 'PARTIAL' ? 'bg-amber-50 text-amber-500' : 'bg-red-50 text-red-500'}`}
+                        >
+                          <span>{index + 1}</span>
                         </div>
                         <div>
-                          <h4 className="font-bold text-gray-800 text-lg">{invoice.classId?.name}</h4>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-gray-800 text-lg">{invoice.classId?.name}</h4>
+                            {invoice.status === 'PARTIAL' && (
+                              <span className="text-xs font-semibold px-2 py-0.5 bg-amber-50 text-amber-600 rounded-full border border-amber-200">
+                                Trả góp
+                              </span>
+                            )}
+                          </div>
                           <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-500">
                             <span className="flex items-center gap-1">
-                              <Calendar size={14} /> Hạn chót: {invoice.dueDate}
+                              <Calendar size={14} /> Hạn chót: {format(new Date(invoice.dueDate), 'dd/MM/yyyy')}
                             </span>
                             <span className="flex items-center gap-1">
                               Mã HĐ:{' '}
                               <span className="font-mono text-gray-700 font-medium">#{invoice.code.toUpperCase()}</span>
                             </span>
                           </div>
+
+                          {invoice.status === 'PARTIAL' && invoice.installmentConfig?.nextDueDate && (
+                            <p className="mt-1.5 text-xs text-amber-600 flex items-center gap-1">
+                              <Clock size={12} />
+                              Hạn kỳ này:{' '}
+                              <span className="font-semibold">
+                                {format(new Date(invoice.installmentConfig.nextDueDate), 'dd/MM/yyyy')}
+                              </span>
+                            </p>
+                          )}
                         </div>
                       </div>
 
-                      <div className="flex flex-col md:items-end gap-3 md:min-w-[200px]">
-                        <p className="font-black text-2xl text-red-600">{formatCurrency(invoice.finalAmount)}</p>
-                        <button
-                          onClick={() => handlePaymentWithVNPAY(invoice._id)}
-                          className="w-full md:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-md shadow-blue-600/20"
-                        >
-                          <QrCode size={18} /> Thanh toán ngay
-                        </button>
+                      <div className="flex flex-col md:items-end gap-3 md:min-w-[220px]">
+                        <div className="flex flex-col md:items-end">
+                          <p
+                            className={`font-black text-2xl
+                  ${invoice.status === 'PARTIAL' ? 'text-amber-600' : 'text-red-600'}`}
+                          >
+                            {formatCurrency(invoice.debt)}
+                          </p>
+                          {invoice.status === 'PARTIAL' && invoice.installmentConfig?.amountPerMonth && (
+                            <p className="text-md text-gray-400 mt-0.5">
+                              Kỳ này:{' '}
+                              <span className="font-semibold text-gray-600">
+                                {formatCurrency(invoice.installmentConfig.amountPerMonth)}
+                              </span>
+                            </p>
+                          )}
+                        </div>
+
+                        {invoice.status === 'PARTIAL' ? (
+                          <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                            <button
+                              onClick={() => handlePayInstallment(invoice._id)}
+                              className="flex-1 md:flex-none px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-md shadow-amber-500/20 text-sm"
+                            >
+                              <QrCode size={16} /> Trả kỳ này
+                            </button>
+
+                            <button
+                              onClick={() => handlePaymentWithVNPAY(invoice._id)}
+                              className="flex-1 md:flex-none px-5 py-2.5 bg-white hover:bg-gray-50 text-gray-700 font-bold rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 border border-gray-300 text-sm"
+                            >
+                              <CheckCircle2 size={16} /> Tất toán
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => handlePaymentWithVNPAY(invoice._id)}
+                            className="w-full md:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-md shadow-blue-600/20"
+                          >
+                            <QrCode size={18} /> Thanh toán ngay
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -563,69 +621,6 @@ const StudentPortal = () => {
           </section>
         )}
       </>
-
-      {/* 4. MODAL THANH TOÁN (GIẢ LẬP MÃ QR) */}
-      {isPaymentModalOpen && selectedInvoice && (
-        <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-gray-900/70 backdrop-blur-sm"
-            onClick={() => setIsPaymentModalOpen(false)}
-          ></div>
-
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md relative z-10 flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="bg-blue-600 p-6 text-white text-center relative">
-              <button
-                onClick={() => setIsPaymentModalOpen(false)}
-                className="absolute top-4 right-4 p-1 hover:bg-white/20 rounded-full transition-colors"
-              >
-                <X size={24} />
-              </button>
-              <h3 className="text-xl font-bold mb-1">Thanh toán Học phí</h3>
-              <p className="text-blue-100 text-sm">Quét mã QR qua ứng dụng Ngân hàng/Ví điện tử</p>
-            </div>
-
-            <div className="p-8 flex flex-col items-center">
-              <div className="w-full bg-gray-50 rounded-2xl p-4 mb-6 border border-gray-100">
-                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Nội dung thanh toán</p>
-                <p className="font-bold text-gray-800 line-clamp-1">{selectedInvoice.title}</p>
-                <div className="flex justify-between items-end mt-3">
-                  <p className="text-sm text-gray-500">Mã: {selectedInvoice.id.toUpperCase()}</p>
-                  <p className="font-black text-2xl text-blue-600">{formatCurrency(selectedInvoice.amount)}</p>
-                </div>
-              </div>
-
-              {/* KHU VỰC MÃ QR GIẢ LẬP */}
-              <div className="p-4 bg-white border-2 border-dashed border-gray-300 rounded-3xl mb-6 relative group">
-                <div className="w-48 h-48 bg-gray-100 rounded-xl flex flex-col items-center justify-center text-gray-400">
-                  <QrCode size={64} className="mb-2" />
-                  <span className="text-xs font-medium">Mã QR VietQR/ZaloPay</span>
-                </div>
-
-                {/* Hiệu ứng quét mô phỏng */}
-                <div className="absolute inset-0 bg-linear-to-b from-transparent via-blue-500/20 to-transparent h-1/2 rounded-3xl animate-[bounce_2s_infinite]"></div>
-              </div>
-
-              <p className="text-sm text-center text-gray-600 mb-8 max-w-[250px]">
-                Mở ứng dụng Ngân hàng hoặc ZaloPay để quét mã. Giao dịch sẽ được cập nhật tự động.
-              </p>
-
-              <button
-                disabled={isProcessing}
-                onClick={handleConfirmPayment}
-                className="w-full py-4 bg-gray-900 hover:bg-black text-white rounded-2xl font-bold flex justify-center items-center gap-2 transition-all active:scale-95 disabled:bg-gray-400"
-              >
-                {isProcessing ? (
-                  <>Chờ một lát...</>
-                ) : (
-                  <>
-                    Tôi đã chuyển khoản xong <CheckCircle2 size={18} />
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 };

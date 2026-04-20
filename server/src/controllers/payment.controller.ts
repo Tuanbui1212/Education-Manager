@@ -26,6 +26,28 @@ export class PaymentController {
     }
   };
 
+  // [POST] /api/payments/create-url-installment
+  createUrlForInstallment = async (req: Request, res: Response) => {
+    try {
+      const { invoiceId, bankCode } = req.body;
+      const forwarded = req.headers['x-forwarded-for'];
+      const ipAddr =
+        (Array.isArray(forwarded) ? forwarded[0] : forwarded?.split(',')[0]) || req.socket.remoteAddress || '127.0.0.1';
+
+      const paymentUrl = await paymentService.generateVnpayUrlForInstallment(invoiceId, String(ipAddr), bankCode);
+
+      return res.status(200).json({
+        success: true,
+        data: { paymentUrl },
+      });
+    } catch (error: any) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  };
+
   // [GET] /api/payments/vnpay-ipn
   vnpayIpn = async (req: Request, res: Response) => {
     try {
