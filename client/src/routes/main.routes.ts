@@ -1,5 +1,5 @@
-import StudentPortal from '../pages/Private/StudentPortal/StudentPortal';
-import StudentAttendancePage from '../pages/Private/StudentPortal/StudentAttendancePage';
+import StudentPortal from '../pages/StudentPortal';
+import StudentAttendancePage from '../pages/StudentAttendancePage';
 import TeacherPortal from '../pages/TeacherPortal';
 import TeacherAttendanceSchedules from '../pages/TeacherAttendanceSchedules';
 import TeacherAttendanceDetails from '../pages/TeacherAttendanceDetails';
@@ -7,7 +7,7 @@ import TeacherAttendanceDetails from '../pages/TeacherAttendanceDetails';
 import { PATHS } from '../utils/constants';
 import ProfileLayout from '../layouts/ProfileLayout';
 
-import StudentExamPage from '../pages/Private/StudentPortal/StudentExamPage';
+import StudentExamPage from '../pages/StudentExamPage';
 import ExamLayout from '../layouts/ExamLayout';
 
 export const mainRoutes = [

@@ -24,22 +24,22 @@ import {
 import { startOfWeek, addDays, subWeeks, addWeeks, format, isSameDay } from 'date-fns';
 
 import { vi } from 'date-fns/locale';
-import { ClassStatus } from '../../../types/class.type';
+import { ClassStatus } from '../types/class.type';
 
-import { PATHS } from '../../../utils/constants';
-import { CLASS_STATUS_CONFIG } from '../../../utils/constants';
-import { getDecodedToken } from '../../../utils/auth';
+import { PATHS } from '../utils/constants';
+import { CLASS_STATUS_CONFIG } from '../utils/constants';
+import { getDecodedToken } from '../utils/auth';
 
-import useFetch from '../../../hooks/useFetch';
-import useDebounce from '../../../hooks/useDebounce';
+import useFetch from '../hooks/useFetch';
+import useDebounce from '../hooks/useDebounce';
 
-import { classService } from '../../../services/class.service';
-import { scheduleService } from '../../../services/schedule.service';
-import { shiftService } from '../../../services/shift.service';
-import { invoiceService } from '../../../services/invoice.service';
-import { paymentService } from '../../../services/payment.service';
-import { examService } from '../../../services/exam.service';
-import type { IExam, IExamSubmission } from '../../../types/exam.type';
+import { classService } from '../services/class.service';
+import { scheduleService } from '../services/schedule.service';
+import { shiftService } from '../services/shift.service';
+import { invoiceService } from '../services/invoice.service';
+import { paymentService } from '../services/payment.service';
+import { examService } from '../services/exam.service';
+import type { IExam, IExamSubmission } from '../types/exam.type';
 
 const MOCK_INVOICES = [
   { id: 'inv1', title: 'Học phí Tiếng Anh (Tháng 10)', amount: 2500000, dueDate: '2023-10-15', status: 'PENDING' },

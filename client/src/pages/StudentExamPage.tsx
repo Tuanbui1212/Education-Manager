@@ -1,4 +1,4 @@
-import { useExam } from '../../../layouts/ExamLayout';
+import { useExam } from '../layouts/ExamLayout';
 
 const StudentExamPage = () => {
     const { exam, submission, answers, handleOptionToggle } = useExam();
