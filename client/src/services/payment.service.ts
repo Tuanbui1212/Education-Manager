@@ -17,6 +17,15 @@ export const paymentService = {
     return response.data;
   },
 
+  createVnpayUrlForInstallment: async (invoiceId: string, bankCode?: string): Promise<IPaymentUrlResponse> => {
+    const response = await axios.post('/payments/create-url-installment', {
+      invoiceId,
+      bankCode,
+    });
+
+    return response.data;
+  },
+
   handleVnpayIpn: async (query: any) => {
     const response = await axios.get('/payments/vnpay-ipn', {
       params: query,

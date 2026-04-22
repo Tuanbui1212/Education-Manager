@@ -15,6 +15,7 @@ export interface IClass {
   roomId: Types.ObjectId;
   documents: Array<string>;
   studentIds: Array<Types.ObjectId>;
+  startDate?: Date;
   status: ClassStatus;
 }
 

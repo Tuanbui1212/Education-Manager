@@ -9,8 +9,6 @@ export class AuthService {
 
   // 1. Đăng nhập (Login)
   async login(email: string, password: string) {
-    console.log(email, password);
-
     const existingUser = await UserModel.findOne({ email }).populate('roleId');
 
     if (!existingUser) {

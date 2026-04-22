@@ -36,13 +36,19 @@ export const scheduleService = {
 
   createSchedulesBulk: async (
     schedules: Partial<ISchedule>[],
+    startDate: string,
   ): Promise<{ success: boolean; message: string; data: ISchedule[] }> => {
-    const response = await axios.post(`/schedules/bulk`, { schedules });
+    const response = await axios.post(`/schedules/bulk`, { schedules, startDate });
     return response.data;
   },
 
   deleteSchedulesBulk: async (ids: string[]): Promise<{ success: boolean; message: string }> => {
     const response = await axios.delete(`/schedules/bulk`, { data: { ids } });
+    return response.data;
+  },
+
+  getStartDateClass: async (classId: string): Promise<{ success: boolean; message: string; data?: string }> => {
+    const response = await axios.get(`/schedules/class/${classId}/start-date`);
     return response.data;
   },
 };
