@@ -7,6 +7,7 @@ const AttendanceNotificationSchema = new Schema<IAttendanceNotification>(
         title: { type: String, required: true },
         content: { type: String, required: true },
         attendanceId: { type: Schema.Types.ObjectId, ref: 'Attendance' },
+        examId: { type: Schema.Types.ObjectId, ref: 'Exam' },
         isRead: { type: Boolean, default: false },
     },
     { timestamps: true, versionKey: false }

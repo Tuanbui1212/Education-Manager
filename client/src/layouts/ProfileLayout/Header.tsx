@@ -72,7 +72,9 @@ const Header = () => {
         const classId = typeof notif.attendanceId === 'object'
             ? notif.attendanceId?.classId
             : null;
-        if (classId) {
+        if (notif.examId) {
+            navigate(PATHS.STUDENT_PORTAL);
+        } else if (classId) {
             navigate(PATHS.STUDENT_ATTENDANCE.replace(':id', classId));
         }
     };
