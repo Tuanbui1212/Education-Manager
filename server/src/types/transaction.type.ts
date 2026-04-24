@@ -7,6 +7,12 @@ export enum PaymentMethod {
   VNPAY = 'VNPAY',
 }
 
+export enum TransactionStatus {
+  PENDING = 'PENDING',
+  SUCCESS = 'SUCCESS',
+  FAILED = 'FAILED',
+}
+
 export interface ITransaction {
   _id?: Types.ObjectId | string;
   code: string;

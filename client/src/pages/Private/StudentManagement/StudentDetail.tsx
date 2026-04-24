@@ -33,6 +33,10 @@ const StudentDetail = () => {
     error,
     refetch: fetchStudent,
   } = useFetch(userService.getUserById, id as string, [id]);
+  const consultant =
+    typeof student?.student_info?.consultantId === 'string' ? undefined : student?.student_info?.consultantId?.fullName;
+  console.log(student);
+
   const { data: enrolledClasses, loading: loadingClasses } = useFetch(
     classService.getClassesByStudentId,
     id as string,
@@ -46,13 +50,6 @@ const StudentDetail = () => {
   const { data: consultants } = useFetch(userService.getUsers, { page: 1, limit: 1000, roleId: consultantRoleId }, [
     consultantRoleId,
   ]);
-
-  const getConsultantName = (consultantData: any) => {
-    if (!consultantData) return 'Chưa phân công';
-    if (typeof consultantData === 'object') return consultantData.fullName;
-    const found = consultants?.find((c: any) => c._id === consultantData);
-    return found ? found.fullName : 'Chưa phân công';
-  };
 
   const [showModalEdit, setShowModalEdit] = useState(false);
   const [confirmConfig, setConfirmConfig] = useState({
@@ -194,10 +191,7 @@ const StudentDetail = () => {
                   <Headset size={16} className="text-green-600" />
                 </div>
                 <span>
-                  Sale phụ trách:{' '}
-                  <span className="font-bold text-green-700">
-                    {getConsultantName(student.student_info?.consultantId)}
-                  </span>
+                  Sale phụ trách: <span className="font-bold text-green-700">{consultant || 'Chưa phân công'}</span>
                 </span>
               </div>
             </div>

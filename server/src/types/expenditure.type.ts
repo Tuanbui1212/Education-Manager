@@ -1,15 +1,18 @@
 import { Document, Types } from 'mongoose';
 
 export enum ExpenditureType {
-  SALARY_TEACHER = 'SALARY_TEACHER',
-  SALARY_SALE = 'SALARY_SALE',
+  SALARY = 'SALARY',
   OPERATION = 'OPERATION',
 }
 
 export interface IExpenditure extends Document {
-  type: ExpenditureType;
+  code: string;
+  expenditureType: ExpenditureType;
   amount: number;
   receiverId: Types.ObjectId;
+  paidBy: Types.ObjectId;
+  payrollId?: Types.ObjectId;
+  fixedCostId?: Types.ObjectId;
   description: string;
   date: Date;
 }

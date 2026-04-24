@@ -7,7 +7,6 @@ export class ExpenditureService {
   }
 
   async getAll() {
-    //return await ExpenditureModel.find().populate('receiverId', 'fullName email').sort({ date: -1 });
     return await ExpenditureModel.find().sort({ date: -1 });
   }
 

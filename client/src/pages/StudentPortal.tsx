@@ -18,6 +18,8 @@ import {
   Clock,
   Search,
   ClipboardList,
+  FileText,
+  AlertCircle,
 } from 'lucide-react';
 import { startOfWeek, addDays, subWeeks, addWeeks, format, isSameDay } from 'date-fns';
 
@@ -36,6 +38,8 @@ import { scheduleService } from '../services/schedule.service';
 import { shiftService } from '../services/shift.service';
 import { invoiceService } from '../services/invoice.service';
 import { paymentService } from '../services/payment.service';
+import { examService } from '../services/exam.service';
+import type { IExam, IExamSubmission } from '../types/exam.type';
 
 const MOCK_INVOICES = [
   { id: 'inv1', title: 'Học phí Tiếng Anh (Tháng 10)', amount: 2500000, dueDate: '2023-10-15', status: 'PENDING' },
@@ -54,13 +58,42 @@ const StudentPortal = () => {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentWeekStart, setCurrentWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
-  const [activeTab, setActiveTab] = useState<'classes' | 'timetable' | 'invoices'>('classes');
+  const [activeTab, setActiveTab] = useState<'classes' | 'timetable' | 'invoices' | 'exams'>('classes');
 
   const [searchInput, setSearchInput] = useState('');
   const debouncedSearch = useDebounce(searchInput, 400);
 
+  // Exam tab state
+  const [examSearch, setExamSearch] = useState('');
+  const [allExams, setAllExams] = useState<(IExam & { submissions?: Pick<IExamSubmission, '_id' | 'status'> })[]>([]);
+  const [examsLoading, setExamsLoading] = useState(false);
+  const [selectedExamToStart, setSelectedExamToStart] = useState<IExam | null>(null);
+  const [isStartingExam, setIsStartingExam] = useState(false);
+
   const handleClassClick = (cls: any) => {
     navigate(PATHS.STUDENT_ATTENDANCE.replace(':id', cls._id));
+  };
+
+  const handleConfirmStartExam = async () => {
+    if (!selectedExamToStart) return;
+    setIsStartingExam(true);
+    try {
+      await examService.startSubmission({
+        examId: selectedExamToStart._id,
+        studentId: currentUser?.id!,
+        classId: (selectedExamToStart.classId as { _id: string })._id,
+      });
+      navigate(PATHS.STUDENT_EXAM_TAKING.replace(':examId', selectedExamToStart._id));
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Có lỗi xảy ra, không thể bắt đầu bài kiểm tra.');
+    } finally {
+      setIsStartingExam(false);
+      setSelectedExamToStart(null);
+    }
+  };
+
+  const handleReviewExam = (examId: string) => {
+    navigate(PATHS.STUDENT_EXAM_TAKING.replace(':examId', examId));
   };
 
   const currentUser = getDecodedToken();
@@ -74,6 +107,39 @@ const StudentPortal = () => {
     const q = debouncedSearch.toLowerCase();
     return classesRaw.filter((cls: any) => cls.name?.toLowerCase().includes(q));
   }, [classesRaw, debouncedSearch]);
+
+  // Fetch exams for all enrolled classes
+  useEffect(() => {
+    if (!classesRaw || classesRaw.length === 0) return;
+    const ids: string[] = classesRaw.map((c: any) => c._id);
+    setExamsLoading(true);
+    examService
+      .getExamsByClasses(ids, currentUser?.id!)
+      .then((res) => setAllExams(res.data ?? []))
+      .catch(() => {})
+      .finally(() => setExamsLoading(false));
+  }, [classesRaw]);
+
+  const filteredExams = useMemo(() => {
+    const now = new Date();
+    let list = [...allExams];
+    if (examSearch.trim()) {
+      const q = examSearch.toLowerCase();
+      list = list.filter(
+        (e) =>
+          e.title.toLowerCase().includes(q) ||
+          (typeof e.classId === 'object' ? (e.classId as any).name?.toLowerCase().includes(q) : false),
+      );
+    }
+    // Sort: available (endDate > now) first, then overdue
+    list.sort((a, b) => {
+      const aOver = new Date(a.endDate) < now;
+      const bOver = new Date(b.endDate) < now;
+      if (aOver === bOver) return new Date(a.endDate).getTime() - new Date(b.endDate).getTime();
+      return aOver ? 1 : -1;
+    });
+    return list;
+  }, [allExams, examSearch]);
 
   const handlePrevWeek = () => setCurrentWeekStart((prev) => subWeeks(prev, 1));
   const handleNextWeek = () => setCurrentWeekStart((prev) => addWeeks(prev, 1));
@@ -103,8 +169,6 @@ const StudentPortal = () => {
 
     return invoicesRaw.filter((inv: any) => ['UNPAID', 'PARTIAL', 'OVERDUE'].includes(inv.status));
   }, [invoicesRaw]);
-
-  console.log('invoicesRaw', invoicesRaw);
 
   useEffect(() => {
     if (!classesData || !Array.isArray(classesData) || classesData.length === 0) {
@@ -281,6 +345,18 @@ const StudentPortal = () => {
             >
               <CreditCard size={18} />
               Học phí
+            </button>
+
+            <button
+              onClick={() => setActiveTab('exams')}
+              className={`px-6 py-2.5 cursor-pointer rounded-xl justify-center min-w-[140px] text-sm font-bold transition-all duration-300 flex items-center gap-2 ${
+                activeTab === 'exams'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600 active:scale-95'
+              }`}
+            >
+              <FileText size={18} />
+              Bài kiểm tra
             </button>
           </div>
         </div>
@@ -620,7 +696,154 @@ const StudentPortal = () => {
             </div>
           </section>
         )}
+
+        {/* BÀI KIỂM TRA */}
+        {activeTab === 'exams' && (
+          <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+              <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <FileText className="text-blue-600" />
+                Bài kiểm tra của tôi
+              </h3>
+              <div className="relative w-full sm:w-80">
+                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Tìm theo tên bài hoặc lớp..."
+                  value={examSearch}
+                  onChange={(e) => setExamSearch(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
+                />
+              </div>
+            </div>
+
+            {examsLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="h-40 bg-gray-100 rounded-2xl animate-pulse" />
+                ))}
+              </div>
+            ) : filteredExams.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-gray-100 p-14 text-center shadow-sm">
+                <FileText size={40} className="mx-auto text-blue-200 mb-3" />
+                <p className="font-bold text-gray-700 text-lg mb-1">Không có bài kiểm tra nào</p>
+                <p className="text-sm text-gray-400">
+                  {examSearch
+                    ? 'Không tìm thấy kết quả phù hợp.'
+                    : 'Chưa có bài kiểm tra nào trong các lớp bạn đang học.'}
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredExams.map((exam) => {
+                  const now = new Date();
+                  const isOverdue = new Date(exam.endDate) < now;
+                  const examClassName = typeof exam.classId === 'object' ? (exam.classId as any).name : exam.classId;
+                  return (
+                    <div
+                      key={exam._id}
+                      className={`bg-white rounded-2xl border shadow-sm hover:shadow-md transition-all p-5 flex flex-col gap-3 ${isOverdue ? 'border-red-100 opacity-80' : 'border-gray-100 hover:border-blue-200'}`}
+                    >
+                      <div className="flex justify-between items-start">
+                        {isOverdue ? (
+                          <span className="text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 bg-red-50 text-red-500">
+                            <AlertCircle size={11} /> Quá hạn
+                          </span>
+                        ) : (
+                          <span className="text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 bg-green-50 text-green-600">
+                            <CheckCircle2 size={11} /> Còn hạn
+                          </span>
+                        )}
+                        <span className="text-[10px] text-gray-400 font-medium bg-gray-50 px-2 py-0.5 rounded-full">
+                          {examClassName}
+                        </span>
+                      </div>
+
+                      <div className="flex-1">
+                        <h4 className="font-bold text-gray-800 line-clamp-2 mb-1">{exam.title}</h4>
+                        {exam.description && <p className="text-xs text-gray-400 line-clamp-1">{exam.description}</p>}
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 border-t border-gray-50 pt-3">
+                        <span className="flex items-center gap-1">
+                          <Clock size={11} /> {exam.duration} phút
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <FileText size={11} /> {exam.questions.length} câu
+                        </span>
+                        <span className="flex items-center gap-1 text-amber-500">
+                          <AlertCircle size={11} />
+                          {new Date(exam.endDate).toLocaleDateString('vi-VN')}
+                        </span>
+                      </div>
+
+                      {!isOverdue && (
+                        <button
+                          onClick={() => {
+                            if (exam.submissions?.status === 'SUBMITTED') {
+                              handleReviewExam(exam._id);
+                              return;
+                            }
+                            setSelectedExamToStart(exam);
+                          }}
+                          className={`cursor-pointer w-full py-2 ${exam.submissions?.status === 'SUBMITTED' ? 'bg-gray-400 hover:bg-gray-500' : 'bg-blue-600 hover:bg-blue-700'} text-white text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-md shadow-blue-600/20`}
+                        >
+                          <FileText size={14} />{' '}
+                          {exam.submissions?.status === 'SUBMITTED' ? 'Xem lại bài kiểm tra' : 'Làm bài'}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        )}
       </>
+
+      {/* CONFIRM START EXAM MODAL */}
+      {selectedExamToStart && (
+        <div className="fixed inset-0 z-100 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm"
+            onClick={() => !isStartingExam && setSelectedExamToStart(null)}
+          ></div>
+
+          <div className="bg-white rounded-3xl shadow-xl w-full max-w-sm relative z-10 p-6 flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-4 border-4 border-white shadow-sm">
+              <FileText size={28} />
+            </div>
+            <h3 className="text-xl font-bold text-gray-800 mb-2">Bắt đầu làm bài?</h3>
+            <p className="text-sm text-gray-500 mb-6">
+              Bạn có chắc chắn muốn bắt đầu bài kiểm tra{' '}
+              <span className="font-semibold text-gray-800">"{selectedExamToStart.title}"</span>?<br />
+              <br />
+              Thời gian đếm ngược <span className="font-bold text-red-500">{selectedExamToStart.duration} phút</span> sẽ
+              bắt đầu tính ngay sau khi bạn xác nhận.
+            </p>
+            <div className="flex gap-3 w-full">
+              <button
+                disabled={isStartingExam}
+                onClick={() => setSelectedExamToStart(null)}
+                className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-all"
+              >
+                Hủy
+              </button>
+              <button
+                disabled={isStartingExam}
+                onClick={handleConfirmStartExam}
+                className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md shadow-blue-600/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+              >
+                {isStartingExam ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  'Bắt đầu'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

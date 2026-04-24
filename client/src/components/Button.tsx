@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline';
+  variant?: 'primary' | 'secondary' | 'outline' | 'danger';
   icon?: React.ReactNode;
   children: React.ReactNode;
 }
@@ -11,6 +11,7 @@ const Button = ({ variant = 'primary', icon, children, className = '', ...props 
     primary: 'bg-[var(--color-primary-btn)] text-white hover:opacity-90 shadow-md',
     secondary: 'bg-gray-200 text-[var(--color-text-main)] hover:bg-gray-300',
     outline: 'border border-gray-300 text-[var(--color-text-main)] hover:bg-gray-50',
+    danger: 'bg-red-500 text-white hover:bg-red-600 shadow-md',
   };
 
   return (

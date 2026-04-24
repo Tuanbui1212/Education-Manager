@@ -21,12 +21,13 @@ export interface GetUsersParams {
   search?: string;
   roleId?: string;
   status?: string;
+  consultantId?: any;
 }
 
 export interface IStudentInfo {
   parentsName?: string;
   crmHistory?: string[];
-  consultantId?: string;
+  consultantId?: string | IUser | null;
 }
 
 export interface ITeacherInfo {

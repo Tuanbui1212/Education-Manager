@@ -21,8 +21,6 @@ import { attendanceService } from '../services/attendance.service';
 import { classService } from '../services/class.service';
 import { PATHS } from '../utils/constants';
 
-// ─── Configs ────────────────────────────────────────────────────────────────
-
 const ATTENDANCE_CONFIG: Record<string, any> = {
   PRESENT: { label: 'Có mặt', bg: 'bg-emerald-100', text: 'text-emerald-700', dot: 'bg-emerald-500', icon: CheckCircle2 },
   ABSENT: { label: 'Vắng mặt', bg: 'bg-red-100', text: 'text-red-700', dot: 'bg-red-500', icon: X },
@@ -48,8 +46,6 @@ const scoreBg = (v: number, max = 10) => {
   if (r >= 0.6) return 'bg-blue-50 border-blue-200';
   return 'bg-red-50 border-red-200';
 };
-
-// ─── StudentAttendancePage ───────────────────────────────────────────────────
 
 const StudentAttendancePage = () => {
   const { id: classId } = useParams<{ id: string }>();
@@ -103,7 +99,6 @@ const StudentAttendancePage = () => {
 
   const handleBack = () => navigate(PATHS.STUDENT_PORTAL);
 
-  // ─── Loading ──────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
@@ -112,7 +107,6 @@ const StudentAttendancePage = () => {
     );
   }
 
-  // ─── Error ────────────────────────────────────────────────────────────────
   if (error || !cls) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center p-8">
@@ -130,7 +124,6 @@ const StudentAttendancePage = () => {
     );
   }
 
-  // ─── Main render ─────────────────────────────────────────────────────────
   return (
     <div className="bg-gray-50 rounded-3xl overflow-hidden border border-gray-200 shadow-xl mb-6 animate-in fade-in zoom-in-95 duration-300">
       {/* Header */}

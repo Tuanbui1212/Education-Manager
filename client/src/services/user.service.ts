@@ -54,4 +54,16 @@ export const userService = {
 
     return response.data;
   },
+
+  getAllTeachers: async (params?: GetUsersParams): Promise<{ success: boolean; message: string; data: IUser[] }> => {
+    const response = await axios.get('/users/teachers', { params });
+    return response.data;
+  },
+
+  getAllStudents: async (
+    params?: GetUsersParams,
+  ): Promise<{ success: boolean; message: string; data: IUser[]; totalCount: number; summary: any }> => {
+    const response = await axios.get('/users/students', { params });
+    return response.data;
+  },
 };

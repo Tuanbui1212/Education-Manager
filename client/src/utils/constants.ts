@@ -30,6 +30,7 @@ export const PATHS = {
   ACCOUNT_LOGS: '/accounts/logs',
 
   SETTINGS_ROLES: '/accounts/roles',
+  ACCOUNT_ROLE_ID: '/accounts/roles/:id',
 
   //HR
   HR_TEACHERS: '/hr/teachers',
@@ -77,12 +78,16 @@ export const PATHS = {
   FINANCE_TRANSACTIONS: '/finance/transactions',
   FINANCE_TRANSACTIONS_ID: '/finance/transactions/:id',
 
+  FINANCE_REPORT: '/finance/reports',
+
   STUDENT_PORTAL: '/student-portal',
   STUDENT_ATTENDANCE: '/student-attendance/:id',
 
   TEACHER_PORTAL: '/teacher-portal',
   TEACHER_ATTENDANCE_SCHEDULES: '/teacher-attendance/:classId',
   TEACHER_ATTENDANCE_DETAILS: '/teacher-attendance/:classId/schedule/:scheduleId',
+
+  STUDENT_EXAM_TAKING: '/student-exam/:examId',
 };
 
 export const STATUS_OPTIONS = [

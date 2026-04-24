@@ -1,5 +1,6 @@
 import Payroll from '../models/payroll.model';
 import ExcelJS from 'exceljs';
+import mongoose from 'mongoose';
 import { IPayroll, PayrollType, PayrollStatus } from '../types/payroll.type';
 import { UserStatus } from '../types/user.type';
 import { UserModel } from '../models/user.model';
@@ -7,6 +8,7 @@ import { ScheduleModel } from '../models/schedule.model';
 import { EmailService } from './email.service';
 import RoleModel from '../models/role.model';
 import { TransactionModel } from '../models/transaction.model';
+import { ExpenditureModel } from '../models/expenditure.model';
 
 export class PayrollService {
   private emailService = new EmailService();
@@ -24,10 +26,10 @@ export class PayrollService {
     return await Payroll.findById(id).populate('userId', 'fullName email');
   }
 
-  async updatePayroll(id: string, data: Partial<IPayroll>): Promise<IPayroll | null> {
+  async updatePayroll(id: string, data: Partial<IPayroll>, currentUserId: string): Promise<IPayroll | null> {
     const { allowance, deduction } = data;
 
-    const existingPayroll = await Payroll.findById(id);
+    const existingPayroll = await Payroll.findById(id).populate('userId', 'fullName email');
     if (!existingPayroll) throw new Error('Payroll not found');
 
     if (allowance !== undefined && deduction !== undefined) {
@@ -39,6 +41,31 @@ export class PayrollService {
         existingPayroll.deduction;
 
       data.totalSalary = existingPayroll.totalSalary;
+    }
+
+    const year = new Date().getFullYear();
+    const lastTx = await ExpenditureModel.findOne({ code: new RegExp(`^PC-${year}-`) }).sort({ createdAt: -1 });
+    let nextNumber = 1;
+    if (lastTx && lastTx.code) {
+      const parts = lastTx.code.split('-');
+      nextNumber = parseInt(parts[parts.length - 1], 10) + 1;
+    }
+    const code = `PC-${year}-${nextNumber.toString().padStart(4, '0')}`;
+
+    if (data.status === 'PAID' && existingPayroll.status !== 'PAID') {
+      const user = existingPayroll.userId as any;
+      const expenditureData = {
+        code: code,
+        expenditureType: 'SALARY',
+        payrollId: existingPayroll._id,
+        amount: existingPayroll.totalSalary,
+        receiverId: user._id,
+        paidBy: currentUserId,
+        description: `Thanh toán lương tháng ${existingPayroll.month} - Nhân viên ${user.fullName}`,
+        date: new Date(),
+      };
+
+      await ExpenditureModel.create(expenditureData);
     }
 
     return await Payroll.findByIdAndUpdate(id, data, { new: true });
@@ -244,27 +271,68 @@ export class PayrollService {
   }
 
   // Hàm đánh dấu phiếu lương là đã thanh toán
-  async markPayrollAsPaid(payrollIds: string[]): Promise<{ count: number; data: string[] }> {
-    const pendingPayrolls = await Payroll.find({
-      _id: { $in: payrollIds },
-      status: 'PENDING',
-    });
+  async markPayrollAsPaid(payrollIds: string[], currentUserId: string): Promise<{ count: number; data: string[] }> {
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    if (pendingPayrolls.length === 0) {
-      throw new Error('Không tìm thấy phiếu lương nào hợp lệ để thanh toán (có thể đã được thanh toán trước đó).');
+    try {
+      const pendingPayrolls = await Payroll.find({
+        _id: { $in: payrollIds },
+        status: 'PENDING',
+      }).populate('userId', 'fullName');
+
+      if (pendingPayrolls.length === 0) {
+        throw new Error('Không tìm thấy phiếu lương nào hợp lệ để thanh toán (có thể đã được thanh toán trước đó).');
+      }
+
+      const year = new Date().getFullYear();
+      const lastTx = await ExpenditureModel.findOne({ code: new RegExp(`^PC-${year}-`) }).sort({ createdAt: -1 });
+
+      let nextNumber = 1;
+      if (lastTx && lastTx.code) {
+        const parts = lastTx.code.split('-');
+        nextNumber = parseInt(parts[parts.length - 1], 10) + 1;
+      }
+
+      const expendituresToInsert = [];
+      const validIds = [];
+
+      for (const p of pendingPayrolls) {
+        const user = p.userId as any;
+        const code = `PC-${year}-${nextNumber.toString().padStart(4, '0')}`;
+
+        expendituresToInsert.push({
+          code: code,
+          expenditureType: 'SALARY',
+          payrollId: p._id,
+          amount: p.totalSalary,
+          receiverId: user._id,
+          paidBy: currentUserId,
+          description: `Thanh toán lương tháng ${p.month} - Nhân viên ${user.fullName || 'Không rõ'}`,
+          date: new Date(),
+        });
+
+        validIds.push(p._id);
+        nextNumber++;
+      }
+      await ExpenditureModel.insertMany(expendituresToInsert, { session });
+
+      const updateResult = await Payroll.updateMany(
+        { _id: { $in: validIds }, status: 'PENDING' },
+        { $set: { status: 'PAID' } },
+      ).session(session);
+      await session.commitTransaction();
+      return {
+        count: updateResult.modifiedCount,
+        data: validIds.map((id) => id.toString()),
+      };
+    } catch (error) {
+      console.log('=== LỖI THANH TOÁN LƯƠNG ===', error);
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
     }
-
-    const validIds = pendingPayrolls.map((p) => p._id);
-
-    const updateResult = await Payroll.updateMany(
-      { _id: { $in: validIds }, status: 'PENDING' },
-      { $set: { status: 'PAID' } },
-    );
-
-    return {
-      count: updateResult.modifiedCount,
-      data: validIds.map((id) => id.toString()),
-    };
   }
 
   // Hàm xuất bảng lương ra Excel

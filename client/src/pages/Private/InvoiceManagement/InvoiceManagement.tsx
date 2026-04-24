@@ -10,6 +10,8 @@ import { invoiceService } from '../../../services/invoice.service';
 import PaymentWizardModal from './PaymentWizardModal';
 import TablePagination from '../../../components/TablePagination';
 import useDebounce from '../../../hooks/useDebounce';
+import { useNavigate } from 'react-router-dom';
+import { PATHS } from '../../../utils/constants';
 
 const TABS: { id: InvoiceStatus | 'ALL'; label: string }[] = [
   { id: 'ALL', label: 'Tất cả' },
@@ -22,6 +24,8 @@ const TABS: { id: InvoiceStatus | 'ALL'; label: string }[] = [
 ];
 
 const InvoiceManagement = () => {
+  const navigation = useNavigate();
+
   const [activeTab, setActiveTab] = useState<InvoiceStatus | 'ALL'>('ALL');
   const [selectedInvoice, setSelectedInvoice] = useState<IInvoice | null>(null);
   const [invoices, setInvoices] = useState<IInvoice[]>([]);
@@ -361,7 +365,13 @@ const InvoiceManagement = () => {
                           </p>
                         </td>
                         <td className="p-4">
-                          <p className="font-medium text-gray-900">
+                          <p
+                            className="font-medium text-gray-900"
+                            onClick={() =>
+                              navigation(PATHS.TRAINING_STUDENT_ID.replace(':id', (inv?.studentId as any)?._id || ''))
+                            }
+                            style={{ cursor: 'pointer' }}
+                          >
                             {(inv?.studentId as any)?.fullName || 'Chưa cập nhật'}
                           </p>
                           <p className="text-xs text-gray-500">{(inv?.classId as any)?.name || 'Chưa phân lớp'}</p>

@@ -52,7 +52,36 @@ const Header = () => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
-      }
+
+        const classId = typeof notif.attendanceId === 'object'
+            ? notif.attendanceId?.classId
+            : null;
+        if (notif.examId) {
+            navigate(PATHS.STUDENT_PORTAL);
+        } else if (classId) {
+            navigate(PATHS.STUDENT_ATTENDANCE.replace(':id', classId));
+        }
+    };
+
+    const handleMarkAllAsRead = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        try {
+            await attendanceNotificationService.markAllAsRead();
+            setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+            setUnreadCount(0);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleDeleteAllRead = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        try {
+            await attendanceNotificationService.deleteAllRead();
+            setNotifications(prev => prev.filter(n => !n.isRead));
+        } catch (err) {
+            console.error(err);
+        }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);

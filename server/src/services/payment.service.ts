@@ -42,6 +42,7 @@ export class PaymentService {
     return paymentUrl;
   }
 
+  // 2. Tạo Link thanh toán trả góp
   async generateVnpayUrlForInstallment(invoiceId: string, ipAddr: string, bankCode?: string): Promise<string> {
     const invoice = await InvoiceModel.findById(invoiceId).lean();
 
@@ -65,7 +66,7 @@ export class PaymentService {
     return paymentUrl;
   }
 
-  // 2. Xử lý IPN Webhook (Quan trọng: Tương tác với cả 2 Model)
+  // 3. Xử lý IPN Webhook (Quan trọng: Tương tác với cả 2 Model)
   async handleVnpayIpn(query: any) {
     try {
       console.log('--- [VNPAY IPN GỌI ĐẾN] ---', query);
