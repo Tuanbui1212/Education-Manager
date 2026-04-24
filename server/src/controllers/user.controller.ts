@@ -134,13 +134,60 @@ export class UserController {
   //[GET] /api/users/staff
   getStaff = async (req: Request, res: Response) => {
     try {
-      const { users, totalCount } = await this.userService.getStaff(req.query as any);
+      const { users, totalCount, allCount, activeCount, inactiveCount } = await this.userService.getStaff(
+        req.query as any,
+      );
 
       res.status(200).json({
         success: true,
         message: 'Lấy danh sách nhân sự thành công',
         data: users,
         totalCount: totalCount,
+        allCount,
+        activeCount,
+        inactiveCount,
+      });
+    } catch (error: any) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  };
+
+  //[GET] /api/users/teachers
+  getAllTeachers = async (req: Request, res: Response) => {
+    try {
+      const { teachers, totalCount, allCount, activeCount, inactiveCount } = await this.userService.getAllTeachers(
+        req.query as any,
+      );
+      return res.status(200).json({
+        success: true,
+        message: 'Lấy danh sách giáo viên thành công',
+        data: teachers,
+        totalCount,
+        allCount,
+        activeCount,
+        inactiveCount,
+      });
+    } catch (error: any) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  };
+
+  //[GET] /api/users/students
+  getAllStudents = async (req: Request, res: Response) => {
+    try {
+      const { users, totalCount, summary } = await this.userService.getAllStudents(req.query as any);
+      return res.status(200).json({
+        success: true,
+        message: 'Lấy danh sách sinh viên thành công',
+        data: users,
+        totalCount,
+        summary,
       });
     } catch (error: any) {
       return res.status(400).json({

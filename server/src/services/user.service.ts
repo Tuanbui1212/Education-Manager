@@ -34,6 +34,7 @@ export class UserService {
     return newUser.populate('roleId', 'name permissions');
   }
 
+  // 2. Lấy danh sách User
   async getAllUsers(query: GetUsersQuery): Promise<{ users: IUser[]; totalCount: number }> {
     const { page = 1, limit = 10, search = '', roleId = '', status = '' } = query;
     const skip = (page - 1) * limit;
@@ -70,7 +71,10 @@ export class UserService {
 
   // 3. Lấy chi tiết 1 User
   async getUserById(id: string): Promise<IUser | null> {
-    return await UserModel.findById(id).select('-password').populate('roleId', 'name permissions');
+    return await UserModel.findById(id)
+      .select('-password')
+      .populate('roleId', 'name permissions')
+      .populate('student_info.consultantId', 'fullName email');
   }
 
   // 4. Cập nhật User
@@ -158,11 +162,15 @@ export class UserService {
     return user;
   }
 
-  async getStaff(query: GetUsersQuery): Promise<{ users: IUser[]; totalCount: number }> {
+  async getStaff(
+    query: GetUsersQuery,
+  ): Promise<{ users: IUser[]; totalCount: number; allCount: number; activeCount: number; inactiveCount: number }> {
     const { page = 1, limit = 10, search = '', roleId = '', status = '' } = query;
     const skip = (page - 1) * limit;
 
-    const otherRoleId = await RoleModel.find({ name: { $in: ['Student', 'Teacher', 'Super Admin'] } }).select('_id');
+    const roles = await RoleModel.find({ name: { $in: ['Student', 'Teacher', 'Super Admin'] } }).select('_id');
+
+    const otherRoleId = roles.map((r) => r._id.toString());
 
     const filter: any = {};
     if (search) {
@@ -174,16 +182,20 @@ export class UserService {
     }
 
     if (roleId) {
-      filter.roleId = roleId;
+      if (otherRoleId.includes(roleId)) {
+        throw new Error('Bạn không có quyền truy cập');
+      } else {
+        filter.roleId = roleId;
+      }
     } else {
-      filter.roleId = { $nin: otherRoleId };
+      filter.roleId = filter.roleId = { $nin: roles };
     }
 
     if (status) {
       filter.status = status;
     }
 
-    const [users, totalCount] = await Promise.all([
+    const [users, totalCount, allCount, activeCount, inactiveCount] = await Promise.all([
       UserModel.find(filter)
         .select('-password')
         .populate('roleId', 'name')
@@ -191,8 +203,101 @@ export class UserService {
         .skip(skip)
         .limit(limit),
       UserModel.countDocuments(filter),
+      UserModel.countDocuments({ roleId: filter.roleId }),
+      UserModel.countDocuments({ roleId: filter.roleId, status: UserStatus.ACTIVE }),
+      UserModel.countDocuments({ roleId: filter.roleId, status: UserStatus.INACTIVE }),
     ]);
 
-    return { users, totalCount };
+    return { users, totalCount, allCount, activeCount, inactiveCount };
+  }
+
+  // Hàm lấy danh sách giáo viên
+  async getAllTeachers(
+    query: GetUsersQuery,
+  ): Promise<{ teachers: IUser[]; totalCount: number; activeCount: number; inactiveCount: number; allCount: number }> {
+    const { page = 1, limit = 10, search = '', status = '' } = query;
+    const skip = (page - 1) * limit;
+
+    const teacherRoleId = await RoleModel.findOne({ name: 'Teacher' }).select('_id');
+
+    const filter: any = {};
+    if (search) {
+      filter.$or = [
+        { fullName: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { phone: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    if (teacherRoleId) {
+      filter.roleId = teacherRoleId._id;
+    }
+
+    if (status) {
+      filter.status = status;
+    }
+
+    const [teachers, totalCount, allCount, activeCount, inactiveCount] = await Promise.all([
+      UserModel.find(filter)
+        .select('-password')
+        .populate('roleId', 'name')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      UserModel.countDocuments(filter),
+      UserModel.countDocuments({ roleId: filter.roleId }),
+      UserModel.countDocuments({ roleId: filter.roleId, status: UserStatus.ACTIVE }),
+      UserModel.countDocuments({ roleId: filter.roleId, status: UserStatus.INACTIVE }),
+    ]);
+
+    return { teachers, totalCount, allCount, activeCount, inactiveCount };
+  }
+
+  async getAllStudents(query: GetUsersQuery): Promise<{ users: IUser[]; totalCount: number; summary: any }> {
+    const { page = 1, limit = 10, search = '', status = '' } = query;
+    const skip = (page - 1) * limit;
+
+    const filter: any = {};
+    if (search) {
+      filter.$or = [
+        { fullName: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { phone: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    const roleId = await RoleModel.findOne({ name: 'Student' }).select('_id');
+
+    if (roleId) {
+      filter.roleId = roleId;
+    }
+
+    if (status) {
+      filter.status = status;
+    }
+
+    const [users, totalCount, countActive, countInactive, countPotential, countReserved] = await Promise.all([
+      UserModel.find(filter)
+        .select('-password')
+        .populate('roleId', 'name')
+        .populate('student_info.consultantId', 'fullName')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      UserModel.countDocuments(filter),
+      UserModel.countDocuments({ ...filter, status: UserStatus.ACTIVE }),
+      UserModel.countDocuments({ ...filter, status: UserStatus.INACTIVE }),
+      UserModel.countDocuments({ ...filter, status: UserStatus.POTENTIAL }),
+      UserModel.countDocuments({ ...filter, status: UserStatus.RESERVED }),
+    ]);
+
+    const summary = {
+      active: countActive,
+      inactive: countInactive,
+      potential: countPotential,
+      reserved: countReserved,
+    };
+
+    return { users, totalCount, summary };
   }
 }

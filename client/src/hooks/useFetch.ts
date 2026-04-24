@@ -1,7 +1,16 @@
 import { useState, useEffect } from 'react';
 
 export default function useFetch<T, P = unknown>(
-  apiFunction: (params?: P) => Promise<{ success: boolean; data?: T; message: string; totalCount?: number }>,
+  apiFunction: (params?: P) => Promise<{
+    success: boolean;
+    data?: T;
+    message: string;
+    totalCount?: number;
+    allCount?: number;
+    activeCount?: number;
+    inactiveCount?: number;
+    summary?: any;
+  }>,
   params: P | null = null,
   dependencies: unknown[] = [],
 ) {
@@ -9,6 +18,10 @@ export default function useFetch<T, P = unknown>(
   const [totalCount, setTotalCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [allCount, setAllCount] = useState<number>(0);
+  const [activeCount, setActiveCount] = useState<number>(0);
+  const [inactiveCount, setInactiveCount] = useState<number>(0);
+  const [summary, setSummary] = useState<any>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -20,11 +33,23 @@ export default function useFetch<T, P = unknown>(
         if (result.totalCount !== undefined) {
           setTotalCount(result.totalCount);
         }
+        if (result.allCount !== undefined) {
+          setAllCount(result.allCount);
+        }
+        if (result.activeCount !== undefined) {
+          setActiveCount(result.activeCount);
+        }
+        if (result.inactiveCount !== undefined) {
+          setInactiveCount(result.inactiveCount);
+        }
+        if (result.summary !== undefined) {
+          return setSummary(result.summary);
+        }
       } else {
         setError(result.message);
       }
     } catch (err: unknown) {
-      setError((err as Error).message || 'Lỗi hệ thống');
+      setError((err as any)?.response?.data?.message || (err as Error).message || 'Lỗi hệ thống');
     } finally {
       setLoading(false);
     }
@@ -34,5 +59,5 @@ export default function useFetch<T, P = unknown>(
     fetchData();
   }, dependencies);
 
-  return { data, totalCount, loading, error, refetch: fetchData };
+  return { data, totalCount, allCount, activeCount, inactiveCount, loading, error, refetch: fetchData, summary };
 }

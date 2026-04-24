@@ -17,6 +17,7 @@ import attendanceNotificationRouter from './attendanceNotification.routes';
 import payrollRouter from './payroll.route';
 import paymentRouter from './payment.route';
 import examRouter from './exam.routes';
+import cashbookRouter from './cashbook.route';
 
 function router(app: Application) {
   app.get('/', (req, res) => res.send('Server is running!'));
@@ -38,6 +39,7 @@ function router(app: Application) {
   app.use('/api/payrolls', payrollRouter);
   app.use('/api/payments', paymentRouter);
   app.use('/api/exams', examRouter);
+  app.use('/api/cashbook', cashbookRouter);
 }
 
 export default router;

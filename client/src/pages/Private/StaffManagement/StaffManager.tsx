@@ -1,19 +1,4 @@
-import {
-  Plus,
-  Edit2,
-  Trash2,
-  Mail,
-  Phone,
-  Briefcase,
-  Filter,
-  Shield,
-  Users,
-  UserCheck,
-  UserX,
-  ChevronDown,
-  X,
-  RefreshCw,
-} from 'lucide-react';
+import { Plus, Edit2, Trash2, Mail, Phone, Briefcase, Filter, Shield, Users, UserCheck, UserX } from 'lucide-react';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -24,6 +9,9 @@ import SearchInput from '../../../components/SearchInput';
 import ConfirmModal from '../../../components/ConfirmModal';
 import StatCard from '../../../components/StatCard';
 import SkeletonRow from '../../../components/SkeletonRow';
+import EmptyState from '../../../components/EmptyState';
+import FilterBtn from '../../../components/FilterBtn';
+import ErrorState from '../../../components/ErrorState';
 
 import useFetch from '../../../hooks/useFetch';
 import useDebounce from '../../../hooks/useDebounce';
@@ -32,125 +20,7 @@ import { roleService } from '../../../services/role.service';
 
 import { formatDate, getStatusUserStyles, translateRole } from '../../../utils/format.util';
 import { PATHS, STATUS_USER_OPTIONS } from '../../../utils/constants';
-
-// ─── Avatar helpers ───────────────────────────────────────────────────────────
-const PALETTE = [
-  { bg: 'bg-violet-100', text: 'text-violet-700', ring: 'ring-violet-200' },
-  { bg: 'bg-purple-100', text: 'text-purple-700', ring: 'ring-purple-200' },
-  { bg: 'bg-indigo-100', text: 'text-indigo-700', ring: 'ring-indigo-200' },
-  { bg: 'bg-fuchsia-100', text: 'text-fuchsia-700', ring: 'ring-fuchsia-200' },
-  { bg: 'bg-sky-100', text: 'text-sky-700', ring: 'ring-sky-200' },
-  { bg: 'bg-emerald-100', text: 'text-emerald-700', ring: 'ring-emerald-200' },
-];
-const getColor = (s: string) => PALETTE[(s || ' ').charCodeAt(0) % PALETTE.length];
-const getInitials = (name: string) => {
-  const p = (name || '').trim().split(' ').filter(Boolean);
-  return p.length < 2 ? (p[0]?.[0] ?? '?').toUpperCase() : (p[0][0] + p[p.length - 1][0]).toUpperCase();
-};
-
-// ─── Empty State ──────────────────────────────────────────────────────────────
-const EmptyState = ({ isFiltered, onReset }: { isFiltered: boolean; onReset: () => void }) => (
-  <tr>
-    <td colSpan={6}>
-      <div className="flex flex-col items-center justify-center py-20">
-        <div className="relative mb-5">
-          <div className="w-20 h-20 rounded-3xl bg-violet-50 flex items-center justify-center">
-            <Briefcase size={34} className="text-violet-300" />
-          </div>
-          {isFiltered && (
-            <div
-              className="absolute -top-1 -right-1 w-6 h-6 bg-amber-400 rounded-full
-              flex items-center justify-center"
-            >
-              <Filter size={11} className="text-white" />
-            </div>
-          )}
-        </div>
-        <p className="font-bold text-gray-600 text-base">
-          {isFiltered ? 'Không có kết quả phù hợp' : 'Chưa có nhân sự nào'}
-        </p>
-        <p className="text-sm text-gray-400 mt-1.5 text-center max-w-xs leading-relaxed">
-          {isFiltered
-            ? 'Thử thay đổi từ khoá, phòng ban hoặc trạng thái.'
-            : 'Bắt đầu bằng cách thêm nhân sự đầu tiên vào hệ thống.'}
-        </p>
-        {isFiltered && (
-          <button
-            onClick={onReset}
-            className="mt-4 px-4 py-1.5 text-sm text-violet-600 bg-violet-50
-              hover:bg-violet-100 rounded-xl font-medium transition-colors
-              flex items-center gap-1.5"
-          >
-            <X size={13} /> Xóa bộ lọc
-          </button>
-        )}
-      </div>
-    </td>
-  </tr>
-);
-
-// ─── Filter Button ────────────────────────────────────────────────────────────
-interface FilterBtnProps {
-  isActive: boolean;
-  label: string;
-  icon: React.ReactNode;
-  isOpen: boolean;
-  accentColor: string;
-  onToggle: () => void;
-  onClear: () => void;
-  children: React.ReactNode;
-  containerRef: React.RefObject<HTMLDivElement>;
-}
-const FilterBtn = ({
-  isActive,
-  label,
-  icon,
-  isOpen,
-  accentColor,
-  onToggle,
-  onClear,
-  children,
-  containerRef,
-}: FilterBtnProps) => (
-  <div className="relative shrink-0" ref={containerRef}>
-    <button
-      type="button"
-      onClick={onToggle}
-      className={`
-        flex items-center gap-2 pl-3.5 pr-3 py-2 rounded-xl border text-sm font-medium
-        transition-all whitespace-nowrap
-        ${
-          isActive
-            ? `bg-primary text-white border-transparent shadow-md shadow-primary/30`
-            : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
-        }
-      `}
-    >
-      <span className={isActive ? 'text-white/80' : 'text-gray-400'}>{icon}</span>
-      {label}
-      {isActive ? (
-        <X
-          size={13}
-          className="ml-0.5 opacity-80 hover:opacity-100"
-          onClick={(e) => {
-            e.stopPropagation();
-            onClear();
-          }}
-        />
-      ) : (
-        <ChevronDown size={14} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
-      )}
-    </button>
-    {isOpen && (
-      <div
-        className="absolute top-[calc(100%+6px)] right-0 min-w-[190px] bg-white
-        border border-gray-200 rounded-2xl shadow-xl z-50 overflow-hidden py-1.5"
-      >
-        {children}
-      </div>
-    )}
-  </div>
-);
+import { getColor, getInitials } from '../../../utils/user.util';
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 const StaffManager = () => {
@@ -199,7 +69,7 @@ const StaffManager = () => {
   const { data: rolesData } = useFetch(roleService.getRoles, {}, []);
   const roles = Array.isArray(rolesData) ? rolesData : (rolesData as any)?.data || [];
   const officeRoles = useMemo(
-    () => roles.filter((r: any) => !['student', 'teacher', 'potential', 'super admin'].includes(r.name?.toLowerCase())),
+    () => roles.filter((r: any) => !['teacher', 'potential', 'super admin'].includes(r.name?.toLowerCase())),
     [roles],
   );
 
@@ -210,6 +80,9 @@ const StaffManager = () => {
     error,
     totalCount,
     refetch: fetchStaffs,
+    allCount: countAll,
+    inactiveCount: countInactive,
+    activeCount: countActive,
   } = useFetch(
     userService.getStaff,
     {
@@ -222,10 +95,7 @@ const StaffManager = () => {
     [page, debouncedSearch, roleFilter, limit, statusFilter],
   );
 
-  // ── Stats counts ──────────────────────────────────────────────────────────
-  const { totalCount: countAll } = useFetch(userService.getStaff, { limit: 1, page: 1 }, []);
-  const { totalCount: countActive } = useFetch(userService.getStaff, { status: 'ACTIVE', limit: 1, page: 1 }, []);
-  const { totalCount: countInactive } = useFetch(userService.getStaff, { status: 'INACTIVE', limit: 1, page: 1 }, []);
+  console.log('reload');
 
   // ── Delete ────────────────────────────────────────────────────────────────
   const handleDeleteStaff = async (id: string) => {
@@ -268,20 +138,12 @@ const StaffManager = () => {
   // ── Error ─────────────────────────────────────────────────────────────────
   if (error)
     return (
-      <div className="p-16 flex flex-col items-center gap-3 text-center">
-        <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center">
-          <X size={26} className="text-red-400" />
-        </div>
-        <p className="font-semibold text-red-500">Không thể tải dữ liệu</p>
-        <p className="text-xs text-gray-400 max-w-xs">{String(error)}</p>
-        <button
-          onClick={fetchStaffs}
-          className="mt-2 flex items-center gap-2 px-4 py-2 bg-white border border-gray-200
-            rounded-xl text-sm font-medium text-gray-600 hover:border-gray-400 transition-colors"
-        >
-          <RefreshCw size={14} /> Thử lại
-        </button>
-      </div>
+      <ErrorState
+        msg={error}
+        onRetry={() => {
+          fetchStaffs();
+        }}
+      />
     );
 
   return (

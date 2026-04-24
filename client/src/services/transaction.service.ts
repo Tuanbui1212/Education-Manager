@@ -13,7 +13,9 @@ export const transactionService = {
     return response.data;
   },
 
-  getTransactions: async (params?: any): Promise<{ success: boolean; data: ITransaction[]; total: number }> => {
+  getTransactions: async (
+    params?: any,
+  ): Promise<{ success: boolean; message: string; data: ITransaction[]; total: number }> => {
     const response = await axios.get('/transactions', { params });
     return response.data;
   },

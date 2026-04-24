@@ -1,0 +1,63 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1E3A5F;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2E6DAD;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#F9A825;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFD54F;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="white_fade" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#CBD8EC;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#00000033"/>
+    </filter>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect width="200" height="200" rx="36" ry="36" fill="url(#bg)" filter="url(#shadow)"/>
+
+  <!-- Graduation cap - diamond shape (top) -->
+  <polygon points="100,28 168,62 100,80 32,62" fill="url(#white_fade)" opacity="0.95"/>
+
+  <!-- Cap top highlight -->
+  <polygon points="100,28 168,62 134,71 100,62 66,71 32,62"
+           fill="white" opacity="0.18"/>
+
+  <!-- Cap body (book/document block) -->
+  <rect x="68" y="80" width="64" height="52" rx="5" fill="url(#white_fade)" opacity="0.92"/>
+
+  <!-- Accent stripe on top of body -->
+  <rect x="68" y="80" width="64" height="6" rx="3" fill="url(#accent)" opacity="0.9"/>
+
+  <!-- Document lines -->
+  <rect x="79" y="96"  width="42" height="4" rx="2" fill="#1E3A5F" opacity="0.30"/>
+  <rect x="79" y="105" width="32" height="4" rx="2" fill="#1E3A5F" opacity="0.22"/>
+  <rect x="79" y="114" width="38" height="4" rx="2" fill="#1E3A5F" opacity="0.22"/>
+
+  <!-- Cap string (tassel) -->
+  <line x1="168" y1="62" x2="168" y2="90" stroke="#FFD54F" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="168" cy="96" r="6" fill="url(#accent)"/>
+
+  <!-- Star/sparkle small -->
+  <circle cx="148" cy="44" r="2.5" fill="#FFD54F" opacity="0.7"/>
+  <circle cx="54"  cy="52" r="2"   fill="#FFD54F" opacity="0.5"/>
+
+  <!-- Accent divider bar -->
+  <rect x="48" y="142" width="104" height="5" rx="2.5" fill="url(#accent)"/>
+
+  <!-- Text EMS -->
+  <text x="100" y="166"
+        font-family="Arial, Helvetica, sans-serif"
+        font-size="23" font-weight="800"
+        fill="white" text-anchor="middle" letter-spacing="4">EMS</text>
+
+  <!-- Tagline -->
+  <text x="100" y="182"
+        font-family="Arial, Helvetica, sans-serif"
+        font-size="7.8" font-weight="400"
+        fill="#9EC4E8" text-anchor="middle" letter-spacing="1.5">EDUCATION MANAGEMENT</text>
+</svg>

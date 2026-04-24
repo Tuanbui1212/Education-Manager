@@ -1,4 +1,5 @@
 import { Document, Types } from 'mongoose';
+import { IUser } from './user.type';
 
 export enum PayrollType {
   STAFF = 'STAFF',

@@ -78,7 +78,11 @@ const StudentPortal = () => {
     if (!selectedExamToStart) return;
     setIsStartingExam(true);
     try {
-      await examService.startSubmission({ examId: selectedExamToStart._id, studentId: currentUser?.id!, classId: (selectedExamToStart.classId as { _id: string })._id });
+      await examService.startSubmission({
+        examId: selectedExamToStart._id,
+        studentId: currentUser?.id!,
+        classId: (selectedExamToStart.classId as { _id: string })._id,
+      });
       navigate(PATHS.STUDENT_EXAM_TAKING.replace(':examId', selectedExamToStart._id));
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Có lỗi xảy ra, không thể bắt đầu bài kiểm tra.');
@@ -109,9 +113,10 @@ const StudentPortal = () => {
     if (!classesRaw || classesRaw.length === 0) return;
     const ids: string[] = classesRaw.map((c: any) => c._id);
     setExamsLoading(true);
-    examService.getExamsByClasses(ids, currentUser?.id!)
-      .then(res => setAllExams(res.data ?? []))
-      .catch(() => { })
+    examService
+      .getExamsByClasses(ids, currentUser?.id!)
+      .then((res) => setAllExams(res.data ?? []))
+      .catch(() => {})
       .finally(() => setExamsLoading(false));
   }, [classesRaw]);
 
@@ -120,9 +125,10 @@ const StudentPortal = () => {
     let list = [...allExams];
     if (examSearch.trim()) {
       const q = examSearch.toLowerCase();
-      list = list.filter(e =>
-        e.title.toLowerCase().includes(q) ||
-        (typeof e.classId === 'object' ? (e.classId as any).name?.toLowerCase().includes(q) : false)
+      list = list.filter(
+        (e) =>
+          e.title.toLowerCase().includes(q) ||
+          (typeof e.classId === 'object' ? (e.classId as any).name?.toLowerCase().includes(q) : false),
       );
     }
     // Sort: available (endDate > now) first, then overdue
@@ -307,10 +313,11 @@ const StudentPortal = () => {
           <div className="bg-white border border-gray-200 p-1.5 rounded-2xl flex items-center gap-1.5 shadow-xs">
             <button
               onClick={() => setActiveTab('classes')}
-              className={`px-6 py-2.5 cursor-pointer rounded-xl justify-center min-w-[140px] text-sm font-bold transition-all duration-300 flex items-center gap-2 ${activeTab === 'classes'
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
-                : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600 active:scale-95'
-                }`}
+              className={`px-6 py-2.5 cursor-pointer rounded-xl justify-center min-w-[140px] text-sm font-bold transition-all duration-300 flex items-center gap-2 ${
+                activeTab === 'classes'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600 active:scale-95'
+              }`}
             >
               <BookOpen size={18} />
               Lớp học
@@ -318,10 +325,11 @@ const StudentPortal = () => {
 
             <button
               onClick={() => setActiveTab('timetable')}
-              className={`px-6 py-2.5 cursor-pointer rounded-xl justify-center min-w-[140px] text-sm font-bold transition-all duration-300 flex items-center gap-2 ${activeTab === 'timetable'
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
-                : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600 active:scale-95'
-                }`}
+              className={`px-6 py-2.5 cursor-pointer rounded-xl justify-center min-w-[140px] text-sm font-bold transition-all duration-300 flex items-center gap-2 ${
+                activeTab === 'timetable'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600 active:scale-95'
+              }`}
             >
               <CalendarIcon size={18} />
               Lịch học
@@ -329,10 +337,11 @@ const StudentPortal = () => {
 
             <button
               onClick={() => setActiveTab('invoices')}
-              className={`px-6 py-2.5 cursor-pointer rounded-xl justify-center min-w-[140px] text-sm font-bold transition-all duration-300 flex items-center gap-2 ${activeTab === 'invoices'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                : 'text-gray-600 hover:bg-gray-50 hover:text-indigo-600 active:scale-95'
-                }`}
+              className={`px-6 py-2.5 cursor-pointer rounded-xl justify-center min-w-[140px] text-sm font-bold transition-all duration-300 flex items-center gap-2 ${
+                activeTab === 'invoices'
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-indigo-600 active:scale-95'
+              }`}
             >
               <CreditCard size={18} />
               Học phí
@@ -340,10 +349,11 @@ const StudentPortal = () => {
 
             <button
               onClick={() => setActiveTab('exams')}
-              className={`px-6 py-2.5 cursor-pointer rounded-xl justify-center min-w-[140px] text-sm font-bold transition-all duration-300 flex items-center gap-2 ${activeTab === 'exams'
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
-                : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600 active:scale-95'
-                }`}
+              className={`px-6 py-2.5 cursor-pointer rounded-xl justify-center min-w-[140px] text-sm font-bold transition-all duration-300 flex items-center gap-2 ${
+                activeTab === 'exams'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600 active:scale-95'
+              }`}
             >
               <FileText size={18} />
               Bài kiểm tra
@@ -701,7 +711,7 @@ const StudentPortal = () => {
                   type="text"
                   placeholder="Tìm theo tên bài hoặc lớp..."
                   value={examSearch}
-                  onChange={e => setExamSearch(e.target.value)}
+                  onChange={(e) => setExamSearch(e.target.value)}
                   className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
                 />
               </div>
@@ -718,12 +728,14 @@ const StudentPortal = () => {
                 <FileText size={40} className="mx-auto text-blue-200 mb-3" />
                 <p className="font-bold text-gray-700 text-lg mb-1">Không có bài kiểm tra nào</p>
                 <p className="text-sm text-gray-400">
-                  {examSearch ? 'Không tìm thấy kết quả phù hợp.' : 'Chưa có bài kiểm tra nào trong các lớp bạn đang học.'}
+                  {examSearch
+                    ? 'Không tìm thấy kết quả phù hợp.'
+                    : 'Chưa có bài kiểm tra nào trong các lớp bạn đang học.'}
                 </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredExams.map(exam => {
+                {filteredExams.map((exam) => {
                   const now = new Date();
                   const isOverdue = new Date(exam.endDate) < now;
                   const examClassName = typeof exam.classId === 'object' ? (exam.classId as any).name : exam.classId;
@@ -749,14 +761,16 @@ const StudentPortal = () => {
 
                       <div className="flex-1">
                         <h4 className="font-bold text-gray-800 line-clamp-2 mb-1">{exam.title}</h4>
-                        {exam.description && (
-                          <p className="text-xs text-gray-400 line-clamp-1">{exam.description}</p>
-                        )}
+                        {exam.description && <p className="text-xs text-gray-400 line-clamp-1">{exam.description}</p>}
                       </div>
 
                       <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 border-t border-gray-50 pt-3">
-                        <span className="flex items-center gap-1"><Clock size={11} /> {exam.duration} phút</span>
-                        <span className="flex items-center gap-1"><FileText size={11} /> {exam.questions.length} câu</span>
+                        <span className="flex items-center gap-1">
+                          <Clock size={11} /> {exam.duration} phút
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <FileText size={11} /> {exam.questions.length} câu
+                        </span>
                         <span className="flex items-center gap-1 text-amber-500">
                           <AlertCircle size={11} />
                           {new Date(exam.endDate).toLocaleDateString('vi-VN')}
@@ -770,11 +784,12 @@ const StudentPortal = () => {
                               handleReviewExam(exam._id);
                               return;
                             }
-                            setSelectedExamToStart(exam)
+                            setSelectedExamToStart(exam);
                           }}
                           className={`cursor-pointer w-full py-2 ${exam.submissions?.status === 'SUBMITTED' ? 'bg-gray-400 hover:bg-gray-500' : 'bg-blue-600 hover:bg-blue-700'} text-white text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-md shadow-blue-600/20`}
                         >
-                          <FileText size={14} /> {exam.submissions?.status === 'SUBMITTED' ? 'Xem lại bài kiểm tra' : 'Làm bài'}
+                          <FileText size={14} />{' '}
+                          {exam.submissions?.status === 'SUBMITTED' ? 'Xem lại bài kiểm tra' : 'Làm bài'}
                         </button>
                       )}
                     </div>
@@ -785,69 +800,6 @@ const StudentPortal = () => {
           </section>
         )}
       </>
-
-      {/* 4. MODAL THANH TOÁN (GIẢ LẬP MÃ QR) */}
-      {isPaymentModalOpen && selectedInvoice && (
-        <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-gray-900/70 backdrop-blur-sm"
-            onClick={() => setIsPaymentModalOpen(false)}
-          ></div>
-
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md relative z-10 flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="bg-blue-600 p-6 text-white text-center relative">
-              <button
-                onClick={() => setIsPaymentModalOpen(false)}
-                className="absolute top-4 right-4 p-1 hover:bg-white/20 rounded-full transition-colors"
-              >
-                <X size={24} />
-              </button>
-              <h3 className="text-xl font-bold mb-1">Thanh toán Học phí</h3>
-              <p className="text-blue-100 text-sm">Quét mã QR qua ứng dụng Ngân hàng/Ví điện tử</p>
-            </div>
-
-            <div className="p-8 flex flex-col items-center">
-              <div className="w-full bg-gray-50 rounded-2xl p-4 mb-6 border border-gray-100">
-                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Nội dung thanh toán</p>
-                <p className="font-bold text-gray-800 line-clamp-1">{selectedInvoice.title}</p>
-                <div className="flex justify-between items-end mt-3">
-                  <p className="text-sm text-gray-500">Mã: {selectedInvoice.id.toUpperCase()}</p>
-                  <p className="font-black text-2xl text-blue-600">{formatCurrency(selectedInvoice.amount)}</p>
-                </div>
-              </div>
-
-              {/* KHU VỰC MÃ QR GIẢ LẬP */}
-              <div className="p-4 bg-white border-2 border-dashed border-gray-300 rounded-3xl mb-6 relative group">
-                <div className="w-48 h-48 bg-gray-100 rounded-xl flex flex-col items-center justify-center text-gray-400">
-                  <QrCode size={64} className="mb-2" />
-                  <span className="text-xs font-medium">Mã QR VietQR/ZaloPay</span>
-                </div>
-
-                {/* Hiệu ứng quét mô phỏng */}
-                <div className="absolute inset-0 bg-linear-to-b from-transparent via-blue-500/20 to-transparent h-1/2 rounded-3xl animate-[bounce_2s_infinite]"></div>
-              </div>
-
-              <p className="text-sm text-center text-gray-600 mb-8 max-w-[250px]">
-                Mở ứng dụng Ngân hàng hoặc ZaloPay để quét mã. Giao dịch sẽ được cập nhật tự động.
-              </p>
-
-              <button
-                disabled={isProcessing}
-                onClick={handleConfirmPayment}
-                className="w-full py-4 bg-gray-900 hover:bg-black text-white rounded-2xl font-bold flex justify-center items-center gap-2 transition-all active:scale-95 disabled:bg-gray-400"
-              >
-                {isProcessing ? (
-                  <>Chờ một lát...</>
-                ) : (
-                  <>
-                    Tôi đã chuyển khoản xong <CheckCircle2 size={18} />
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* CONFIRM START EXAM MODAL */}
       {selectedExamToStart && (
@@ -863,8 +815,11 @@ const StudentPortal = () => {
             </div>
             <h3 className="text-xl font-bold text-gray-800 mb-2">Bắt đầu làm bài?</h3>
             <p className="text-sm text-gray-500 mb-6">
-              Bạn có chắc chắn muốn bắt đầu bài kiểm tra <span className="font-semibold text-gray-800">"{selectedExamToStart.title}"</span>?<br /><br />
-              Thời gian đếm ngược <span className="font-bold text-red-500">{selectedExamToStart.duration} phút</span> sẽ bắt đầu tính ngay sau khi bạn xác nhận.
+              Bạn có chắc chắn muốn bắt đầu bài kiểm tra{' '}
+              <span className="font-semibold text-gray-800">"{selectedExamToStart.title}"</span>?<br />
+              <br />
+              Thời gian đếm ngược <span className="font-bold text-red-500">{selectedExamToStart.duration} phút</span> sẽ
+              bắt đầu tính ngay sau khi bạn xác nhận.
             </p>
             <div className="flex gap-3 w-full">
               <button
@@ -879,7 +834,11 @@ const StudentPortal = () => {
                 onClick={handleConfirmStartExam}
                 className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md shadow-blue-600/20 active:scale-95 transition-all flex items-center justify-center gap-2"
               >
-                {isStartingExam ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Bắt đầu'}
+                {isStartingExam ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  'Bắt đầu'
+                )}
               </button>
             </div>
           </div>

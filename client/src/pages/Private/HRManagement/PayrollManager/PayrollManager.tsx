@@ -35,6 +35,7 @@ const PayrollManager = () => {
   const [selectedMonth, setSelectedMonth] = useState('2026-03');
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState('ALL');
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
   const [isActioning, setIsActioning] = useState(false);
   const [actionText, setActionText] = useState('');
@@ -53,7 +54,7 @@ const PayrollManager = () => {
     loading,
     refetch: fetchPayrollData,
   } = useFetch(payrollService.getPayrolls, { month: selectedMonth }, [selectedMonth]);
-
+  console.log(payrollData);
   // State Modal QR
   const [qrModal, setQrModal] = useState<{ isOpen: boolean; payload: IPayroll | null }>({
     isOpen: false,
@@ -74,18 +75,20 @@ const PayrollManager = () => {
 
   const filteredData = useMemo(() => {
     return payrollData?.filter((item) => {
-      const matchSearch = (item?.userId?.fullName ?? '').toLowerCase().includes(searchTerm.toLowerCase());
+      const keyword = searchTerm.toLowerCase();
+
+      const matchSearch = (item?.userId?.fullName ?? '').toLowerCase().includes(keyword);
+
       const matchRole =
-        roleFilter === 'ALL'
-          ? true
-          : roleFilter === 'STAFF'
-            ? item.payrollType === 'STAFF'
-            : roleFilter === 'TEACHER'
-              ? item.payrollType.includes('TEACHER')
-              : true;
-      return matchSearch && matchRole;
+        roleFilter === 'ALL' ||
+        (roleFilter === 'STAFF' && item.payrollType === 'STAFF') ||
+        (roleFilter === 'TEACHER' && item.payrollType.includes('TEACHER'));
+
+      const matchStatus = statusFilter === 'ALL' || item.status === statusFilter;
+
+      return matchSearch && matchRole && matchStatus;
     });
-  }, [payrollData, searchTerm, roleFilter]);
+  }, [payrollData, searchTerm, roleFilter, statusFilter]);
 
   // ---- SUMMARY STATS ----
   const totalPayroll = filteredData?.reduce((sum, item) => sum + item.totalSalary, 0);
@@ -104,7 +107,6 @@ const PayrollManager = () => {
   };
 
   const handleSelectRow = (id: string, status: string) => {
-    // PAID records không thể chọn
     if (status === 'PAID') return;
     setSelectedRowIds((prev) => (prev.includes(id) ? prev.filter((rowId) => rowId !== id) : [...prev, id]));
   };
@@ -274,7 +276,7 @@ const PayrollManager = () => {
     setQrModal({ isOpen: false, payload: null });
     try {
       const response = await payrollService.updatePayroll(id, { status: 'PAID' });
-      if (!response.success) {
+      if (response.success) {
         setConfirmConfig({
           isOpen: true,
           title: 'Thành công',
@@ -284,6 +286,7 @@ const PayrollManager = () => {
           cancelText: '',
           onConfirm: closeConfirm,
         });
+
         fetchPayrollData();
       }
     } catch (error) {
@@ -625,6 +628,23 @@ const PayrollManager = () => {
               <option value="ALL">Tất cả phòng ban</option>
               <option value="STAFF">Khối Văn phòng</option>
               <option value="TEACHER">Khối Giáo viên</option>
+            </select>
+            <Filter size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          </div>
+
+          {/* Lọc trạng thái */}
+          <div className="relative">
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setSelectedRowIds([]);
+              }}
+              className="pl-10 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none appearance-none cursor-pointer"
+            >
+              <option value="ALL">Tất cả trạng thái</option>
+              <option value="PENDING">Chờ thanh toán</option>
+              <option value="PAID">Đã thanh toán</option>
             </select>
             <Filter size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           </div>

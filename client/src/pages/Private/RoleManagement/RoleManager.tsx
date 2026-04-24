@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Plus, Edit2, Trash2, Lock, ShieldAlert } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { formatDate } from '../../../utils/format.util';
 
 import Button from '../../../components/Button';
@@ -15,8 +16,10 @@ import useDebounce from '../../../hooks/useDebounce';
 import { roleService } from '../../../services/role.service';
 
 import type { IRole } from '../../../types/role.type';
+import { PATHS } from '../../../utils/constants';
 
 const RoleManager = () => {
+  const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [searchInput, setSearchInput] = useState('');
@@ -235,7 +238,13 @@ const RoleManager = () => {
             {sortedRoles && sortedRoles.length > 0 ? (
               sortedRoles.map((role: any, index: number) => {
                 // TÍNH NĂNG KHÓA SUPER ADMIN: Bất khả xâm phạm
-                const isSuperAdmin = role.name?.toLowerCase() === 'super admin';
+                const isSuperAdmin =
+                  role.name?.toLowerCase() === 'super admin' ||
+                  role.name?.toLowerCase() === 'student' ||
+                  role.name?.toLowerCase() === 'teacher' ||
+                  role.name?.toLowerCase() === 'accountant' ||
+                  role.name?.toLowerCase() === 'manager' ||
+                  role.name?.toLowerCase() === 'consultant';
 
                 return (
                   <tr key={role._id} className="hover:bg-blue-50/50 transition-colors group">
@@ -243,7 +252,11 @@ const RoleManager = () => {
                       {index + 1 + (page - 1) * limit}
                     </td>
                     <td className="p-4 font-semibold text-blue-600">
-                      <div className="flex items-center gap-2">
+                      <div
+                        className="flex items-center gap-2"
+                        onClick={() => navigate(PATHS.ACCOUNT_ROLE_ID.replace(':id', role._id!))}
+                        style={{ cursor: 'pointer' }}
+                      >
                         {isSuperAdmin && <ShieldAlert size={16} className="text-orange-500" />}
                         {role.name}
                       </div>

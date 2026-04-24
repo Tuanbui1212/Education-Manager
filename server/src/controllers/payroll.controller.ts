@@ -40,7 +40,8 @@ export class PayrollController {
   // [PUT] /api/payrolls/:id
   async update(req: Request, res: Response) {
     try {
-      const payroll = await payrollService.updatePayroll(req.params.id as string, req.body);
+      const currentUserId = (req as any).user?._id || (req as any).user?.id;
+      const payroll = await payrollService.updatePayroll(req.params.id as string, req.body, currentUserId);
       if (!payroll) return res.status(404).json({ success: false, message: 'Payroll not found' });
       return res.status(200).json({ success: true, message: 'Cập nhật bảng lương thành công', data: payroll });
     } catch (error: any) {
@@ -88,7 +89,8 @@ export class PayrollController {
   async markAsPaid(req: Request, res: Response) {
     try {
       const { payrollIds } = req.body;
-      const { count, data } = await payrollService.markPayrollAsPaid(payrollIds);
+      const currentUserId = (req as any).user?._id || (req as any).user?.id;
+      const { count, data } = await payrollService.markPayrollAsPaid(payrollIds, currentUserId);
       return res.status(200).json({ success: true, message: `Đã đánh dấu ${count} bảng lương là đã thanh toán`, data });
     } catch (error: any) {
       return res.status(500).json({ success: false, message: error.message });
