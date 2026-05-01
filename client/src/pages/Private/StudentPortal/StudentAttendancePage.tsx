@@ -17,9 +17,9 @@ import {
   TrendingUp,
   Filter,
 } from 'lucide-react';
-import { attendanceService } from '../services/attendance.service';
-import { classService } from '../services/class.service';
-import { PATHS } from '../utils/constants';
+import { attendanceService } from '../../../services/attendance.service';
+import { classService } from '../../../services/class.service';
+import { PATHS } from '../../../utils/constants';
 
 const ATTENDANCE_CONFIG: Record<string, any> = {
   PRESENT: { label: 'Có mặt', bg: 'bg-emerald-100', text: 'text-emerald-700', dot: 'bg-emerald-500', icon: CheckCircle2 },

@@ -10,14 +10,14 @@ import {
   Search,
   FileText,
 } from 'lucide-react';
-import useFetch from '../hooks/useFetch';
-import useDebounce from '../hooks/useDebounce';
-import { attendanceService } from '../services/attendance.service';
-import { getDecodedToken } from '../utils/auth';
-import { PATHS } from '../utils/constants';
-import { ClassStatus } from '../types/class.type';
-import { ClassCardSkeleton } from '../components/ClassCardSkeleton';
-import { CLASS_STATUS_CONFIG } from '../utils/constants';
+import useFetch from '../../../hooks/useFetch';
+import useDebounce from '../../../hooks/useDebounce';
+import { attendanceService } from '../../../services/attendance.service';
+import { getDecodedToken } from '../../../utils/auth';
+import { PATHS } from '../../../utils/constants';
+import { ClassStatus } from '../../../types/class.type';
+import { ClassCardSkeleton } from '../../../components/ClassCardSkeleton';
+import { CLASS_STATUS_CONFIG } from '../../../utils/constants';
 import { ExamManager } from './ExamManager';
 
 type Tab = 'attendance' | 'exams';
@@ -32,7 +32,7 @@ const TeacherPortal = () => {
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
 
   const { data: classes, loading, totalCount } = useFetch(
-    () => attendanceService.getActiveClasses({ limit: 100, search: debouncedSearch }),
+    () => attendanceService.getActiveClassesByTeacherId({ limit: 100, search: debouncedSearch }),
     null,
     [debouncedSearch]
   );

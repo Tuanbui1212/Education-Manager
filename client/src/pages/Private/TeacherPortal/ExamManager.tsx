@@ -10,9 +10,9 @@ import {
     AlertCircle,
     XCircle
 } from 'lucide-react';
-import { examService } from '../services/exam.service';
-import type { IExam, IExamQuestion, IExamOption, IExamSubmission } from '../types/exam.type';
-import { getDecodedToken } from '../utils/auth';
+import { examService } from '../../../services/exam.service';
+import type { IExam, IExamQuestion, IExamOption, IExamSubmission } from '../../../types/exam.type';
+import { getDecodedToken } from '../../../utils/auth';
 
 const STATUS_CFG: Record<string, { label: string; bg: string; text: string; icon: React.ReactNode }> = {
     DRAFT: { label: 'Nháp', bg: 'bg-gray-100', text: 'text-gray-600', icon: <FileText size={12} /> },
@@ -293,7 +293,7 @@ const CopyFromOtherClasses = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {exams.map(exam => {
                         const sc = STATUS_CFG[exam.status] ?? STATUS_CFG.DRAFT;
-                        const className = typeof exam.classId === 'object' ? exam.classId.name : exam.classId;
+                        const className = typeof exam.classId === 'object' ? exam.classId?.name : exam.classId;
                         return (
                             <div key={exam._id} className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm hover:shadow-md transition-all group">
                                 <div className="flex justify-between items-start mb-2">

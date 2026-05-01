@@ -1,13 +1,13 @@
-import StudentPortal from '../pages/StudentPortal';
-import StudentAttendancePage from '../pages/StudentAttendancePage';
-import TeacherPortal from '../pages/TeacherPortal';
-import TeacherAttendanceSchedules from '../pages/TeacherAttendanceSchedules';
-import TeacherAttendanceDetails from '../pages/TeacherAttendanceDetails';
+import StudentPortal from '../pages/Private/StudentPortal/StudentPortal';
+import StudentAttendancePage from '../pages/Private/StudentPortal/StudentAttendancePage';
+import TeacherPortal from '../pages/Private/TeacherPortal/TeacherPortal';
+import TeacherAttendanceSchedules from '../pages/Private/TeacherPortal/TeacherAttendanceSchedules';
+import TeacherAttendanceDetails from '../pages/Private/TeacherPortal/TeacherAttendanceDetails';
 
 import { PATHS } from '../utils/constants';
 import ProfileLayout from '../layouts/ProfileLayout';
 
-import StudentExamPage from '../pages/StudentExamPage';
+import StudentExamPage from '../pages/Private/StudentPortal/StudentExamPage';
 import ExamLayout from '../layouts/ExamLayout';
 
 export const mainRoutes = [

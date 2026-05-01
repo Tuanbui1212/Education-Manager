@@ -56,13 +56,16 @@ export class ClassService {
   }
 
   async getAllClasses(query: GetClassesQuery) {
-    const { page = 1, limit = 10, search = '', status = '' } = query;
+    const { page = 1, limit = 10, search = '', status = '', courseId = '' } = query;
     const skip = (Number(page) - 1) * Number(limit);
     const filter: any = {
       name: { $regex: search, $options: 'i' },
     };
     if (status) {
       filter.status = status.toUpperCase();
+    }
+    if (courseId) {
+      filter.courseId = new Types.ObjectId(courseId);
     }
     const [total, classes] = await Promise.all([
       ClassModel.countDocuments(filter),

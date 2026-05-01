@@ -12,11 +12,11 @@ import {
   Calculator,
 } from 'lucide-react';
 
-import useFetch from '../hooks/useFetch';
-import { attendanceService } from '../services/attendance.service';
-import type { IAttendanceRecord, IAttendance } from '../types/attendance.type';
-import type { AttendanceStatus, HomeworkStatus } from '../types/attendance.type';
-import { PATHS } from '../utils/constants';
+import useFetch from '../../../hooks/useFetch';
+import { attendanceService } from '../../../services/attendance.service';
+import type { IAttendanceRecord, IAttendance } from '../../../types/attendance.type';
+import type { AttendanceStatus, HomeworkStatus } from '../../../types/attendance.type';
+import { PATHS } from '../../../utils/constants';
 import { toast } from 'react-toastify';
 
 const ATTENDANCE_STATUS_OPTIONS: { value: AttendanceStatus; label: string; bg: string; text: string; border: string }[] = [

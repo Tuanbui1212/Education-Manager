@@ -19,7 +19,6 @@ import { roomService } from '../../../services/room.service';
 import { shiftService } from '../../../services/shift.service';
 import { scheduleService } from '../../../services/schedule.service';
 
-import Button from '../../../components/Button';
 import { getRoomStatusStyles } from '../../../utils/format.util';
 import { PATHS } from '../../../utils/constants';
 

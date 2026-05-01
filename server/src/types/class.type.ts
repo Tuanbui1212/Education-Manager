@@ -24,6 +24,7 @@ export interface GetClassesQuery {
   limit?: number;
   search?: string;
   status?: ClassStatus;
+  courseId?: string;
 }
 
 export interface GetStudentsByClassQuery {
