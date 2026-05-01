@@ -9,6 +9,7 @@ import { EmailService } from './email.service';
 import RoleModel from '../models/role.model';
 import { TransactionModel } from '../models/transaction.model';
 import { ExpenditureModel } from '../models/expenditure.model';
+import { CourseModel } from '@/models/course.model';
 
 export class PayrollService {
   private emailService = new EmailService();
@@ -44,7 +45,8 @@ export class PayrollService {
     }
 
     const year = new Date().getFullYear();
-    const lastTx = await ExpenditureModel.findOne({ code: new RegExp(`^PC-${year}-`) }).sort({ createdAt: -1 });
+    const lastTx = await ExpenditureModel.findOne({ code: new RegExp(`^PC-${year}-`) }).sort({ code: -1 });
+
     let nextNumber = 1;
     if (lastTx && lastTx.code) {
       const parts = lastTx.code.split('-');
@@ -148,9 +150,19 @@ export class PayrollService {
       throw new Error('Không có nhân sự nào đang hoạt động để tính lương.');
     }
 
+    const paidPayrolls = await Payroll.find({
+      month: month,
+      status: PayrollStatus.PAID,
+    }).select('userId');
+
+    const paidUserIds = new Set(paidPayrolls.map((p) => p.userId.toString()));
+
     const bulkOperations = [];
 
     for (const user of activeUsers) {
+      if (paidUserIds.has(user._id.toString())) {
+        continue;
+      }
       const role = user.roleId as any;
       let payrollType = PayrollType.STAFF;
       let teachingHours = 0;
@@ -286,7 +298,7 @@ export class PayrollService {
       }
 
       const year = new Date().getFullYear();
-      const lastTx = await ExpenditureModel.findOne({ code: new RegExp(`^PC-${year}-`) }).sort({ createdAt: -1 });
+      const lastTx = await ExpenditureModel.findOne({ code: new RegExp(`^PC-${year}-`) }).sort({ code: -1 });
 
       let nextNumber = 1;
       if (lastTx && lastTx.code) {
@@ -322,6 +334,7 @@ export class PayrollService {
         { $set: { status: 'PAID' } },
       ).session(session);
       await session.commitTransaction();
+
       return {
         count: updateResult.modifiedCount,
         data: validIds.map((id) => id.toString()),
@@ -386,6 +399,91 @@ export class PayrollService {
     });
 
     return await workbook.xlsx.writeBuffer();
+  }
+
+  async generatePayrollForUsers(payRollIds: string[], month: string): Promise<{ success: boolean; count: number }> {
+    if (!payRollIds || payRollIds.length === 0) {
+      return { success: true, count: 0 };
+    }
+
+    const targetPayrolls = await Payroll.find({
+      _id: { $in: payRollIds },
+    });
+
+    if (targetPayrolls.length === 0) {
+      return { success: true, count: 0 };
+    }
+
+    const validUserIds = targetPayrolls.filter((p) => p.status !== PayrollStatus.PAID).map((p) => p.userId.toString());
+
+    if (validUserIds.length === 0) {
+      return { success: true, count: 0 };
+    }
+
+    const usersToProcess = await UserModel.find({
+      _id: { $in: validUserIds },
+      status: UserStatus.ACTIVE,
+    }).populate('roleId', 'name');
+
+    const bulkOperations = [];
+
+    for (const user of usersToProcess) {
+      const role = user.roleId as any;
+      let payrollType = PayrollType.STAFF;
+      let teachingHours = 0;
+      let hourlyRate = 0;
+      let totalSalary = user.baseSalary || 0;
+      let allowance = 0;
+      let deduction = 0;
+
+      if (role?.name?.toLowerCase().includes('teacher')) {
+        payrollType =
+          user.teacher_info?.type === 'FULL_TIME' ? PayrollType.TEACHER_FULL_TIME : PayrollType.TEACHER_PART_TIME;
+        hourlyRate = user.teacher_info?.hourlyRate || 0;
+        teachingHours = (await this.calculateTeachingHours(user._id.toString(), month)) || 0;
+
+        if (payrollType === PayrollType.TEACHER_PART_TIME) {
+          totalSalary = teachingHours * hourlyRate;
+        } else {
+          totalSalary = (user.baseSalary || 0) + Math.max(0, teachingHours - 50) * hourlyRate;
+        }
+      } else if (role?.name?.toLowerCase().includes('consultant')) {
+        payrollType = PayrollType.STAFF;
+        const commission = await this.calculateCommissionForConsultants(user._id.toString(), month);
+        allowance = commission * 0.1;
+      } else {
+        totalSalary = user.baseSalary || 0;
+      }
+
+      const payrollData = {
+        userId: user._id,
+        month: month,
+        roleName: role.name,
+        payrollType: payrollType,
+        baseSalary: user.baseSalary || 0,
+        hourlyRate: hourlyRate,
+        metrics: { standardDays: 22, actualDays: 22, standardHours: 50, teachingHours: teachingHours },
+        allowance: allowance,
+        deduction: deduction,
+        totalSalary: totalSalary,
+        status: PayrollStatus.PENDING,
+        bankInfo: user.bankInfo || { bankName: '', bankBin: '', accountNo: '', accountName: '' },
+      };
+
+      bulkOperations.push({
+        updateOne: {
+          filter: { userId: user._id, month: month },
+          update: { $set: payrollData },
+          upsert: true,
+        },
+      });
+    }
+
+    if (bulkOperations.length > 0) {
+      await Payroll.bulkWrite(bulkOperations);
+    }
+
+    return { success: true, count: bulkOperations.length };
   }
 }
 

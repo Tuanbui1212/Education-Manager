@@ -15,8 +15,22 @@ export const transactionService = {
 
   getTransactions: async (
     params?: any,
-  ): Promise<{ success: boolean; message: string; data: ITransaction[]; total: number }> => {
+  ): Promise<{ success: boolean; message: string; data: ITransaction[]; total: number; summary: any }> => {
     const response = await axios.get('/transactions', { params });
+    return response.data;
+  },
+
+  createTransactionTest: async (
+    data: Partial<ITransaction>,
+  ): Promise<{ success: boolean; message: string; data?: ITransaction }> => {
+    const response = await axios.post('/transactions/test', data);
+    return response.data;
+  },
+
+  getTransactionsById: async (id: any): Promise<{ success: boolean; message: string; data: ITransaction }> => {
+    const safeId = typeof id === 'object' ? id.id : id;
+
+    const response = await axios.get(`/transactions/${safeId}`);
     return response.data;
   },
 };

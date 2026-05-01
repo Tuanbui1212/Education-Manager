@@ -3,6 +3,7 @@ import { X, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import Button from '../../../../components/Button';
 import { transactionService } from '../../../../services/transaction.service';
 import { expenditureService } from '../../../../services/expenditure.service';
+import type { PaymentMethod } from '../../../../types/transaction.type';
 
 // ==================== TYPES ====================
 
@@ -13,13 +14,13 @@ interface IVoucherForm {
   category: string;
   amount: string;
   description: string;
-  paymentMethod: string;
+  paymentMethod: PaymentMethod;
 }
 
 interface CreateVoucherModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void; // trigger refetch ở parent
+  onSuccess: () => void;
 }
 
 // ==================== CONSTANTS ====================
@@ -67,7 +68,7 @@ const CreateVoucherModal: React.FC<CreateVoucherModalProps> = ({ isOpen, onClose
   };
 
   const handleTypeChange = (type: VoucherType) => {
-    setForm({ ...DEFAULT_FORM, type }); // reset form khi đổi type
+    setForm({ ...DEFAULT_FORM, type });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -83,25 +84,24 @@ const CreateVoucherModal: React.FC<CreateVoucherModalProps> = ({ isOpen, onClose
     setLoading(true);
     try {
       if (form.type === 'IN') {
-        await transactionService.create({
-          type: 'IN',
-          category: form.category,
+        console.log('form:', form);
+        await transactionService.createTransactionTest({
           amount,
-          description: form.description,
+          note: form.description,
           paymentMethod: form.paymentMethod,
         });
       } else {
-        await expenditureService.create({
-          type: 'OPERATION',
-          category: form.category,
-          amount,
-          description: form.description,
-          paymentMethod: form.paymentMethod,
-        });
+        // await expenditureService.create({
+        //   type: 'OPERATION',
+        //   category: form.category,
+        //   amount,
+        //   description: form.description,
+        //   paymentMethod: form.paymentMethod,
+        // });
       }
 
       handleClose();
-      onSuccess(); // trigger refetch
+      onSuccess();
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại');
     } finally {
@@ -179,7 +179,7 @@ const CreateVoucherModal: React.FC<CreateVoucherModalProps> = ({ isOpen, onClose
               <select
                 className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                 value={form.paymentMethod}
-                onChange={(e) => setForm({ ...form, paymentMethod: e.target.value })}
+                onChange={(e) => setForm({ ...form, paymentMethod: e.target.value as PaymentMethod })}
               >
                 {PAYMENT_METHODS.map((m) => (
                   <option key={m.value} value={m.value}>

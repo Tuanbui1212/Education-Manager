@@ -25,5 +25,5 @@ router.put(
   expenditureController.update,
 );
 router.delete('/:id', verifyToken, requirePermission(PERMISSIONS.EXPENDITURE.DELETE), expenditureController.delete);
-
+router.get('/:id', verifyToken, requirePermission(PERMISSIONS.EXPENDITURE.VIEW), expenditureController.getById);
 export default router;

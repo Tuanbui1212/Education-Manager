@@ -41,6 +41,14 @@ export const payrollService = {
     return response.data;
   },
 
+  generatePayrollForUsers: async (
+    userIds: string[],
+    month: string,
+  ): Promise<{ success: boolean; message: string; count: number }> => {
+    const response = await axiosClient.post('/payrolls/generatePayrollForUsers', { userIds, month });
+    return response.data;
+  },
+
   sendPayrollEmail: async (payrollIds: string[]): Promise<{ success: boolean; message: string }> => {
     const response = await axiosClient.post('/payrolls/send-email', { payrollIds });
     return response.data;

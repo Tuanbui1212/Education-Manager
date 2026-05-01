@@ -20,10 +20,6 @@ const TransactionList: React.FC = () => {
     VNPAY: { label: 'VNPAY', color: 'bg-sky-100 text-sky-700' },
   };
 
-  useEffect(() => {
-    fetchTransactions();
-  }, []);
-
   const fetchTransactions = async () => {
     setLoading(true);
     try {

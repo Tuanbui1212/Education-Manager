@@ -1,4 +1,4 @@
-export type PaymentMethod = 'CASH' | 'TRANSFER' | 'CARD';
+export type PaymentMethod = 'CASH' | 'TRANSFER' | 'CARD' | 'VNPAY';
 
 export type TransactionType = 'IN' | 'OUT' | 'REFUND';
 export interface ITransaction {
@@ -15,10 +15,10 @@ export interface ITransaction {
 }
 
 export interface CreateTransactionDTO {
-  invoiceId: string;
+  invoiceId?: string;
   amount: number;
   paymentMethod: PaymentMethod;
-  processedBy: string;
+  processedBy?: string;
   note?: string;
 }
 

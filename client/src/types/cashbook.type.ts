@@ -9,6 +9,11 @@ export type ICashbookItem = {
   paymentMethod: string;
   creatorName: string;
   processedBy?: any;
+  invoiceId?: any;
+  studentId?: any;
   note?: string;
   paidBy?: any;
+  payrollId?: any;
+  receiverId?: any;
+  expenditureType?: any;
 };

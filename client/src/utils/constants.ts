@@ -1,4 +1,5 @@
 import { ClassStatus } from '../types/class.type';
+import type { PaymentMethod } from '../types/transaction.type';
 
 export const API_ROOT = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 export const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
@@ -51,7 +52,6 @@ export const PATHS = {
   //Settings
   SETTINGS_SHIFTS: '/settings/shifts',
   SETTINGS_FIXED_COSTS: '/settings/fixed-costs',
-  SETTINGS_EXPENDITURES: '/settings/expenditures',
 
   SETTINGS_ROOMS: '/settings/rooms',
   SETTINGS_ROOMS_ID: '/settings/rooms/:id',
@@ -71,15 +71,20 @@ export const PATHS = {
   TRAINING_SCHEDULES: '/training/schedules',
   TRAINING_ATTENDANCES: '/training/attendances',
   TRAINING_ATTENDANCES_ID: '/training/attendances/:id',
+
   //Finace
   FINANCE_INVOICES: '/finance/invoices',
   FINANCE_INVOICES_ID: '/finance/invoices/:id',
 
-  FINANCE_TRANSACTIONS: '/finance/transactions',
+  FINANCE_TRANSACTIONS: '/finance/cashbooks',
   FINANCE_TRANSACTIONS_ID: '/finance/transactions/:id',
+
+  FINANCE_EXPENDITURES: '/finance/expenditures',
+  FINANCE_EXPENDITURES_ID: '/finance/expenditures/:id',
 
   FINANCE_REPORT: '/finance/reports',
 
+  //Portal
   STUDENT_PORTAL: '/student-portal',
   STUDENT_ATTENDANCE: '/student-attendance/:id',
 
@@ -119,8 +124,39 @@ export const DAYS_OF_WEEK = [
   { label: 'CN', value: 0 },
 ];
 
+export const NAME_ROLES = [
+  { label: 'Học viên', value: 'STUDENT' },
+  { label: 'Giáo viên', value: 'TEACHER' },
+  { label: 'Tư vấn viên', value: 'CONSULTANT' },
+  { label: 'Nhân viên Sale', value: 'SALE' },
+  { label: 'Quản trị viên', value: 'SUPER ADMIN' },
+  { label: 'Quản lý', value: 'MANAGER' },
+  { label: 'Kế toán', value: 'ACCOUNTANT' },
+  { label: 'Nhân sự', value: 'HR' },
+  { label: 'Nhân viên', value: 'STAFF' },
+];
+
 export const CLASS_STATUS_CONFIG: Record<string, { label: string; bg: string; text: string }> = {
   [ClassStatus.ACTIVE]: { label: 'Đang học', bg: 'bg-blue-100', text: 'text-blue-700' },
   [ClassStatus.COMPLETED]: { label: 'Đã kết thúc', bg: 'bg-gray-100', text: 'text-gray-600' },
   [ClassStatus.UPCOMING]: { label: 'Sắp diễn ra', bg: 'bg-green-100', text: 'text-green-700' },
+};
+
+export const PAYMENT_CONFIG: Record<string, { label: string; className: string }> = {
+  CASH: {
+    label: 'Tiền mặt',
+    className: 'bg-green-100 text-green-700',
+  },
+  TRANSFER: {
+    label: 'Chuyển khoản',
+    className: 'bg-blue-100 text-blue-700',
+  },
+  CARD: {
+    label: 'Quẹt thẻ',
+    className: 'bg-purple-100 text-purple-700',
+  },
+  VNPAY: {
+    label: 'VNPay',
+    className: 'bg-yellow-100 text-yellow-700',
+  },
 };

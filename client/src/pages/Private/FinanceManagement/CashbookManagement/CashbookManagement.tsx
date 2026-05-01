@@ -64,6 +64,7 @@ const DATE_RANGE_OPTIONS: { value: DateRangeType; label: string }[] = [
   { value: 'this_quarter', label: 'Quý này' },
   { value: 'this_year', label: 'Năm nay' },
   { value: 'custom', label: 'Tùy chỉnh...' },
+  { value: 'all', label: 'Tất cả' },
 ];
 
 const CashbookManagement = () => {
@@ -84,35 +85,39 @@ const CashbookManagement = () => {
     switch (dateRange) {
       case 'this_month':
         return {
-          startDate: new Date(now.getFullYear(), now.getMonth(), 1),
-          endDate: new Date(),
+          startDate: new Date(now.getFullYear(), now.getMonth(), 1).toISOString(),
+          endDate: new Date().toISOString(),
         };
 
       case 'last_month':
         return {
-          startDate: new Date(now.getFullYear(), now.getMonth() - 1, 1),
-          endDate: new Date(now.getFullYear(), now.getMonth(), 0),
+          startDate: new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString(),
+          endDate: new Date(now.getFullYear(), now.getMonth(), 0).toISOString(),
         };
 
       case 'this_quarter':
         return {
-          startDate: new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1),
-          endDate: new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3 + 3, 0),
+          startDate: new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1).toISOString(),
+          endDate: new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3 + 3, 0).toISOString(),
         };
 
       case 'this_year':
         return {
-          startDate: new Date(now.getFullYear(), 0, 1),
-          endDate: new Date(now.getFullYear(), 11, 31),
+          startDate: new Date(now.getFullYear(), 0, 1).toISOString(),
+          endDate: new Date(now.getFullYear(), 11, 31).toISOString(),
         };
 
       case 'custom':
         if (!fromDate || !toDate) return null;
         return {
-          startDate: new Date(fromDate),
-          endDate: new Date(toDate),
+          startDate: new Date(fromDate).toISOString(),
+          endDate: new Date(toDate).toISOString(),
         };
-
+      case 'all':
+        return {
+          startDate: '',
+          endDate: '',
+        };
       default:
         return null;
     }
@@ -122,8 +127,8 @@ const CashbookManagement = () => {
     page,
     limit,
     type,
-    startDate: range?.startDate.toISOString(),
-    endDate: range?.endDate.toISOString(),
+    startDate: range?.startDate,
+    endDate: range?.endDate,
     search,
   };
 
@@ -137,11 +142,18 @@ const CashbookManagement = () => {
     toDate,
   ]);
 
-  console.log('data:', data);
-
   const loadingSummary = loading;
 
   const totalPages = Math.ceil(totalCount / queryParams.limit);
+
+  const handleNavigate = (item: any) => {
+    if (item.type === 'IN') {
+      return navigate(PATHS.FINANCE_TRANSACTIONS_ID.replace(':id', item._id) + '?type=IN&table=transaction');
+    } else if (item.type === 'OUT' && item.invoiceId.status === 'REFUNDED') {
+      return navigate(PATHS.FINANCE_TRANSACTIONS_ID.replace(':id', item._id) + '?type=OUT&table=transaction');
+    }
+    return navigate(PATHS.FINANCE_EXPENDITURES_ID.replace(':id', item._id) + '?type=OUT&table=expenditure');
+  };
 
   return (
     <div className="p-4 sm:p-8 w-full min-h-screen bg-gray-50/50">
@@ -271,7 +283,10 @@ const CashbookManagement = () => {
                 type="text"
                 placeholder="Tìm mã phiếu, nội dung..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
                 className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
               />
             </div>
@@ -288,7 +303,6 @@ const CashbookManagement = () => {
                 <th className="p-4 font-semibold">Thời gian</th>
                 <th className="p-4 font-semibold">Mã Phiếu</th>
                 <th className="p-4 font-semibold">Loại</th>
-                {/* <th className="p-4 font-semibold">Danh mục</th> */}
                 <th className="p-4 font-semibold w-1/3">Nội dung </th>
                 <th className="p-4 font-semibold text-right">Số tiền (VNĐ)</th>
                 <th className="p-4 font-semibold text-center">Hình thức</th>
@@ -315,11 +329,13 @@ const CashbookManagement = () => {
                       <div className="font-medium text-gray-800">{formatDate(item.createdAt)}</div>
                       <div className="text-xs text-gray-400">{item.createdAt.split('T')[1]?.substring(0, 5)}</div>
                     </td>
-                    <td className="p-4">
-                      <span className="font-mono text-sm font-semibold text-blue-600">{item.code}</span>
+                    <td className="p-4 cursor-pointer" onClick={() => handleNavigate(item)}>
+                      <span className="font-mono text-sm font-semibold text-blue-600 hover:text-blue-400">
+                        {item.code}
+                      </span>
                     </td>
                     <td className="p-4">{renderTypeBadge(item.type)}</td>
-                    {/* <td className="p-4 text-sm font-medium text-gray-700">{item.category}</td> */}
+
                     <td className="p-4 text-sm text-gray-600">{item.description || item.note}</td>
                     <td className="p-4 text-right">
                       <span

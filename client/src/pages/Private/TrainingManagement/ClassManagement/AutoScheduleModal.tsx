@@ -9,22 +9,14 @@ import { shiftService } from '../../../../services/shift.service';
 import { scheduleService } from '../../../../services/schedule.service';
 import useFetch from '../../../../hooks/useFetch';
 
+import { DAYS_OF_WEEK } from '../../../../utils/constants';
+
 interface AutoScheduleModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
   classData: any;
 }
-
-const DAYS_OF_WEEK = [
-  { label: 'T2', value: 1 },
-  { label: 'T3', value: 2 },
-  { label: 'T4', value: 3 },
-  { label: 'T5', value: 4 },
-  { label: 'T6', value: 5 },
-  { label: 'T7', value: 6 },
-  { label: 'CN', value: 0 },
-];
 
 const AutoScheduleModal: React.FC<AutoScheduleModalProps> = ({ isOpen, onClose, onSuccess, classData }) => {
   const [startDate, setStartDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
