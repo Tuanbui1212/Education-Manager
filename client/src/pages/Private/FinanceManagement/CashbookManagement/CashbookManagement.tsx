@@ -1,16 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import {
-  Search,
-  Download,
-  Plus,
-  ArrowUpRight,
-  ArrowDownRight,
-  Wallet,
-  TrendingUp,
-  TrendingDown,
-  RefreshCcw,
-  Calendar,
-} from 'lucide-react';
+import { Search, Download, Plus, ArrowUpRight, ArrowDownRight, RefreshCcw, Calendar } from 'lucide-react';
 
 import { formatCurrency, formatDate } from '../../../../utils/format.util';
 import Button from '../../../../components/Button';
@@ -132,7 +121,7 @@ const CashbookManagement = () => {
     search,
   };
 
-  const { data, loading, error, refetch, totalCount, summary } = useFetch(cashbookService.getCashBook, queryParams, [
+  const { data, loading, error, refetch, totalCount } = useFetch(cashbookService.getCashBook, queryParams, [
     page,
     limit,
     type,
@@ -141,8 +130,6 @@ const CashbookManagement = () => {
     fromDate,
     toDate,
   ]);
-
-  const loadingSummary = loading;
 
   const totalPages = Math.ceil(totalCount / queryParams.limit);
 
@@ -160,7 +147,7 @@ const CashbookManagement = () => {
     <div className="p-4 sm:p-8 w-full min-h-screen bg-gray-50/50">
       {/* ===== HEADER ===== */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <PageHeader title="Sổ Quỹ & Báo cáo Thu Chi" />
+        <PageHeader title="Lịch sử giao dịch" />
         <div className="flex gap-3">
           <Button variant="outline" icon={<Download size={18} />} className="bg-white">
             Xuất Báo cáo
@@ -168,55 +155,6 @@ const CashbookManagement = () => {
           <Button variant="primary" icon={<Plus size={18} />} onClick={() => setIsModalOpen(true)}>
             Tạo Phiếu Thủ Công
           </Button>
-        </div>
-      </div>
-
-      {/* ===== SUMMARY CARDS ===== */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
-          <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0">
-            <TrendingUp size={28} />
-          </div>
-          <div>
-            <p className="text-sm text-gray-500 font-medium mb-1">Tổng Thu</p>
-            <p className="text-2xl font-bold text-gray-800">
-              {loadingSummary ? '---' : formatCurrency(summary.totalIn)}
-            </p>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
-          <div className="w-14 h-14 bg-orange-50 text-orange-600 rounded-2xl flex items-center justify-center shrink-0">
-            <TrendingDown size={28} />
-          </div>
-          <div>
-            <p className="text-sm text-gray-500 font-medium mb-1">Tổng Chi</p>
-            <p className="text-2xl font-bold text-gray-800">
-              {loadingSummary ? '---' : formatCurrency(summary.totalOut)}
-            </p>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
-          <div className="w-14 h-14 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center shrink-0">
-            <RefreshCcw size={28} />
-          </div>
-          <div>
-            <p className="text-sm text-gray-500 font-medium mb-1">Hoàn Tiền</p>
-            <p className="text-2xl font-bold text-gray-800">
-              {loadingSummary ? '---' : formatCurrency(summary.totalRefund)}
-            </p>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-2xl shadow-md flex items-center gap-4 text-white hover:shadow-lg transition-all transform hover:-translate-y-1">
-          <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center shrink-0">
-            <Wallet size={28} />
-          </div>
-          <div>
-            <p className="text-sm text-blue-100 font-medium mb-1">Tồn Quỹ Kỳ Này</p>
-            <p className="text-2xl font-bold">{loadingSummary ? '---' : formatCurrency(summary.balance)}</p>
-          </div>
         </div>
       </div>
 
@@ -228,7 +166,10 @@ const CashbookManagement = () => {
             {(['ALL', 'IN', 'OUT'] as const).map((tab) => (
               <button
                 key={tab}
-                onClick={() => setTab(tab)}
+                onClick={() => {
+                  setTab(tab);
+                  setPage(1);
+                }}
                 className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${
                   type === tab
                     ? 'bg-white text-blue-600 shadow-sm border border-gray-200/50'
@@ -248,7 +189,10 @@ const CashbookManagement = () => {
               <select
                 className="bg-transparent border-none outline-none text-sm font-medium text-gray-700 cursor-pointer"
                 value={dateRange}
-                onChange={(e) => setDateRange(e.target.value as DateRangeType)}
+                onChange={(e) => {
+                  setDateRange(e.target.value as DateRangeType);
+                  setPage(1);
+                }}
               >
                 {DATE_RANGE_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -304,7 +248,7 @@ const CashbookManagement = () => {
                 <th className="p-4 font-semibold">Thời gian</th>
                 <th className="p-4 font-semibold">Mã Phiếu</th>
                 <th className="p-4 font-semibold">Loại</th>
-                <th className="p-4 font-semibold w-1/3">Nội dung </th>
+                <th className="p-4 font-semibold w-1/3">Nội dung</th>
                 <th className="p-4 font-semibold text-right">Số tiền (VNĐ)</th>
                 <th className="p-4 font-semibold text-center">Hình thức</th>
                 <th className="p-4 font-semibold text-center">Người lập</th>
@@ -336,7 +280,6 @@ const CashbookManagement = () => {
                       </span>
                     </td>
                     <td className="p-4">{renderTypeBadge(item.type)}</td>
-
                     <td className="p-4 text-sm text-gray-600">{item.description || item.note}</td>
                     <td className="p-4 text-right">
                       <span

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Users,
   BookOpen,
@@ -12,36 +13,23 @@ import {
   Wallet,
   MapPin,
   ChevronRight,
+  TrendingUp,
+  TrendingDown,
+  BarChart2,
   type LucideIcon,
 } from 'lucide-react';
+import { PATHS } from '../../utils/constants';
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
-type PaymentMethod = 'CASH' | 'TRANSFER' | 'MOMO';
 type ScheduleStatus = 'ongoing' | 'upcoming' | 'done';
 
 interface Stats {
   totalStudents: number;
   totalClasses: number;
   monthlyRevenue: number;
+  monthlyExpense: number;
   pendingInvoices: number;
-}
-
-interface Transaction {
-  code: string;
-  processedBy: { fullName: string };
-  amount: number;
-  paymentMethod: PaymentMethod;
-  createdAt: string;
-}
-
-interface Debtor {
-  id: number;
-  name: string;
-  className: string;
-  debt: number;
-  dueDate: string;
-  overdueDays: number;
 }
 
 interface ScheduleSession {
@@ -67,54 +55,9 @@ const MOCK_STATS: Stats = {
   totalStudents: 142,
   totalClasses: 18,
   monthlyRevenue: 45_500_000,
+  monthlyExpense: 18_200_000,
   pendingInvoices: 7,
 };
-
-const MOCK_TRANSACTIONS: Transaction[] = [
-  {
-    code: 'GD-0091',
-    processedBy: { fullName: 'Nguyễn Văn An' },
-    amount: 2_500_000,
-    paymentMethod: 'CASH',
-    createdAt: '29/04/2024',
-  },
-  {
-    code: 'GD-0090',
-    processedBy: { fullName: 'Trần Thị Bình' },
-    amount: 1_800_000,
-    paymentMethod: 'TRANSFER',
-    createdAt: '28/04/2024',
-  },
-  {
-    code: 'GD-0089',
-    processedBy: { fullName: 'Lê Hoàng Cường' },
-    amount: 3_200_000,
-    paymentMethod: 'CASH',
-    createdAt: '28/04/2024',
-  },
-  {
-    code: 'GD-0088',
-    processedBy: { fullName: 'Phạm Minh Đức' },
-    amount: 900_000,
-    paymentMethod: 'TRANSFER',
-    createdAt: '27/04/2024',
-  },
-  {
-    code: 'GD-0087',
-    processedBy: { fullName: 'Hoàng Thị Emy' },
-    amount: 4_500_000,
-    paymentMethod: 'MOMO',
-    createdAt: '26/04/2024',
-  },
-];
-
-const MOCK_DEBTORS: Debtor[] = [
-  { id: 1, name: 'Nguyễn Bảo Châu', className: 'Toán K5', debt: 3_000_000, dueDate: '15/04', overdueDays: 14 },
-  { id: 2, name: 'Trần Quốc Hùng', className: 'Anh Văn K3', debt: 1_800_000, dueDate: '18/04', overdueDays: 11 },
-  { id: 3, name: 'Lê Thị Hoa', className: 'Lý Nâng Cao', debt: 2_500_000, dueDate: '20/04', overdueDays: 9 },
-  { id: 4, name: 'Đinh Văn Khoa', className: 'Hóa K4', debt: 900_000, dueDate: '22/04', overdueDays: 7 },
-  { id: 5, name: 'Vũ Ngọc Lan', className: 'Văn K2', debt: 1_200_000, dueDate: '25/04', overdueDays: 4 },
-];
 
 const MOCK_SCHEDULE: ScheduleSession[] = [
   {
@@ -156,12 +99,6 @@ const MOCK_SCHEDULE: ScheduleSession[] = [
 ];
 
 // ─── CONFIGS ──────────────────────────────────────────────────────────────────
-
-const PAYMENT_CONFIG: Record<PaymentMethod, { label: string; className: string }> = {
-  CASH: { label: 'Tiền mặt', className: 'bg-green-100 text-green-700' },
-  TRANSFER: { label: 'Chuyển khoản', className: 'bg-blue-100 text-blue-700' },
-  MOMO: { label: 'MoMo', className: 'bg-pink-100 text-pink-700' },
-};
 
 const STATUS_CONFIG: Record<ScheduleStatus, { label: string; className: string; dot: string }> = {
   ongoing: { label: 'Đang học', className: 'bg-green-100 text-green-700', dot: 'bg-green-500' },
@@ -213,7 +150,7 @@ const ACTION_ITEMS: ActionItem[] = [
 const formatCurrency = (value: number | undefined): string =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value ?? 0);
 
-// ─── SKELETON ────────────────────────────────────────────────────────────────
+// ─── SKELETON ─────────────────────────────────────────────────────────────────
 
 const Skeleton = ({ className = '' }: { className?: string }) => (
   <div className={`animate-pulse bg-gray-200 rounded ${className}`} />
@@ -246,7 +183,81 @@ const StatCard = ({ title, value, icon: Icon, color, bg, loading }: StatCardProp
   </div>
 );
 
-// ─── STEP 2: QuickActions ──────────────────────────────────────────────────────
+// ─── STEP 2: FinanceSummary ───────────────────────────────────────────────────
+
+interface FinanceSummaryProps {
+  stats: Stats | null;
+  loading: boolean;
+  onViewReport: () => void;
+}
+
+const FinanceSummary = ({ stats, loading, onViewReport }: FinanceSummaryProps) => {
+  const netProfit = (stats?.monthlyRevenue ?? 0) - (stats?.monthlyExpense ?? 0);
+  const isProfit = netProfit >= 0;
+
+  return (
+    <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl shadow-md p-6 text-white">
+      <div className="flex justify-between items-start mb-5">
+        <div>
+          <p className="text-sm font-medium text-blue-100">Tài chính tháng này</p>
+          <p className="text-xs text-blue-200 mt-0.5">Tổng quan nhanh</p>
+        </div>
+        <button
+          onClick={onViewReport}
+          className="flex items-center gap-1 text-xs font-semibold bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-lg transition-colors"
+        >
+          Xem báo cáo <ChevronRight size={13} />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        {/* Doanh thu */}
+        <div className="bg-white/10 rounded-xl p-3">
+          <div className="flex items-center gap-1.5 mb-2">
+            <TrendingUp size={13} className="text-emerald-300" />
+            <p className="text-xs font-medium text-blue-100">Doanh thu</p>
+          </div>
+          {loading ? (
+            <Skeleton className="h-5 w-full bg-white/20" />
+          ) : (
+            <p className="text-sm font-bold truncate">{formatCurrency(stats?.monthlyRevenue)}</p>
+          )}
+        </div>
+
+        {/* Chi phí */}
+        <div className="bg-white/10 rounded-xl p-3">
+          <div className="flex items-center gap-1.5 mb-2">
+            <TrendingDown size={13} className="text-orange-300" />
+            <p className="text-xs font-medium text-blue-100">Chi phí</p>
+          </div>
+          {loading ? (
+            <Skeleton className="h-5 w-full bg-white/20" />
+          ) : (
+            <p className="text-sm font-bold truncate">{formatCurrency(stats?.monthlyExpense)}</p>
+          )}
+        </div>
+
+        {/* Lợi nhuận */}
+        <div className="bg-white/10 rounded-xl p-3">
+          <div className="flex items-center gap-1.5 mb-2">
+            <BarChart2 size={13} className={isProfit ? 'text-emerald-300' : 'text-red-300'} />
+            <p className="text-xs font-medium text-blue-100">Lợi nhuận</p>
+          </div>
+          {loading ? (
+            <Skeleton className="h-5 w-full bg-white/20" />
+          ) : (
+            <p className={`text-sm font-bold truncate ${isProfit ? 'text-emerald-300' : 'text-red-300'}`}>
+              {isProfit ? '+' : ''}
+              {formatCurrency(netProfit)}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── STEP 3: QuickActions ─────────────────────────────────────────────────────
 
 interface QuickActionsProps {
   onNavigate: (path: string) => void;
@@ -270,104 +281,7 @@ const QuickActions = ({ onNavigate }: QuickActionsProps) => (
   </div>
 );
 
-// ─── STEP 3: RecentTransactions ───────────────────────────────────────────────
-
-interface RecentTransactionsProps {
-  data: Transaction[];
-  loading: boolean;
-}
-
-const RecentTransactions = ({ data, loading }: RecentTransactionsProps) => (
-  <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-    <div className="flex justify-between items-center mb-4">
-      <h2 className="text-lg font-bold text-gray-800">Giao dịch gần đây</h2>
-      <button className="text-sm text-blue-600 hover:underline flex items-center gap-1">
-        Xem tất cả <ChevronRight className="w-3 h-3" />
-      </button>
-    </div>
-    <div className="overflow-x-auto">
-      <table className="w-full text-left">
-        <thead>
-          <tr className="border-b border-gray-200 text-xs text-gray-500 uppercase tracking-wide">
-            <th className="pb-3 font-medium">Mã GD</th>
-            <th className="pb-3 font-medium">Người thực hiện</th>
-            <th className="pb-3 font-medium">Số tiền</th>
-            <th className="pb-3 font-medium">Hình thức</th>
-            <th className="pb-3 font-medium">Ngày</th>
-          </tr>
-        </thead>
-        <tbody className="text-sm">
-          {loading
-            ? Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i} className="border-b border-gray-100">
-                  {Array.from({ length: 5 }).map((_, j) => (
-                    <td key={j} className="py-3 pr-4">
-                      <Skeleton className="h-4 w-full" />
-                    </td>
-                  ))}
-                </tr>
-              ))
-            : data.map((tx, idx) => (
-                <tr key={idx} className="border-b border-gray-100 last:border-0 hover:bg-gray-50">
-                  <td className="py-3 pr-4 font-medium text-gray-800">{tx.code}</td>
-                  <td className="py-3 pr-4 text-gray-600">{tx.processedBy.fullName}</td>
-                  <td className="py-3 pr-4 font-semibold text-gray-800">{formatCurrency(tx.amount)}</td>
-                  <td className="py-3 pr-4">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${PAYMENT_CONFIG[tx.paymentMethod].className}`}
-                    >
-                      {PAYMENT_CONFIG[tx.paymentMethod].label}
-                    </span>
-                  </td>
-                  <td className="py-3 text-gray-500">{tx.createdAt}</td>
-                </tr>
-              ))}
-        </tbody>
-      </table>
-    </div>
-  </div>
-);
-
-// ─── STEP 4: DebtList ─────────────────────────────────────────────────────────
-
-interface DebtListProps {
-  data: Debtor[];
-  loading: boolean;
-}
-
-const DebtList = ({ data, loading }: DebtListProps) => (
-  <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-    <div className="flex justify-between items-center mb-4">
-      <h2 className="text-lg font-bold text-gray-800">Công nợ học phí</h2>
-      <button className="text-sm text-blue-600 hover:underline flex items-center gap-1">
-        Xem tất cả <ChevronRight className="w-3 h-3" />
-      </button>
-    </div>
-    <div className="space-y-3">
-      {loading
-        ? Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)
-        : data.map((debtor) => (
-            <div
-              key={debtor.id}
-              className="flex items-center justify-between p-3 rounded-lg bg-red-50 border border-red-100"
-            >
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-gray-800 truncate">{debtor.name}</p>
-                <p className="text-xs text-gray-500">
-                  {debtor.className} · Hạn: {debtor.dueDate}
-                </p>
-              </div>
-              <div className="text-right shrink-0 ml-2">
-                <p className="text-sm font-bold text-red-600">{formatCurrency(debtor.debt)}</p>
-                <p className="text-xs text-red-400">Quá hạn {debtor.overdueDays} ngày</p>
-              </div>
-            </div>
-          ))}
-    </div>
-  </div>
-);
-
-// ─── STEP 5: TeacherScheduleToday ─────────────────────────────────────────────
+// ─── STEP 4: TeacherScheduleToday ─────────────────────────────────────────────
 
 interface TeacherScheduleTodayProps {
   data: ScheduleSession[];
@@ -433,21 +347,17 @@ const TeacherScheduleToday = ({ data, loading }: TeacherScheduleTodayProps) => {
   );
 };
 
-// ─── STEP 6: HomePage ─────────────────────────────────────────────────────────
+// ─── STEP 5: HomePage ─────────────────────────────────────────────────────────
 
 export default function HomePage() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<Stats | null>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [debtors, setDebtors] = useState<Debtor[]>([]);
   const [schedule, setSchedule] = useState<ScheduleSession[]>([]);
 
-  // Simulate useFetch (loading → data)
   useEffect(() => {
     const t = setTimeout(() => {
       setStats(MOCK_STATS);
-      setTransactions(MOCK_TRANSACTIONS);
-      setDebtors(MOCK_DEBTORS);
       setSchedule(MOCK_SCHEDULE);
       setLoading(false);
     }, 1800);
@@ -504,23 +414,14 @@ export default function HomePage() {
         ))}
       </div>
 
-      {/* Row 2: Quick Actions + Teacher Schedule */}
+      {/* Row 2: Finance Summary + Quick Actions + Teacher Schedule */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 flex flex-col gap-6">
+          <FinanceSummary stats={stats} loading={loading} onViewReport={() => navigate(PATHS.FINANCE_REPORT)} />
           <QuickActions onNavigate={(path) => console.log(`navigate → PATHS.${path}`)} />
         </div>
         <div className="lg:col-span-2">
           <TeacherScheduleToday data={schedule} loading={loading} />
-        </div>
-      </div>
-
-      {/* Row 3: Debt List + Recent Transactions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1">
-          <DebtList data={debtors} loading={loading} />
-        </div>
-        <div className="lg:col-span-2">
-          <RecentTransactions data={transactions} loading={loading} />
         </div>
       </div>
     </div>
