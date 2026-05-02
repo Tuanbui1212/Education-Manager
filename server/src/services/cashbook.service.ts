@@ -2,6 +2,7 @@ import { ExpenditureModel } from '../models/expenditure.model';
 import { TransactionModel } from '../models/transaction.model';
 import { InvoiceModel } from '../models/invoice.model';
 import { IInvoice } from '../types/invoice.type';
+import mongoose from 'mongoose';
 
 export class CashBookService {
   async getCashBook(query: any) {
@@ -131,7 +132,9 @@ export class CashBookService {
       return { type: 'OUT', ...transaction };
     } else if (type === 'OUT' && table === 'expenditure') {
       const expenditure = await ExpenditureModel.aggregate([
-        { $match: { _id: id } },
+        {
+          $match: { _id: new mongoose.Types.ObjectId(id) },
+        },
         {
           $lookup: {
             from: 'payrolls',
@@ -198,7 +201,7 @@ export class CashBookService {
               },
               {
                 $project: {
-                  fullname: 1,
+                  fullName: 1,
                 },
               },
             ],
@@ -210,8 +213,8 @@ export class CashBookService {
         },
       ]);
 
-      if (!expenditure) throw new Error('Không tìm thấy chi tiêu');
-      return { type: 'OUT', ...expenditure };
+      if (!expenditure.length) throw new Error('Không tìm thấy chi tiêu');
+      return { type: 'OUT', ...expenditure[0] };
     } else {
       throw new Error('Không tìm thấy bảng thu chi');
     }

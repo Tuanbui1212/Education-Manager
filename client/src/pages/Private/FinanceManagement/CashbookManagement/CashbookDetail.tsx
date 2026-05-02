@@ -22,6 +22,7 @@ import {
 import { useParams, useLocation } from 'react-router-dom';
 import useFetch from '../../../../hooks/useFetch';
 import { cashbookService } from '../../../../services/cashbook.service';
+import { NAME_ROLES } from '../../../../utils/constants';
 
 // ==================== HELPERS ====================
 
@@ -152,7 +153,11 @@ const ReceiverPayrollCard = ({ receiver, payroll }: { receiver: any; payroll: an
       </div>
       <div className="space-y-3">
         <InfoRow icon={User} label="Họ và tên" value={receiver.fullName} />
-        <InfoRow icon={Tag} label="Vị trí" value={receiver.role} />
+        <InfoRow
+          icon={Tag}
+          label="Vị trí"
+          value={NAME_ROLES.find((r) => r.value.toUpperCase() === receiver?.role?.name.toUpperCase())?.label}
+        />
         <InfoRow icon={Hash} label="Email" value={receiver.email} />
         <InfoRow icon={Hash} label="Số điện thoại" value={receiver.phone} />
       </div>
@@ -167,7 +172,13 @@ const ReceiverPayrollCard = ({ receiver, payroll }: { receiver: any; payroll: an
         <h4 className="font-bold text-gray-700 text-sm">Bảng lương tháng {payroll.month}</h4>
       </div>
       <div className="space-y-3">
-        <InfoRow icon={Tag} label="Vị trí" value={payroll.roleName} />
+        <InfoRow
+          icon={Tag}
+          label="Vị trí"
+          value={
+            NAME_ROLES.find((r) => r.value.toUpperCase() === payroll.roleName.toUpperCase())?.label || payroll.roleName
+          }
+        />
         <InfoRow icon={Banknote} label="Lương cứng" value={formatCurrency(payroll.baseSalary)} />
         <InfoRow
           icon={ArrowUpRight}
@@ -201,11 +212,10 @@ const CashbookDetail = () => {
   const table = searchParams.get('table');
 
   const { data } = useFetch(cashbookService.getCashBookById, { id, type, table }, [id, type, table]);
+  console.log(data);
 
   const isIN = data?.type === 'IN';
   const accentColor = isIN ? 'from-emerald-500 to-teal-600' : 'from-orange-500 to-amber-600';
-  // const hasSalary = 'payroll' in data && data.payroll;
-  // const hasStudent = 'student' in data && data.student;
 
   return (
     <div className="min-h-screen bg-gray-50/60 p-4 sm:p-8">
@@ -260,7 +270,7 @@ const CashbookDetail = () => {
             </div>
             <h4 className="font-bold text-gray-700 text-sm">Hình thức</h4>
           </div>
-          <p className="text-xl font-bold text-gray-800">{PAYMENT_LABELS[data?.paymentMethod || ''] || '—'}</p>
+          <p className="text-xl font-bold text-gray-800">{PAYMENT_LABELS[data?.paymentMethod || 'TRANSFER'] || '—'}</p>
         </div>
 
         {/* Danh mục (chỉ OUT OPERATION) */}
@@ -321,7 +331,7 @@ const CashbookDetail = () => {
           <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3 px-1">
             Thông tin nhân viên & Bảng lương
           </h3>
-          <ReceiverPayrollCard receiver={data?.receiverId} payroll={data?.payrollId} />
+          <ReceiverPayrollCard receiver={data?.receiver} payroll={data?.payroll} />
         </div>
       )}
     </div>

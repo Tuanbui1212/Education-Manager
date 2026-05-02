@@ -16,4 +16,8 @@ export type ICashbookItem = {
   payrollId?: any;
   receiverId?: any;
   expenditureType?: any;
+  receiver?: any;
+  payroll?: any;
+  fixedCost?: any;
+  time?: string;
 };

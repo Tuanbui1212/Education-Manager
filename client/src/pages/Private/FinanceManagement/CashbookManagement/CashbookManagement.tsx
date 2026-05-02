@@ -149,10 +149,11 @@ const CashbookManagement = () => {
   const handleNavigate = (item: any) => {
     if (item.type === 'IN') {
       return navigate(PATHS.FINANCE_TRANSACTIONS_ID.replace(':id', item._id) + '?type=IN&table=transaction');
-    } else if (item.type === 'OUT' && item.invoiceId.status === 'REFUNDED') {
+    } else if (item.type === 'OUT' && item.invoiceId?.status === 'REFUNDED') {
       return navigate(PATHS.FINANCE_TRANSACTIONS_ID.replace(':id', item._id) + '?type=OUT&table=transaction');
     }
-    return navigate(PATHS.FINANCE_EXPENDITURES_ID.replace(':id', item._id) + '?type=OUT&table=expenditure');
+
+    return navigate(PATHS.FINANCE_TRANSACTIONS_ID.replace(':id', item._id) + '?type=OUT&table=expenditure');
   };
 
   return (
