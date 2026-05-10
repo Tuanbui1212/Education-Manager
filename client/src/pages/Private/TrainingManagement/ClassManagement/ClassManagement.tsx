@@ -294,7 +294,7 @@ const ClassManagement = () => {
         <Button
           variant="primary"
           icon={<Plus size={20} />}
-          onClick={() => setShowClassModal(true)}
+          onClick={() => navigate(PATHS.TRAINING_CLASSES_CREATE)}
           className="rounded-xl shadow-lg shadow-primary/20"
         >
           Tạo lớp học mới

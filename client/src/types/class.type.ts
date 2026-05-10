@@ -15,13 +15,17 @@ export type ClassStatus = (typeof ClassStatus)[keyof typeof ClassStatus];
 export interface IClass {
   _id?: string;
   name: string;
-  courseId: string | { _id: string; title: string; basePrice?: number };
+  courseId: string | { _id: string; title: string; basePrice?: number; totalLessons?: number };
   teacherId: string | { _id: string; fullName: string };
-  roomId: string | { _id: string; name: string };
+  roomId: string | { _id: string; name: string; capacity?: number };
   documents?: string[];
   studentIds?: (string | { _id: string; fullName: string })[];
   startDate?: string | Date;
   status: ClassStatus;
+  totalLessons?: number;
+  maxNumberOfStudents?: number;
+  lessonsPerWeek?: number;
+  optionalRequirements?: string[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -56,6 +60,9 @@ export interface IPopulatedClass {
   name: string;
   status: ClassStatus;
   startDate?: string | Date;
+  totalLessons?: number;
+  maxNumberOfStudents?: number;
+  lessonsPerWeek?: number;
   createdAt?: string;
   updatedAt?: string;
 }

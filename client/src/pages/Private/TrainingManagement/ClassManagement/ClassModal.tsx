@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { X, BookOpen, UserCheck, DoorOpen, Activity } from 'lucide-react';
+import { X, BookOpen, UserCheck, DoorOpen, Activity, FileText } from 'lucide-react';
 
 import Button from '../../../../components/Button';
 import InputField from '../../../../components/InputField';
@@ -27,6 +27,7 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, onSubmit, init
     teacherId: '',
     roomId: '',
     status: 'PENDING',
+    totalLessons: 0,
   });
 
   console.log('Form Data:', formData);
@@ -56,6 +57,7 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, onSubmit, init
         teacherId: getSafeId(initialData.teacherId),
         roomId: getSafeId(initialData.roomId),
         status: initialData.status || 'UPCOMING',
+        totalLessons: initialData.totalLessons || 0,
       });
     } else {
       setFormData({
@@ -64,6 +66,7 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, onSubmit, init
         teacherId: '',
         roomId: '',
         status: 'PENDING',
+        totalLessons: 0,
       });
     }
 
@@ -78,6 +81,9 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, onSubmit, init
     if (!formData.courseId) newErrors.courseId = 'Vui lòng chọn khóa học';
     if (!formData.teacherId) newErrors.teacherId = 'Vui lòng chọn giáo viên';
     if (!formData.roomId) newErrors.roomId = 'Vui lòng chọn phòng học';
+    if (!formData.totalLessons || formData.totalLessons <= 0 || !Number.isInteger(formData.totalLessons)) {
+      newErrors.totalLessons = 'Tổng số bài học phải là số nguyên > 0';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -132,7 +138,7 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, onSubmit, init
           </button>
         </div>
 
-        <form className="p-6 space-y-5" onSubmit={handleSubmit}>
+        <form className="p-6 space-y-5 max-h-[80vh] overflow-y-auto" onSubmit={handleSubmit}>
           <InputField
             label="Tên lớp học"
             icon={<BookOpen size={16} />}
@@ -185,6 +191,17 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, onSubmit, init
             initialValue={
               initialData?.roomId && (initialData.roomId as any).name ? (initialData.roomId as any).name : ''
             }
+          />
+
+          <InputField
+            label="Tổng số buổi học"
+            icon={<FileText size={16} />}
+            type="number"
+            value={formData.totalLessons || ''}
+            onChange={(e) => setFormData({ ...formData, totalLessons: Number(e.target.value) })}
+            onFocus={() => clearError('totalLessons')}
+            error={errors.totalLessons}
+            placeholder="Vd: 24"
           />
 
           {initialData && (

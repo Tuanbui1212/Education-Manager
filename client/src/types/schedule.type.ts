@@ -22,6 +22,7 @@ export interface GetSchedulesParams {
   roomId?: string;
   teacherId?: string;
   search?: string;
+  date?: string;
 }
 
 export interface ScheduleModalProps {
@@ -29,6 +30,14 @@ export interface ScheduleModalProps {
   onClose: () => void;
   onSubmit: (data: Partial<ISchedule>) => void;
   initialData?: ISchedule;
+}
+
+export interface BulkScheduleItem {
+  classId: string;
+  shiftId: string;
+  roomId: string;
+  teacherId: string;
+  date: Date | string;
 }
 
 export type ScheduleStatus = 'ongoing' | 'upcoming' | 'done';

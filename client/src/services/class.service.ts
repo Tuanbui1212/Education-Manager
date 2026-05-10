@@ -18,8 +18,12 @@ export const classService = {
   },
 
   createClass: async (data: Partial<IClass>) => {
-    const response = await axios.post('/classes', data);
-    return response.data;
+    try {
+      const response = await axios.post('/classes', data);
+      return response.data;
+    } catch (error: any) {
+      return error.response.data;
+    }
   },
 
   updateClass: async (id: string, data: Partial<IClass>) => {

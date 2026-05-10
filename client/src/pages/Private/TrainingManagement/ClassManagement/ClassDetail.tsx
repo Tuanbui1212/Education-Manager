@@ -114,7 +114,7 @@ const ClassDetail = () => {
     title: '',
     message: '',
     type: 'success' as 'success' | 'danger' | 'warning' | 'info',
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   const [confirmDeleteAll, setConfirmDeleteAll] = useState({
@@ -416,7 +416,7 @@ const ClassDetail = () => {
                     className="cursor-pointer hover:text-rose-600 transition-colors"
                     onClick={() => navigate(PATHS.SETTINGS_ROOMS_ID.replace(':id', classData.roomId?._id as string))}
                   >
-                    {classData.roomId?.name || 'Chưa xếp phòng / Học Online'}
+                    {classData.roomId?.name || 'Chưa xếp phòng'}
                   </span>
                 </div>
               </div>
@@ -508,7 +508,7 @@ const ClassDetail = () => {
               <div className="flex flex-col items-center justify-center py-8 text-gray-400 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
                 <Calendar size={44} className="mb-3 opacity-20" />
                 <p className="text-sm font-medium text-gray-500 mb-3">Lớp học này chưa có thời khóa biểu</p>
-                <Button variant="primary" onClick={() => setShowAutoScheduleModal(true)}>
+                <Button variant="primary" onClick={() => navigate(PATHS.TRAINING_CLASSES_CREATE_SCHEDULE.replace(':id', id as string))}>
                   Tạo lịch học ngay
                 </Button>
               </div>
@@ -534,7 +534,7 @@ const ClassDetail = () => {
                     placeholder="Tìm tên, SĐT học viên..."
                     value={searchInput}
                     setSearchInput={setSearchInput}
-                    setPage={() => {}}
+                    setPage={() => { }}
                   />
                 </div>
                 <Button

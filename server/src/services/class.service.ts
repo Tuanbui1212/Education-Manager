@@ -40,9 +40,11 @@ export class ClassService {
       }
     }
 
-    const existingRoom = await RoomModel.findById(classData.roomId);
-    if (!existingRoom) {
-      throw new Error('Phòng học không tồn tại');
+    if (classData.roomId) {
+      const existingRoom = await RoomModel.findById(classData.roomId);
+      if (!existingRoom) {
+        throw new Error('Phòng học không tồn tại');
+      }
     }
 
     if (classData.studentIds && classData.studentIds.length > 0) {
@@ -52,7 +54,15 @@ export class ClassService {
       }
     }
 
-    return await ClassModel.create(classData);
+    if (!classData.totalLessons || classData.totalLessons <= 0) {
+      if (existingCourse.totalLessons && existingCourse.totalLessons > 0) {
+        classData.totalLessons = existingCourse.totalLessons;
+      } else {
+        throw new Error('Số lượng bài học không hợp lệ');
+      }
+    }
+
+    return await ClassModel.create({ ...classData, schedule: false });
   }
 
   async getAllClasses(query: GetClassesQuery) {
@@ -113,9 +123,19 @@ export class ClassService {
       throw new Error('Giáo viên không tồn tại');
     }
 
-    const existingRoom = await RoomModel.findById(classData.roomId);
-    if (!existingRoom) {
-      throw new Error('Phòng học không tồn tại');
+    if (classData.roomId) {
+      const existingRoom = await RoomModel.findById(classData.roomId);
+      if (!existingRoom) {
+        throw new Error('Phòng học không tồn tại');
+      }
+    }
+
+    if (!classData.totalLessons || classData.totalLessons <= 0) {
+      if (existingCourse.totalLessons && existingCourse.totalLessons > 0) {
+        classData.totalLessons = existingCourse.totalLessons;
+      } else {
+        throw new Error('Số lượng bài học không hợp lệ');
+      }
     }
 
     if (classData.studentIds && classData.studentIds.length > 0) {

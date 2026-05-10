@@ -6,8 +6,8 @@ export const CreateScheduleSchema = z.object({
         .regex(/^[0-9a-fA-F]{24}$/, 'ID không đúng định dạng ObjectId').transform((val) => new Types.ObjectId(val)),
     shiftId: z.string({ message: 'ID ca học là bắt buộc' }).trim().min(1, 'ID ca học không được để trống')
         .regex(/^[0-9a-fA-F]{24}$/, 'ID không đúng định dạng ObjectId').transform((val) => new Types.ObjectId(val)),
-    roomId: z.string({ message: 'ID phòng là bắt buộc' }).trim().min(1, 'ID phòng không được để trống')
-        .regex(/^[0-9a-fA-F]{24}$/, 'ID không đúng định dạng ObjectId').transform((val) => new Types.ObjectId(val)),
+    roomId: z.string().trim()
+        .regex(/^[0-9a-fA-F]{24}$/, 'ID không đúng định dạng ObjectId').transform((val) => new Types.ObjectId(val)).optional(),
     teacherId: z.string().trim().regex(/^[0-9a-fA-F]{24}$/, 'ID không đúng định dạng ObjectId').transform((val) => new Types.ObjectId(val)).optional(),
     date: z.coerce.date({ message: 'Ngày không hợp lệ' }),
     attendances: z.array(z.string().regex(/^[0-9a-fA-F]{24}$/, 'ID không đúng định dạng ObjectId'))

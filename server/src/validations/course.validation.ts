@@ -8,6 +8,9 @@ export const CreateCourseSchema = z.object({
         .min(1, "Giá khóa học phải lớn hơn 0"),
     syllabus: z.string({ message: 'Nội dung (syllabus) là bắt buộc' })
         .min(1, "Nội dung không được để trống"),
+    totalLessons: z.number({ message: 'Số lượng bài học là bắt buộc' })
+        .int("Số lượng bài học phải là số nguyên")
+        .min(1, "Số lượng bài học phải lớn hơn 0"),
 });
 
 export const CourseIdSchema = z.object({
