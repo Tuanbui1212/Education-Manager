@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   TrendingUp,
   TrendingDown,
@@ -9,8 +10,6 @@ import {
   ArrowDownRight,
   ChevronRight,
   Minus,
-  ArrowDownCircle,
-  ArrowUpCircle,
 } from 'lucide-react';
 import {
   BarChart,
@@ -26,215 +25,38 @@ import {
 } from 'recharts';
 import useFetch from '../../../../hooks/useFetch';
 import { cashbookService } from '../../../../services/cashbook.service';
-
-// ===================== MOCK DATA =====================
-
-const MOCK_KPI = {
-  totalRevenue: 285_000_000,
-  totalExpense: 162_500_000,
-  netProfit: 122_500_000,
-  totalDebt: 47_300_000,
-  revenueGrowth: 12.4,
-  expenseGrowth: 5.1,
-};
-
-const MOCK_CHART = [
-  { month: 'T1', revenue: 210_000_000, expense: 140_000_000, profit: 70_000_000 },
-  { month: 'T2', revenue: 195_000_000, expense: 135_000_000, profit: 60_000_000 },
-  { month: 'T3', revenue: 230_000_000, expense: 148_000_000, profit: 82_000_000 },
-  { month: 'T4', revenue: 255_000_000, expense: 155_000_000, profit: 100_000_000 },
-  { month: 'T5', revenue: 242_000_000, expense: 150_000_000, profit: 92_000_000 },
-  { month: 'T6', revenue: 270_000_000, expense: 158_000_000, profit: 112_000_000 },
-  { month: 'T7', revenue: 260_000_000, expense: 152_000_000, profit: 108_000_000 },
-  { month: 'T8', revenue: 285_000_000, expense: 162_500_000, profit: 122_500_000 },
-  { month: 'T9', revenue: 0, expense: 0, profit: 0 },
-  { month: 'T10', revenue: 0, expense: 0, profit: 0 },
-  { month: 'T11', revenue: 0, expense: 0, profit: 0 },
-  { month: 'T12', revenue: 0, expense: 0, profit: 0 },
-];
-
-const MOCK_TRANSACTIONS = [
-  {
-    _id: '1',
-    code: 'TXN-001',
-    date: '2026-08-15',
-    studentName: 'Nguyễn Văn An',
-    className: 'IELTS Advanced 01',
-    amount: 8_500_000,
-    paymentMethod: 'Chuyển khoản',
-  },
-  {
-    _id: '2',
-    code: 'TXN-002',
-    date: '2026-08-14',
-    studentName: 'Trần Thị Bình',
-    className: 'TOEIC 600+ B2',
-    amount: 6_200_000,
-    paymentMethod: 'Tiền mặt',
-  },
-  {
-    _id: '3',
-    code: 'TXN-003',
-    date: '2026-07-28',
-    studentName: 'Lê Minh Cường',
-    className: 'Communication Pro',
-    amount: 5_000_000,
-    paymentMethod: 'Chuyển khoản',
-  },
-  {
-    _id: '4',
-    code: 'TXN-004',
-    date: '2026-08-12',
-    studentName: 'Phạm Thị Dung',
-    className: 'IELTS Starter 03',
-    amount: 7_800_000,
-    paymentMethod: 'Chuyển khoản',
-  },
-  {
-    _id: '5',
-    code: 'TXN-005',
-    date: '2026-08-11',
-    studentName: 'Hoàng Văn Em',
-    className: 'TOEIC 600+ A1',
-    amount: 6_200_000,
-    paymentMethod: 'Tiền mặt',
-  },
-  {
-    _id: '6',
-    code: 'TXN-006',
-    date: '2026-07-20',
-    studentName: 'Vũ Thị Phương',
-    className: 'IELTS Advanced 02',
-    amount: 9_100_000,
-    paymentMethod: 'Chuyển khoản',
-  },
-  {
-    _id: '7',
-    code: 'TXN-007',
-    date: '2026-06-30',
-    studentName: 'Đặng Quốc Tuấn',
-    className: 'Business English',
-    amount: 7_500_000,
-    paymentMethod: 'Tiền mặt',
-  },
-];
-
-const MOCK_EXPENDITURES = [
-  {
-    _id: 'e1',
-    date: '2026-08-15',
-    type: 'SALARY_TEACHER',
-    receiverName: 'GV. Nguyễn Hữu Phúc',
-    description: 'Lương giảng dạy T8/2026',
-    amount: 22_000_000,
-  },
-  {
-    _id: 'e2',
-    date: '2026-08-15',
-    type: 'SALARY_TEACHER',
-    receiverName: 'GV. Trần Thị Lan',
-    description: 'Lương giảng dạy T8/2026',
-    amount: 18_500_000,
-  },
-  {
-    _id: 'e3',
-    date: '2026-08-10',
-    type: 'SALARY_SALE',
-    receiverName: 'TV. Lê Văn Hùng',
-    description: 'Lương + hoa hồng T8/2026',
-    amount: 12_000_000,
-  },
-  {
-    _id: 'e4',
-    date: '2026-08-01',
-    type: 'OPERATION',
-    receiverName: 'Công ty TNHH Điện lực',
-    description: 'Tiền điện tháng 8',
-    amount: 3_200_000,
-  },
-  {
-    _id: 'e5',
-    date: '2026-07-25',
-    type: 'OPERATION',
-    receiverName: 'Viettel Business',
-    description: 'Internet + điện thoại T7',
-    amount: 850_000,
-  },
-  {
-    _id: 'e6',
-    date: '2026-07-15',
-    type: 'SALARY_TEACHER',
-    receiverName: 'GV. Phan Minh Tuấn',
-    description: 'Lương giảng dạy T7/2026',
-    amount: 20_000_000,
-  },
-];
+import { formatCurrency } from '../../../../utils/format.util';
+import { PATHS } from '../../../../utils/constants';
 
 // ===================== HELPERS =====================
 
-const QUICK_MONTHS = Array.from({ length: 12 }, (_, i) => {
-  const d = new Date(2026, i, 1);
-  const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-  console.log('Quick Month Option:', { label: `T${d.getMonth() + 1}`, value });
-  return { label: `T${d.getMonth() + 1}`, value };
-});
+// FIX Bug 4: QUICK_MONTHS nhận year động, không hardcode 2026
+const getQuickMonths = (year: number) =>
+  Array.from({ length: 12 }, (_, i) => {
+    const d = new Date(year, i, 1);
+    const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    return { label: `T${d.getMonth() + 1}`, value };
+  });
 
-const EXPENDITURE_TYPE_LABEL = {
+const EXPENDITURE_TYPE_LABEL: Record<string, string> = {
   SALARY_TEACHER: 'Lương giáo viên',
   SALARY_SALE: 'Lương tư vấn',
   OPERATION: 'Chi phí vận hành',
 };
 
-const PAYMENT_METHOD_BADGE = {
-  'Chuyển khoản': 'bg-blue-50 text-blue-600',
-  'Tiền mặt': 'bg-amber-50 text-amber-600',
+const PAYMENT_METHOD_BADGE: Record<string, string> = {
+  TRANSFER: 'bg-blue-50 text-blue-600',
+  CASH: 'bg-amber-50 text-amber-600',
+  CARD: 'bg-violet-50 text-violet-600',
+  VNPAY: 'bg-emerald-50 text-emerald-600',
 };
 
-const formatCurrency = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
-
-const formatDate = (str) => {
-  const d = new Date(str);
-  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  CASH: 'Tiền mặt',
+  TRANSFER: 'Chuyển khoản',
+  CARD: 'Quẹt thẻ',
+  VNPAY: 'VNPAY',
 };
-
-// Filter items by month string (YYYY-MM) hoặc date range (YYYY-MM-DD)
-const filterByTime = (items, { month, dateFrom, dateTo }) => {
-  return items.filter((item) => {
-    const d = item.date; // "YYYY-MM-DD"
-    if (dateFrom && dateTo) return d >= dateFrom && d <= dateTo;
-    if (dateFrom) return d >= dateFrom;
-    if (dateTo) return d <= dateTo;
-    if (month) return d.startsWith(month);
-    return true;
-  });
-};
-
-// Tính KPI từ filtered data
-const calcKpi = (txs, exs) => {
-  const totalRevenue = txs.reduce((s, t) => s + t.amount, 0);
-  const totalExpense = exs.reduce((s, e) => s + e.amount, 0);
-  return {
-    totalRevenue,
-    totalExpense,
-    netProfit: totalRevenue - totalExpense,
-    totalDebt: MOCK_KPI.totalDebt, // debt giữ nguyên mock
-    revenueGrowth: null,
-    expenseGrowth: null,
-  };
-};
-
-// ===================== HOOK: useDelayedData =====================
-
-// Trả về { data, loading } — loading true trong `delay` ms đầu
-function useDelayedData(rawData, delay = 500) {
-  const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    setLoading(true);
-    const t = setTimeout(() => setLoading(false), delay);
-    return () => clearTimeout(t);
-  }, [JSON.stringify(rawData), delay]);
-  return { data: rawData, loading };
-}
 
 // ===================== KpiCard =====================
 
@@ -310,13 +132,14 @@ const KpiCard = ({
 
 // ===================== ReportChart =====================
 
-const formatYAxis = (v) => {
+const formatYAxis = (v: number) => {
   if (v >= 1_000_000_000) return `${(v / 1_000_000_000).toFixed(1)}tỷ`;
   if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(0)}tr`;
   return `${v}`;
 };
 
-const CustomTooltip = ({ active, payload, label }) => {
+// FIX Bug 3: Props của CustomTooltip dùng optional types để match Recharts interface
+const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: any[]; label?: string }) => {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-white border border-gray-100 rounded-xl shadow-lg p-3 text-sm min-w-[180px]">
@@ -427,29 +250,25 @@ const ReportChart = ({ data, loading }: { data: any[]; loading: boolean }) => {
 
 // ===================== TopTransactions =====================
 
-const TopTransactions = ({ transactions, expenditures, loading, onViewAll }) => {
-  const topItems = useMemo(() => {
-    const inc = transactions.map((tx) => ({
-      id: tx._id,
-      type: 'IN',
-      label: tx.studentName,
-      sublabel: tx.className,
-      amount: tx.amount,
-      date: tx.date,
-      badge: tx.paymentMethod,
-    }));
-    const exp = expenditures.map((ex) => ({
-      id: ex._id,
-      type: 'OUT',
-      label: ex.receiverName,
-      sublabel: EXPENDITURE_TYPE_LABEL[ex.type] || ex.type,
-      amount: ex.amount,
-      date: ex.date,
-      badge: null,
-    }));
-    return [...inc, ...exp].sort((a, b) => b.amount - a.amount).slice(0, 5);
-  }, [transactions, expenditures]);
+const TopTransactions = ({
+  topItems,
+  loading,
+  onViewAll,
+}: {
+  topItems: any[];
+  loading: boolean;
+  onViewAll: () => void;
+}) => {
+  const navigate = useNavigate();
+  const handleNavigate = (item: any) => {
+    if (item.type === 'IN') {
+      return navigate(PATHS.FINANCE_TRANSACTIONS_ID.replace(':id', item._id) + '?type=IN&table=transaction');
+    } else if (item.type === 'OUT' && item.invoiceId?.status === 'REFUNDED') {
+      return navigate(PATHS.FINANCE_TRANSACTIONS_ID.replace(':id', item._id) + '?type=OUT&table=transaction');
+    }
 
+    return navigate(PATHS.FINANCE_TRANSACTIONS_ID.replace(':id', item._id) + '?type=OUT&table=expenditure');
+  };
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
@@ -479,28 +298,41 @@ const TopTransactions = ({ transactions, expenditures, loading, onViewAll }) => 
           ))
         ) : topItems.length > 0 ? (
           topItems.map((item, idx) => (
-            <div key={item.id} className="px-5 py-3.5 flex items-center gap-4 hover:bg-gray-50/60 transition-colors">
+            <div key={item._id} className="px-5 py-3.5 flex items-center gap-4 hover:bg-gray-50/60 transition-colors">
               <div className="flex items-center gap-2.5 shrink-0">
                 <span className="text-xs font-bold text-gray-300 w-4 text-center">{idx + 1}</span>
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center ${item.type === 'IN' ? 'bg-emerald-50 text-emerald-500' : 'bg-orange-50 text-orange-500'}`}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                    item.type === 'IN' ? 'bg-emerald-50 text-emerald-500' : 'bg-orange-50 text-orange-500'
+                  }`}
                 >
                   {item.type === 'IN' ? <ArrowUpRight size={15} /> : <ArrowDownRight size={15} />}
                 </div>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-800 truncate">{item.label}</p>
-                <p className="text-xs text-gray-400 truncate">
-                  {item.sublabel} · {formatDate(item.date)}
+                <p className="text-sm font-semibold text-gray-800 truncate">
+                  {item.processedBy?.fullName || item.paidBy?.fullName}{' '}
+                  {item.code && (
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleNavigate(item);
+                      }}
+                      className="text-[11px] font-mono font-medium text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded cursor-pointer hover:bg-blue-100 transition-colors"
+                    >
+                      #{item.code}
+                    </span>
+                  )}
                 </p>
+                <p className="text-xs text-gray-400 truncate">{item.description || item.note}</p>
               </div>
-              {item.badge && (
-                <span
-                  className={`text-xs font-semibold px-2 py-0.5 rounded-full hidden sm:inline-flex ${PAYMENT_METHOD_BADGE[item.badge] || 'bg-gray-100 text-gray-500'}`}
-                >
-                  {item.badge}
-                </span>
-              )}
+              <span
+                className={`text-xs font-semibold px-2 py-0.5 rounded-full hidden sm:inline-flex ${
+                  PAYMENT_METHOD_BADGE[item.paymentMethod] || 'bg-blue-50 text-blue-600'
+                }`}
+              >
+                {PAYMENT_METHOD_LABELS[item.paymentMethod] || item.paymentMethod || 'Chuyển khoản'}
+              </span>
               <span
                 className={`text-sm font-bold shrink-0 ${item.type === 'IN' ? 'text-emerald-600' : 'text-orange-600'}`}
               >
@@ -520,35 +352,18 @@ const TopTransactions = ({ transactions, expenditures, loading, onViewAll }) => 
 // ===================== MAIN PAGE =====================
 
 export default function FinancialReport() {
+  const navigate = useNavigate();
+
   const monthNow = new Date().getMonth() + 1;
   const yearNow = new Date().getFullYear();
 
-  const [selectedMonth, setSelectedMonth] = useState(`${yearNow}-${monthNow.toString().padStart(2, '0')}`);
+  const quickMonths = getQuickMonths(yearNow);
 
+  const [selectedMonth, setSelectedMonth] = useState(`${yearNow}-${monthNow.toString().padStart(2, '0')}`);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
   const isDateRangeActive = !!(dateFrom || dateTo);
-
-  // Params filter
-  const timeParams = useMemo(
-    () => ({
-      month: !dateFrom && !dateTo ? selectedMonth : undefined,
-      dateFrom: dateFrom || undefined,
-      dateTo: dateTo || undefined,
-    }),
-    [selectedMonth, dateFrom, dateTo],
-  );
-
-  // Filtered mock data
-  const filteredTx = useMemo(() => filterByTime(MOCK_TRANSACTIONS, timeParams), [timeParams]);
-  const filteredEx = useMemo(() => filterByTime(MOCK_EXPENDITURES, timeParams), [timeParams]);
-  const kpi = useMemo(() => calcKpi(filteredTx, filteredEx), [filteredTx, filteredEx]);
-
-  // Delayed loading per filter change
-  const { loading: kpiLoading } = useDelayedData(kpi, 500);
-  const { loading: txLoading } = useDelayedData(filteredTx, 500);
-  const { loading: chartLoading } = useDelayedData(MOCK_CHART, 600);
 
   const clearFilters = () => {
     setDateFrom('');
@@ -562,7 +377,11 @@ export default function FinancialReport() {
     [selectedMonth],
   );
 
-  
+  const { data: kpiData, loading: kpiDataLoading } = useFetch(
+    cashbookService.getCashBookYearlySummary,
+    { year: yearNow },
+    [yearNow],
+  );
 
   return (
     <div className="p-8 w-full space-y-6 bg-gray-50 min-h-screen">
@@ -581,7 +400,8 @@ export default function FinancialReport() {
             <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide flex items-center gap-1">
               <CalendarDays size={13} /> Tháng nhanh
             </span>
-            {QUICK_MONTHS.map((m) => (
+            {/* FIX Bug 4: Dùng quickMonths thay vì QUICK_MONTHS hardcode */}
+            {quickMonths.map((m) => (
               <button
                 key={m.value}
                 onClick={() => {
@@ -608,14 +428,18 @@ export default function FinancialReport() {
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className={`px-3 py-1.5 border rounded-lg text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors ${isDateRangeActive ? 'border-blue-400 bg-blue-50' : 'border-gray-200'}`}
+              className={`px-3 py-1.5 border rounded-lg text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors ${
+                isDateRangeActive ? 'border-blue-400 bg-blue-50' : 'border-gray-200'
+              }`}
             />
             <span className="text-gray-400 text-sm">→</span>
             <input
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className={`px-3 py-1.5 border rounded-lg text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors ${isDateRangeActive ? 'border-blue-400 bg-blue-50' : 'border-gray-200'}`}
+              className={`px-3 py-1.5 border rounded-lg text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors ${
+                isDateRangeActive ? 'border-blue-400 bg-blue-50' : 'border-gray-200'
+              }`}
             />
             {isDateRangeActive && (
               <button
@@ -629,60 +453,60 @@ export default function FinancialReport() {
         </div>
       </div>
 
-      {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <KpiCard
           title="Tổng Doanh Thu"
-          value={cashbookLoading ? '—' : formatCurrency(cashbookSummary.totalIn)}
-          growth={kpi.revenueGrowth}
+          value={cashbookLoading ? '—' : formatCurrency(cashbookSummary?.totalIn ?? 0)}
+          growth={cashbookSummary?.revenueGrowthPercent ?? null}
           subtitle="so với kỳ trước"
           icon={<TrendingUp size={18} />}
           iconBg="bg-blue-50"
           iconColor="text-blue-500"
           valueColor="text-blue-600"
-          loading={kpiLoading}
+          loading={cashbookLoading}
         />
         <KpiCard
           title="Tổng Chi Phí"
-          value={cashbookLoading ? '—' : formatCurrency(cashbookSummary.totalOut)}
-          growth={kpi.expenseGrowth}
+          value={cashbookLoading ? '—' : formatCurrency(cashbookSummary?.totalOut ?? 0)}
+          growth={cashbookSummary?.expenseGrowthPercent ?? null}
           subtitle="lương + vận hành"
           icon={<TrendingDown size={18} />}
           iconBg="bg-orange-50"
           iconColor="text-orange-500"
           valueColor="text-orange-600"
-          loading={kpiLoading}
+          loading={cashbookLoading}
         />
         <KpiCard
           title="Lợi Nhuận Ròng"
-          value={cashbookLoading ? '—' : formatCurrency(cashbookSummary.balance)}
+          value={cashbookLoading ? '—' : formatCurrency(cashbookSummary?.balance ?? 0)}
+          growth={cashbookSummary?.profitGrowthPercent ?? null}
           icon={<DollarSign size={18} />}
           iconBg="bg-emerald-50"
           iconColor="text-emerald-500"
           valueColor="text-emerald-600"
-          loading={kpiLoading}
+          loading={cashbookLoading}
         />
         <KpiCard
           title="Công Nợ Còn Lại"
-          value={cashbookLoading ? '—' : formatCurrency(cashbookSummary.totalDebt)}
+          value={cashbookLoading ? '—' : formatCurrency(cashbookSummary?.totalDebt ?? 0)}
+          growth={null}
           subtitle="chưa thu"
           icon={<AlertTriangle size={18} />}
           iconBg="bg-rose-50"
           iconColor="text-rose-500"
           valueColor="text-rose-600"
-          loading={kpiLoading}
+          loading={cashbookLoading}
         />
       </div>
 
       {/* Chart */}
-      <ReportChart data={MOCK_CHART} loading={chartLoading} />
+      <ReportChart data={kpiData || []} loading={kpiDataLoading} />
 
       {/* Top Transactions */}
       <TopTransactions
-        transactions={filteredTx}
-        expenditures={filteredEx}
-        loading={txLoading}
-        onViewAll={() => alert('Điều hướng tới sổ quỹ')}
+        topItems={cashbookSummary?.top5Amounts || []}
+        loading={cashbookLoading}
+        onViewAll={() => navigate(PATHS.FINANCE_TRANSACTIONS)}
       />
     </div>
   );

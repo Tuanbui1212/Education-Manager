@@ -28,4 +28,18 @@ export class CashBookController {
       res.status(400).json({ success: false, message: error.message });
     }
   };
+
+  //[GET] /api/cashbook/summary
+  getCashBookYearlySummary = async (req: Request, res: Response) => {
+    try {
+      const year = Number(req.query.year);
+      if (isNaN(year)) {
+        return res.status(400).json({ success: false, message: 'Năm không hợp lệ' });
+      }
+      const result = await this.cashBookService.getCashBookYearlySummary(year);
+      res.status(200).json({ success: true, message: 'Lấy bảng thu chi thành công', data: result });
+    } catch (error: any) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  };
 }
