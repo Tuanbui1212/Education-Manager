@@ -28,4 +28,15 @@ export const cashbookService = {
 
     return response.data;
   },
+
+  getCashBookYearlySummary: async (
+    params: any,
+  ): Promise<{
+    success: boolean;
+    message: string;
+    data: any[];
+  }> => {
+    const response = await axios.get(`/cashbook/summary?year=${params.year as string}`);
+    return response.data;
+  },
 };

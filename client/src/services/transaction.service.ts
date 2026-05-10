@@ -23,7 +23,7 @@ export const transactionService = {
   createTransactionTest: async (
     data: Partial<ITransaction>,
   ): Promise<{ success: boolean; message: string; data?: ITransaction }> => {
-    const response = await axios.post('/transactions/test', data);
+    const response = await axios.post('/transactions/create', data);
     return response.data;
   },
 

@@ -7,13 +7,14 @@ import mongoose from 'mongoose';
 export class CashBookService {
   async getCashBook(query: any) {
     const { startDate, endDate, type, search, month } = query;
-    const limit = Number(query.limit) || 10;
-    const page = Number(query.page) || 1;
+    const limit = Number(query.limit);
+    const page = Number(query.page);
     let totalIn = 0;
     let totalOut = 0;
     let totalRefund = 0;
     let balance = 0;
     let totalDebt = 0;
+    let top5Amounts: any[] = [];
 
     const start = (page - 1) * limit;
     const end = start + limit;
@@ -65,6 +66,13 @@ export class CashBookService {
         };
         cashBookData.push(obj);
         totalIn += obj.amount || 0;
+
+        if (top5Amounts.length < 5) {
+          top5Amounts.push(obj);
+        } else if (obj.amount > top5Amounts[4].amount) {
+          top5Amounts[4] = obj;
+          top5Amounts.sort((a, b) => (b.amount || 0) - (a.amount || 0));
+        }
       }
     }
 
@@ -78,6 +86,12 @@ export class CashBookService {
         };
         cashBookData.push(obj);
         totalOut += obj.amount || 0;
+        if (top5Amounts.length < 5) {
+          top5Amounts.push(obj);
+        } else if (obj.amount > top5Amounts[4].amount) {
+          top5Amounts[4] = obj;
+          top5Amounts.sort((a, b) => (b.amount || 0) - (a.amount || 0));
+        }
       }
 
       const transactions = await TransactionModel.find(filter)
@@ -99,6 +113,13 @@ export class CashBookService {
         };
         cashBookData.push(obj);
         totalRefund += obj.amount || 0;
+
+        if (top5Amounts.length < 5) {
+          top5Amounts.push(obj);
+        } else if (obj.amount > top5Amounts[4].amount) {
+          top5Amounts[4] = obj;
+          top5Amounts.sort((a, b) => (b.amount || 0) - (a.amount || 0));
+        }
       }
     }
 
@@ -108,10 +129,15 @@ export class CashBookService {
     if (!type || type === 'ALL') cashBookData.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
     balance = totalIn - totalOut - totalRefund;
 
+    if (limit && page) {
+      cashBookData = cashBookData.slice(start, end);
+    }
+
     return {
-      data: cashBookData.slice(start, end),
+      data: cashBookData,
       total: cashBookData.length,
       summary: {
+        top5Amounts,
         totalIn,
         totalOut,
         totalRefund,
@@ -121,7 +147,6 @@ export class CashBookService {
     };
   }
 
-  //[GET] /api/cashbook/summary
   async getCashBookYearlySummary(year: number) {
     const start = new Date(year, 0, 1);
     const end = new Date(year, 11, 31, 23, 59, 59, 999);
@@ -137,8 +162,6 @@ export class CashBookService {
       startDate: start,
       endDate: end,
       type: 'ALL',
-      limit: 0,
-      page: 1,
     });
 
     dataCashBooks.data.forEach((item: any) => {
