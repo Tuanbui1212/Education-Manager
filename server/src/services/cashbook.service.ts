@@ -121,27 +121,6 @@ export class CashBookService {
           top5Amounts.sort((a, b) => (b.amount || 0) - (a.amount || 0));
         }
       }
-
-      const transactions = await TransactionModel.find(filter)
-        .populate<{ invoiceId: IInvoice | null }>({
-          path: 'invoiceId',
-          match: { status: 'REFUNDED' },
-          select: 'code status',
-        })
-        .populate('processedBy', 'fullName')
-        .sort({ createdAt: -1 });
-
-      for (const item of transactions) {
-        if (!item.invoiceId) continue;
-
-        const obj = {
-          ...item.toObject(),
-          type: 'OUT',
-          time: item.createdAt as any,
-        };
-        cashBookData.push(obj);
-        totalRefund += obj.amount || 0;
-      }
     }
 
     const debtInvoices = await InvoiceModel.find({ debt: { $gt: 0 } }).select('debt');
