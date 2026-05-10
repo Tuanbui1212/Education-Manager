@@ -3,6 +3,7 @@ import { InvoiceModel } from '../models/invoice.model';
 import type { CreateTransactionDTO, ITransaction } from '../types/transaction.type';
 import { InvoiceStatus, IInvoice } from '../types/invoice.type';
 export class TransactionService {
+  // Tạo giao dịch mới
   async createTransaction(data: Partial<ITransaction>, currentUserId: string): Promise<ITransaction> {
     const year = new Date().getFullYear();
     const lastTx = await TransactionModel.findOne({ code: new RegExp(`^PT-${year}-`) }).sort({ createdAt: -1 });
@@ -83,6 +84,7 @@ export class TransactionService {
     };
   }
 
+  // Lấy danh sách giao dịch với phân trang và lọc
   async getTransactions(query: any) {
     const { invoiceId, studentId, limit = 10, page = 1, month, year } = query;
     const skip = (Number(page) - 1) * Number(limit);
@@ -134,6 +136,7 @@ export class TransactionService {
     return { transactions, total, summary: { totalIn } };
   }
 
+  // Lấy chi tiết một giao dịch
   async getTransactionsById(id: string) {
     const data = await TransactionModel.findById(id)
       .populate('studentId', 'fullName')
