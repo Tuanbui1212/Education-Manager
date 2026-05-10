@@ -7,7 +7,7 @@ import TablePagination from '../../../components/TablePagination';
 import SearchInput from '../../../components/SearchInput';
 import ConfirmModal from '../../../components/ConfirmModal';
 
-import NotificationTemplateModal, { SYSTEM_TEMPLATE_CODES } from './NotificationTemplateModal';
+import NotificationTemplateModal from './NotificationTemplateModal';
 
 import useFetch from '../../../hooks/useFetch';
 import useDebounce from '../../../hooks/useDebounce';
@@ -16,6 +16,7 @@ import { notificationTemplateService } from '../../../services/notificationTempl
 
 import { useState } from 'react';
 import type { INotificationTemplate, NotificationType } from '../../../types/notificationTemplate.type';
+import { SYSTEM_TEMPLATE_CODES } from '../../../utils/constants';
 
 const ListNotificationTemplate = () => {
   const [page, setPage] = useState(1);
@@ -128,7 +129,7 @@ const ListNotificationTemplate = () => {
           setConfirmConfig({
             isOpen: true,
             title: 'Lỗi',
-            message: error.response?.data?.message || 'Lỗi xóa!',
+            message: error.response?.data?.message || 'Có lỗi xảy ra khi xóa!',
             type: 'danger',
             onConfirm: () => setConfirmConfig({ ...confirmConfig, isOpen: false }),
           });
@@ -216,7 +217,7 @@ const ListNotificationTemplate = () => {
             <tr className="bg-primary text-white text-sm sticky top-0 z-10 ">
               <th className="p-4 font-semibold w-16 text-center rounded-tl-xl">No.</th>
               <th className="p-4 font-semibold">Sự kiện áp dụng</th>
-              <th className="p-4 font-semibold">Tiêu đề mẫu</th>
+              <th className="p-4 font-semibold">Tiêu đề</th>
               <th className="p-4 font-semibold">Loại</th>
               <th className="p-4 font-semibold text-center rounded-tr-xl">Thao tác</th>
             </tr>

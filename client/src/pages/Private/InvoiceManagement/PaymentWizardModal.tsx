@@ -182,22 +182,20 @@ const PaymentWizardModal: React.FC<PaymentWizardModalProps> = ({ invoice, onClos
         <button
           disabled={isLoading}
           onClick={() => setPaymentMethod('TRANSFER')}
-          className={`p-3 rounded-xl border-2 font-bold flex items-center justify-center gap-2 transition-all ${
-            paymentMethod === 'TRANSFER'
+          className={`p-3 rounded-xl border-2 font-bold flex items-center justify-center gap-2 transition-all ${paymentMethod === 'TRANSFER'
               ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm'
               : 'border-gray-200 text-gray-400 hover:bg-gray-50'
-          }`}
+            }`}
         >
           <CreditCard size={18} /> Chuyển khoản
         </button>
         <button
           disabled={isLoading}
           onClick={() => setPaymentMethod('CASH')}
-          className={`p-3 rounded-xl border-2 font-bold flex items-center justify-center gap-2 transition-all ${
-            paymentMethod === 'CASH'
+          className={`p-3 rounded-xl border-2 font-bold flex items-center justify-center gap-2 transition-all ${paymentMethod === 'CASH'
               ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
               : 'border-gray-200 text-gray-400 hover:bg-gray-50'
-          }`}
+            }`}
         >
           <Banknote size={18} /> Tiền mặt
         </button>
@@ -305,11 +303,10 @@ const PaymentWizardModal: React.FC<PaymentWizardModalProps> = ({ invoice, onClos
                   <button
                     disabled={isLoading || !canRemind}
                     onClick={() => handleProcess('notify_next_period')}
-                    className={`w-full mb-6 p-4 rounded-xl font-black flex items-center justify-center gap-3 shadow-sm transition-all active:scale-[0.98] ${
-                      canRemind
+                    className={`w-full mb-6 p-4 rounded-xl font-black flex items-center justify-center gap-3 shadow-sm transition-all active:scale-[0.98] ${canRemind
                         ? 'bg-amber-500 hover:bg-amber-600 text-white'
                         : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                    }`}
+                      }`}
                   >
                     <QrCode size={20} />
                     {canRemind ? 'GỬI THÔNG BÁO NHẮC NỢ KỲ NÀY' : remindBlockMessage}
@@ -391,14 +388,13 @@ const PaymentWizardModal: React.FC<PaymentWizardModalProps> = ({ invoice, onClos
               <button
                 disabled={isLoading || !canRemind}
                 onClick={() => handleProcess('notify_full')}
-                className={`w-full p-5 rounded-2xl font-black flex justify-center items-center gap-3 transition-all shadow-md ${
-                  canRemind
+                className={`w-full p-5 rounded-2xl font-black flex justify-center items-center gap-3 transition-all shadow-md ${canRemind
                     ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                }`}
+                  }`}
               >
                 <QrCode size={24} />
-                {canRemind ? 'GỬI THÔNG BÁO NHẮC NỢ TOÀN BỘ' : remindBlockMessage}
+                {canRemind ? 'GỬI THÔNG BÁO NHẮC NỢ' : remindBlockMessage}
               </button>
 
               <div className="relative py-4">
@@ -444,11 +440,10 @@ const PaymentWizardModal: React.FC<PaymentWizardModalProps> = ({ invoice, onClos
                       key={m}
                       disabled={isLoading}
                       onClick={() => setMonths(m)}
-                      className={`w-16 h-16 rounded-2xl font-black transition-all border-2 ${
-                        months === m
+                      className={`w-16 h-16 rounded-2xl font-black transition-all border-2 ${months === m
                           ? 'bg-indigo-600 text-white border-indigo-700 shadow-lg scale-110'
                           : 'bg-white text-gray-600 border-gray-100 hover:border-indigo-300'
-                      }`}
+                        }`}
                     >
                       {m}K
                     </button>

@@ -7,6 +7,7 @@ import { z } from "zod";
 import { UpsertAttendanceItemSchema } from "../validations/attendance.validation";
 import { AttendanceNotificationModel } from "../models/attendanceNotification.model";
 import { getIO, userSocketMap } from "../lib/socket";
+import { AttendanceNotificationType } from "../types/attendanceNotification.type";
 
 type UpsertAttendanceData = z.infer<typeof UpsertAttendanceItemSchema>;
 
@@ -269,7 +270,8 @@ export class AttendanceService {
                     ${att.mark ? ` - Điểm: ${att.mark}` : ''} 
                     ${att.teacherComment ? ` - Nhận xét: ${att.teacherComment}` : ''}`,
                 attendanceId: att._id,
-                isRead: false
+                isRead: false,
+                type: AttendanceNotificationType.ATTENDANCE
             })
         });
 

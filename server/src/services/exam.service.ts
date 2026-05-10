@@ -7,6 +7,7 @@ import { ExamStatus } from '../types/exam.type';
 import { getIO, userSocketMap } from '../lib/socket';
 import { ClassModel } from '../models/class.model';
 import { AttendanceNotificationModel } from '../models/attendanceNotification.model';
+import { AttendanceNotificationType } from '../types/attendanceNotification.type';
 
 export class ExamService {
 
@@ -143,7 +144,36 @@ export class ExamService {
         return exam;
     }
     async updateExam(id: string, data: UpdateExamType) {
-        return ExamModel.findByIdAndUpdate(id, data, { new: true, runValidators: true }).lean();
+        const exam = await ExamModel.findById(id).lean();
+        if (!exam) throw new Error('Không tìm thấy bài kiểm tra');
+
+        const updatedExam = await ExamModel.findByIdAndUpdate(id, data, { new: true, runValidators: true }).lean();
+
+        // Chỉ gửi notification khi status thay đổi sang PUBLISHED
+        const isPublishing = data.status === ExamStatus.PUBLISHED && exam.status !== ExamStatus.PUBLISHED;
+        if (isPublishing) {
+            const classes = await ClassModel.findById(exam.classId);
+            if (classes && classes.studentIds.length > 0) {
+                const notifications = classes.studentIds.map(studentId => ({
+                    userId: studentId,
+                    title: `Lớp ${classes.name} có bài kiểm tra mới được phát hành`,
+                    content: `${updatedExam?.title}${updatedExam?.description ? ` - ${updatedExam.description}` : ''}`,
+                    examId: updatedExam?._id,
+                    isRead: false,
+                    type: AttendanceNotificationType.EXAM
+                }));
+                const savedNotifs = await AttendanceNotificationModel.insertMany(notifications);
+                const io = getIO();
+                savedNotifs.forEach(notif => {
+                    const socketId = userSocketMap.get(notif.userId.toString());
+                    if (socketId) {
+                        io.to(socketId).emit('new_notification', notif.toObject());
+                    }
+                });
+            }
+        }
+
+        return updatedExam;
     }
 
     async deleteExam(id: string) {

@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import { UserModel } from '../models/user.model';
 import { EmailService } from './email.service';
 
+const ONE_MINUTE = 60 * 1000;
 export class AuthService {
   private emailService = new EmailService();
 
@@ -48,7 +49,7 @@ export class AuthService {
     const resetToken = crypto.randomBytes(32).toString('hex');
     const passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 
-    const passwordResetExpires = new Date(Date.now() + 15 * 60 * 1000);
+    const passwordResetExpires = new Date(Date.now() + 15 * ONE_MINUTE);
 
     user.passwordResetToken = passwordResetToken;
     user.passwordResetExpires = passwordResetExpires as any;
