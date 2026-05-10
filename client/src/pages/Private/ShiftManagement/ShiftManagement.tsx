@@ -290,7 +290,7 @@ const ShiftManagement = () => {
             ) : (
               <tr>
                 <td colSpan={7} className="p-6 text-center text-gray-500">
-                  Không có dữ liệu
+                  Không tìm thấy dữ liệu nào.
                 </td>
               </tr>
             )}

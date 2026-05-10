@@ -10,6 +10,7 @@ const CourseModal = ({ isOpen, onClose, onSubmit, initialData }: CourseModalProp
         title: '',
         basePrice: 0,
         syllabus: '',
+        totalLessons: 0,
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -23,6 +24,7 @@ const CourseModal = ({ isOpen, onClose, onSubmit, initialData }: CourseModalProp
                     title: '',
                     basePrice: 0,
                     syllabus: '',
+                    totalLessons: 0,
                 });
             }
             setErrors({});
@@ -46,6 +48,10 @@ const CourseModal = ({ isOpen, onClose, onSubmit, initialData }: CourseModalProp
 
         if (!formData.syllabus?.trim()) {
             newErrors.syllabus = 'Vui lòng nhập nội dung (syllabus)';
+        }
+
+        if (!formData.totalLessons || formData.totalLessons <= 0 || !Number.isInteger(formData.totalLessons)) {
+            newErrors.totalLessons = 'Tổng số bài học phải là số nguyên lớn hơn 0';
         }
 
         setErrors(newErrors);
@@ -96,6 +102,16 @@ const CourseModal = ({ isOpen, onClose, onSubmit, initialData }: CourseModalProp
                         onChange={(e) => handleChange('basePrice', Number(e.target.value))}
                         error={errors.basePrice}
                         placeholder="Vd: 5000000"
+                    />
+
+                    <InputField
+                        label="Tổng số buổi học"
+                        icon={<FileText size={16} />}
+                        type="number"
+                        value={formData.totalLessons || ''}
+                        onChange={(e) => handleChange('totalLessons', Number(e.target.value))}
+                        error={errors.totalLessons}
+                        placeholder="Vd: 24"
                     />
 
                     <div>

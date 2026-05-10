@@ -68,7 +68,8 @@ export const PATHS = {
 
   TRAINING_CLASSES: '/training/classes',
   TRAINING_CLASSES_ID: '/training/classes/:id',
-  
+  TRAINING_CLASSES_CREATE: '/training/classes/create',
+  TRAINING_CLASSES_CREATE_SCHEDULE: '/training/classes/create-schedule/:id',
   TRAINING_SCHEDULES: '/training/schedules',
 
   //Finace
@@ -90,6 +91,7 @@ export const PATHS = {
   TEACHER_PORTAL: '/teacher-portal',
   TEACHER_ATTENDANCE_SCHEDULES: '/teacher-attendance/:classId',
   TEACHER_ATTENDANCE_DETAILS: '/teacher-attendance/:classId/schedule/:scheduleId',
+  TEACHER_EXAM_MANAGER: '/teacher-exam/:classId',
 
   STUDENT_EXAM_TAKING: '/student-exam/:examId',
 };
@@ -159,3 +161,14 @@ export const PAYMENT_CONFIG: Record<string, { label: string; className: string }
     className: 'bg-yellow-100 text-yellow-700',
   },
 };
+
+export const SYSTEM_TEMPLATE_CODES: { value: string; label: string }[] = [
+  { value: 'REMIND_DEBT', label: 'Gửi thông báo nhắc nợ học phí' },
+  { value: 'ENROLL_SUCCESS', label: 'Chào mừng ghi danh thành công' },
+  { value: 'PAYMENT_SUCCESS', label: 'Xác nhận đã thanh toán' },
+  { value: 'CLASS_OPENING', label: 'Thông báo khai giảng lớp mới' },
+  { value: 'INSTALLMENT_CREATED', label: 'Thông báo tạo lịch trả góp' },
+  { value: 'REMIND_INSTALLMENT', label: 'Thông báo lịch trả góp' },
+  { value: 'FORGOT_PASSWORD', label: 'Xác nhận quên mật khẩu' },
+  { value: 'MONTHLY_PAYROLL_NOTICE', label: 'Thông báo bảng lương hàng tháng' },
+];

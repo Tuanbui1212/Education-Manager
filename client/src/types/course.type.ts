@@ -3,6 +3,7 @@ export interface ICourse {
     title: string;
     basePrice: number;
     syllabus: string;
+    totalLessons: number;
     createdAt?: string;
     updatedAt?: string;
 }

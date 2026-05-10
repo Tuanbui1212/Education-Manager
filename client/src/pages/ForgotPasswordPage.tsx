@@ -21,9 +21,6 @@ const ForgotPasswordPage = () => {
     setIsLoading(true);
     try {
       await authService.forgotPassword(email);
-
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
       setIsSuccess(true);
     } catch (error: any) {
       alert(error.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại!');

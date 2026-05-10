@@ -22,6 +22,7 @@ export interface GetSchedulesQuery {
   classId?: string;
   roomId?: string;
   teacherId?: string;
+  date?: string;
 }
 
 export interface ScheduleStatus {

@@ -73,13 +73,18 @@ export class ScheduleService {
   }
 
   async getAllSchedules(query: GetSchedulesQuery) {
-    const { page = 1, limit = 10, classId, roomId, teacherId } = query;
+    const { page = 1, limit = 10, classId, roomId, teacherId, date } = query;
     const skip = (Number(page) - 1) * Number(limit);
 
     const filter: any = {};
     if (classId) filter.classId = new Types.ObjectId(classId);
     if (roomId) filter.roomId = new Types.ObjectId(roomId);
     if (teacherId) filter.teacherId = new Types.ObjectId(teacherId);
+    if (date) {
+      const [day, month, year] = date.split('/');
+      const formattedDate = `${month}/${day}/${year}`;
+      filter.date = new Date(formattedDate);
+    }
     const [total, schedules] = await Promise.all([
       ScheduleModel.countDocuments(filter),
       ScheduleModel.find(filter)
