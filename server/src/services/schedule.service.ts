@@ -267,4 +267,106 @@ export class ScheduleService {
     const startDate = await ScheduleModel.find({ classId: classData._id }).sort({ date: 1 }).limit(1);
     return startDate;
   }
+
+  async getTodaySchedules() {
+    const now = new Date();
+
+    const startOfDay = new Date(now);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(now);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const query: any = {
+      date: {
+        $gte: startOfDay,
+        $lte: endOfDay,
+      },
+    };
+
+    // const schedules = await ScheduleModel.find(query)
+    //   .populate('classId', 'name studentIds')
+    //   .populate('teacherId', 'fullName')
+    //   .populate('roomId', 'name')
+    //   .populate('shiftId', 'name startTime endTime')
+    //   .sort({ 'shiftId.startTime': 1 })
+    //   .lean();
+
+    const schedules = await ScheduleModel.aggregate([
+      { $match: query },
+      {
+        $lookup: {
+          from: 'classes',
+          localField: 'classId',
+          foreignField: '_id',
+          as: 'classInfo',
+        },
+      },
+      { $unwind: '$classInfo' },
+      { $match: { 'classInfo.status': 'ACTIVE' } },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'teacherId',
+          foreignField: '_id',
+          as: 'teacherInfo',
+        },
+      },
+      { $unwind: '$teacherInfo' },
+      {
+        $lookup: {
+          from: 'rooms',
+          localField: 'roomId',
+          foreignField: '_id',
+          as: 'roomInfo',
+        },
+      },
+      { $unwind: '$roomInfo' },
+      {
+        $lookup: {
+          from: 'shifts',
+          localField: 'shiftId',
+          foreignField: '_id',
+          as: 'shiftInfo',
+        },
+      },
+      { $unwind: '$shiftInfo' },
+      {
+        $sort: {
+          'shiftInfo.startTime': 1,
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          date: 1,
+
+          classId: {
+            _id: '$classInfo._id',
+            name: '$classInfo.name',
+            studentCount: { $size: '$classInfo.studentIds' },
+          },
+
+          teacherId: {
+            _id: '$teacherInfo._id',
+            fullName: '$teacherInfo.fullName',
+          },
+
+          roomId: {
+            _id: '$roomInfo._id',
+            name: '$roomInfo.name',
+          },
+
+          shiftId: {
+            _id: '$shiftInfo._id',
+            name: '$shiftInfo.name',
+            startTime: '$shiftInfo.startTime',
+            endTime: '$shiftInfo.endTime',
+          },
+        },
+      },
+    ]);
+
+    return schedules;
+  }
 }

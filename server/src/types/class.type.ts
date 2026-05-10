@@ -25,6 +25,8 @@ export interface GetClassesQuery {
   search?: string;
   status?: ClassStatus;
   courseId?: string;
+  startDate?: Date;
+  endDate?: Date;
 }
 
 export interface GetStudentsByClassQuery {

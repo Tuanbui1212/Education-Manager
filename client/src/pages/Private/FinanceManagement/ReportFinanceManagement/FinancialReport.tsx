@@ -24,6 +24,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+import useFetch from '../../../../hooks/useFetch';
+import { cashbookService } from '../../../../services/cashbook.service';
 
 // ===================== MOCK DATA =====================
 
@@ -45,6 +47,10 @@ const MOCK_CHART = [
   { month: 'T6', revenue: 270_000_000, expense: 158_000_000, profit: 112_000_000 },
   { month: 'T7', revenue: 260_000_000, expense: 152_000_000, profit: 108_000_000 },
   { month: 'T8', revenue: 285_000_000, expense: 162_500_000, profit: 122_500_000 },
+  { month: 'T9', revenue: 0, expense: 0, profit: 0 },
+  { month: 'T10', revenue: 0, expense: 0, profit: 0 },
+  { month: 'T11', revenue: 0, expense: 0, profit: 0 },
+  { month: 'T12', revenue: 0, expense: 0, profit: 0 },
 ];
 
 const MOCK_TRANSACTIONS = [
@@ -166,9 +172,10 @@ const MOCK_EXPENDITURES = [
 
 // ===================== HELPERS =====================
 
-const QUICK_MONTHS = Array.from({ length: 8 }, (_, i) => {
+const QUICK_MONTHS = Array.from({ length: 12 }, (_, i) => {
   const d = new Date(2026, i, 1);
   const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  console.log('Quick Month Option:', { label: `T${d.getMonth() + 1}`, value });
   return { label: `T${d.getMonth() + 1}`, value };
 });
 
@@ -241,6 +248,16 @@ const KpiCard = ({
   valueColor = 'text-gray-900',
   subtitle,
   loading,
+}: {
+  title: string;
+  value: string;
+  growth: number | null | undefined;
+  icon: React.ReactNode;
+  iconBg: string;
+  iconColor: string;
+  valueColor?: string;
+  subtitle?: string;
+  loading: boolean;
 }) => {
   const renderGrowth = () => {
     if (growth === undefined || growth === null) return null;
@@ -323,7 +340,7 @@ const ChartSkeleton = () => (
   </div>
 );
 
-const ReportChart = ({ data, loading }) => {
+const ReportChart = ({ data, loading }: { data: any[]; loading: boolean }) => {
   if (loading) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -503,7 +520,11 @@ const TopTransactions = ({ transactions, expenditures, loading, onViewAll }) => 
 // ===================== MAIN PAGE =====================
 
 export default function FinancialReport() {
-  const [selectedMonth, setSelectedMonth] = useState('2026-08');
+  const monthNow = new Date().getMonth() + 1;
+  const yearNow = new Date().getFullYear();
+
+  const [selectedMonth, setSelectedMonth] = useState(`${yearNow}-${monthNow.toString().padStart(2, '0')}`);
+
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
@@ -532,8 +553,16 @@ export default function FinancialReport() {
   const clearFilters = () => {
     setDateFrom('');
     setDateTo('');
-    setSelectedMonth('2026-08');
+    setSelectedMonth(`${yearNow}-${monthNow.toString().padStart(2, '0')}`);
   };
+
+  const { summary: cashbookSummary, loading: cashbookLoading } = useFetch(
+    cashbookService.getCashBook,
+    { month: selectedMonth },
+    [selectedMonth],
+  );
+
+  
 
   return (
     <div className="p-8 w-full space-y-6 bg-gray-50 min-h-screen">
@@ -604,7 +633,7 @@ export default function FinancialReport() {
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <KpiCard
           title="Tổng Doanh Thu"
-          value={kpiLoading ? '—' : formatCurrency(kpi.totalRevenue)}
+          value={cashbookLoading ? '—' : formatCurrency(cashbookSummary.totalIn)}
           growth={kpi.revenueGrowth}
           subtitle="so với kỳ trước"
           icon={<TrendingUp size={18} />}
@@ -615,7 +644,7 @@ export default function FinancialReport() {
         />
         <KpiCard
           title="Tổng Chi Phí"
-          value={kpiLoading ? '—' : formatCurrency(kpi.totalExpense)}
+          value={cashbookLoading ? '—' : formatCurrency(cashbookSummary.totalOut)}
           growth={kpi.expenseGrowth}
           subtitle="lương + vận hành"
           icon={<TrendingDown size={18} />}
@@ -626,7 +655,7 @@ export default function FinancialReport() {
         />
         <KpiCard
           title="Lợi Nhuận Ròng"
-          value={kpiLoading ? '—' : formatCurrency(kpi.netProfit)}
+          value={cashbookLoading ? '—' : formatCurrency(cashbookSummary.balance)}
           icon={<DollarSign size={18} />}
           iconBg="bg-emerald-50"
           iconColor="text-emerald-500"
@@ -635,7 +664,7 @@ export default function FinancialReport() {
         />
         <KpiCard
           title="Công Nợ Còn Lại"
-          value={kpiLoading ? '—' : formatCurrency(kpi.totalDebt)}
+          value={cashbookLoading ? '—' : formatCurrency(cashbookSummary.totalDebt)}
           subtitle="chưa thu"
           icon={<AlertTriangle size={18} />}
           iconBg="bg-rose-50"

@@ -1,4 +1,3 @@
-// ─── Stat Card ────────────────────────────────────────────────────────────────
 interface StatCardProps {
   icon: React.ReactNode;
   label: string;
@@ -7,6 +6,7 @@ interface StatCardProps {
   textColor: string;
   active: boolean;
   onClick: () => void;
+  loading?: boolean;
 }
 const StatCard = ({ icon, label, value, gradient, textColor, active, onClick }: StatCardProps) => (
   <button

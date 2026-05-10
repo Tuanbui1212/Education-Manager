@@ -23,3 +23,9 @@ export interface GetSchedulesQuery {
   roomId?: string;
   teacherId?: string;
 }
+
+export interface ScheduleStatus {
+  ongoing: string;
+  upcoming: string;
+  done: string;
+}

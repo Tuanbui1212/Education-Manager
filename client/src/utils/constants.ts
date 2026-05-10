@@ -68,6 +68,7 @@ export const PATHS = {
 
   TRAINING_CLASSES: '/training/classes',
   TRAINING_CLASSES_ID: '/training/classes/:id',
+  
   TRAINING_SCHEDULES: '/training/schedules',
 
   //Finace

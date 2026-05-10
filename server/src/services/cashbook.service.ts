@@ -6,18 +6,26 @@ import mongoose from 'mongoose';
 
 export class CashBookService {
   async getCashBook(query: any) {
-    const { startDate, endDate, type, search, dateRange } = query;
+    const { startDate, endDate, type, search, month } = query;
     const limit = Number(query.limit) || 10;
     const page = Number(query.page) || 1;
     let totalIn = 0;
     let totalOut = 0;
     let totalRefund = 0;
     let balance = 0;
+    let totalDebt = 0;
 
     const start = (page - 1) * limit;
     const end = start + limit;
 
     const filter: any = {};
+
+    if (month) {
+      const [year, monthNum] = month.split('-').map(Number);
+      const startDate = new Date(year, monthNum - 1, 1);
+      const endDate = new Date(year, monthNum, 0, 23, 59, 59);
+      filter.createdAt = { $gte: startDate, $lte: endDate };
+    }
 
     if (startDate && endDate) {
       filter.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
@@ -94,6 +102,9 @@ export class CashBookService {
       }
     }
 
+    const debtInvoices = await InvoiceModel.find({ debt: { $gt: 0 } }).select('debt');
+    totalDebt = debtInvoices.reduce((sum, inv) => sum + (inv.debt || 0), 0);
+
     if (!type || type === 'ALL') cashBookData.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
     balance = totalIn - totalOut - totalRefund;
 
@@ -105,8 +116,48 @@ export class CashBookService {
         totalOut,
         totalRefund,
         balance,
+        totalDebt,
       },
     };
+  }
+
+  //[GET] /api/cashbook/summary
+  async getCashBookYearlySummary(year: number) {
+    const start = new Date(year, 0, 1);
+    const end = new Date(year, 11, 31, 23, 59, 59, 999);
+
+    const listSummary = Array.from({ length: 12 }, (_, i) => ({
+      month: `T${i + 1}`,
+      revenue: 0,
+      expense: 0,
+      profit: 0,
+    }));
+
+    const dataCashBooks = await this.getCashBook({
+      startDate: start,
+      endDate: end,
+      type: 'ALL',
+      limit: 0,
+      page: 1,
+    });
+
+    dataCashBooks.data.forEach((item: any) => {
+      const monthIndex = new Date(item.time).getMonth();
+
+      if (item.type === 'IN') {
+        listSummary[monthIndex].revenue += item.amount || 0;
+      }
+
+      if (item.type === 'OUT') {
+        listSummary[monthIndex].expense += item.amount || 0;
+      }
+    });
+
+    listSummary.forEach((item) => {
+      item.profit = item.revenue - item.expense;
+    });
+
+    return listSummary;
   }
 
   async getCashBookById(id: string, type: string, table: string) {

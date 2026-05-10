@@ -51,4 +51,9 @@ export const scheduleService = {
     const response = await axios.get(`/schedules/class/${classId}/start-date`);
     return response.data;
   },
+
+  getTodaySchedules: async (): Promise<{ success: boolean; message: string; data?: ISchedule[] }> => {
+    const response = await axios.get(`/schedules/class/today`);
+    return response.data;
+  },
 };

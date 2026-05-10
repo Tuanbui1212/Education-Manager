@@ -155,7 +155,7 @@ const StudentManager = () => {
         <StatCard
           label="Tổng học viên"
           icon={<Users size={20} />}
-          value={totalCount ?? '—'}
+          value={summary?.total ?? '—'}
           gradient="bg-gradient-to-br from-slate-600 to-slate-800"
           textColor="text-slate-600"
           active={statusFilter === 'ALL' && !debouncedSearch}
