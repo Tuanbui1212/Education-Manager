@@ -6,5 +6,6 @@ const router = Router();
 const cashBookController = new CashBookController();
 
 router.get('/', verifyToken, cashBookController.getCashBook);
+router.get('/:id', verifyToken, cashBookController.getCashBookById);
 
 export default router;

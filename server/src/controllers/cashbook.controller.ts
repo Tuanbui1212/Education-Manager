@@ -13,4 +13,19 @@ export class CashBookController {
       res.status(400).json({ success: false, message: error.message });
     }
   };
+
+  //[GET] /api/cashbook/:id
+  getCashBookById = async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const result = await this.cashBookService.getCashBookById(
+        id as string,
+        req.query.type as string,
+        req.query.table as string,
+      );
+      res.status(200).json({ success: true, message: 'Lấy bảng thu chi thành công', data: result });
+    } catch (error: any) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  };
 }

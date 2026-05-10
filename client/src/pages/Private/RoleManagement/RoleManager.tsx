@@ -16,7 +16,7 @@ import useDebounce from '../../../hooks/useDebounce';
 import { roleService } from '../../../services/role.service';
 
 import type { IRole } from '../../../types/role.type';
-import { PATHS } from '../../../utils/constants';
+import { PATHS, NAME_ROLES } from '../../../utils/constants';
 
 const RoleManager = () => {
   const navigate = useNavigate();
@@ -237,7 +237,6 @@ const RoleManager = () => {
           <tbody className="divide-y divide-gray-100">
             {sortedRoles && sortedRoles.length > 0 ? (
               sortedRoles.map((role: any, index: number) => {
-                // TÍNH NĂNG KHÓA SUPER ADMIN: Bất khả xâm phạm
                 const isSuperAdmin =
                   role.name?.toLowerCase() === 'super admin' ||
                   role.name?.toLowerCase() === 'student' ||
@@ -258,7 +257,7 @@ const RoleManager = () => {
                         style={{ cursor: 'pointer' }}
                       >
                         {isSuperAdmin && <ShieldAlert size={16} className="text-orange-500" />}
-                        {role.name}
+                        {NAME_ROLES.find((r) => r.value.toUpperCase() === role.name.toUpperCase())?.label || role.name}
                       </div>
                     </td>
                     <td className="p-4 text-text-main text-sm max-w-xs truncate">

@@ -9,7 +9,7 @@ const attendanceController = new AttendanceController();
 
 router.get("/", verifyToken, requirePermission('attendance.view'),
     validate(GetActiveClassesQuerySchema, 'query'),
-    attendanceController.getAllClasses);
+    attendanceController.getAllClassesByTeacherId);
 
 router.get("/:classId", verifyToken, requirePermission('attendance.view'),
     requireTeacherForAttendance,

@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { createTransport, TransportOptions } from 'nodemailer';
 import dotenv from 'dotenv';
 import { NotificationTemplateModel } from '../models/notificationTemplate.model';
 import { NotificationType } from '../types/notificationTemplate.type';
@@ -8,14 +9,30 @@ dotenv.config();
 export class EmailService {
   private transporter: nodemailer.Transporter;
 
+  // constructor() {
+  //   this.transporter = nodemailer.createTransport({
+  //     service: 'gmail',
+  //     auth: {
+  //       user: process.env.EMAIL_USER,
+  //       pass: process.env.EMAIL_PASS,
+  //     },
+  //   });
+  // }
+
   constructor() {
-    this.transporter = nodemailer.createTransport({
-      service: 'gmail',
+    this.transporter = createTransport({
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
+      family: 4,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
-    });
+      tls: {
+        rejectUnauthorized: false,
+      },
+    } as TransportOptions);
   }
 
   private formatCurrency(amount: number): string {

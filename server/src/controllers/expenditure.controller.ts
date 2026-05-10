@@ -65,4 +65,16 @@ export class ExpenditureController {
       res.status(400).json({ success: false, message: error.message });
     }
   };
+  // [GET] /api/expenditure/:id
+  getById = async (req: Request, res: Response) => {
+    try {
+      const result = await this.expenditureService.getById(req.params.id as string);
+      if (!result) {
+        return res.status(404).json({ success: false, message: 'Không tìm thấy khoản chi' });
+      }
+      res.json({ success: true, data: result, message: 'Lấy khoản chi thành công' });
+    } catch (error: any) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  };
 }

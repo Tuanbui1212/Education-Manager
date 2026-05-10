@@ -1,5 +1,6 @@
 import type { RoomStatus } from '../types/room.type';
 import type { NotificationType } from '../types/notificationTemplate.type';
+import type { ScheduleStatus } from '../types/schedule.type';
 
 export const getRoleStyles = (role: string): string => {
   const normalizedRole = role?.trim();
@@ -121,4 +122,10 @@ export const translateRole = (roleName?: string): string => {
   };
 
   return roleMap[normalizedRole] || roleName;
+};
+
+export const STATUS_CONFIG: Record<ScheduleStatus, { label: string; className: string; dot: string }> = {
+  ongoing: { label: 'Đang học', className: 'bg-green-100 text-green-700', dot: 'bg-green-500' },
+  upcoming: { label: 'Sắp tới', className: 'bg-blue-100 text-blue-700', dot: 'bg-blue-400' },
+  done: { label: 'Đã xong', className: 'bg-gray-100 text-gray-500', dot: 'bg-gray-400' },
 };

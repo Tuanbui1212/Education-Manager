@@ -4,7 +4,7 @@ import { cashbookService } from '../services/cashbook.service';
 // ==================== TYPES ====================
 
 export type CashbookTabType = 'ALL' | 'IN' | 'OUT';
-export type DateRangeType = 'this_month' | 'last_month' | 'this_quarter' | 'this_year' | 'custom';
+export type DateRangeType = 'this_month' | 'last_month' | 'this_quarter' | 'this_year' | 'custom' | 'all';
 export type PaymentMethodType = 'CASH' | 'TRANSFER' | 'CARD';
 export type TransactionType = 'IN' | 'OUT' | 'REFUND';
 

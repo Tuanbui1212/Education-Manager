@@ -276,7 +276,7 @@ export class UserService {
       filter.status = status;
     }
 
-    const [users, totalCount, countActive, countInactive, countPotential, countReserved] = await Promise.all([
+    const [users, totalCount, total, countActive, countInactive, countPotential, countReserved] = await Promise.all([
       UserModel.find(filter)
         .select('-password')
         .populate('roleId', 'name')
@@ -285,6 +285,7 @@ export class UserService {
         .skip(skip)
         .limit(limit),
       UserModel.countDocuments(filter),
+      UserModel.countDocuments({ roleId: filter.roleId }),
       UserModel.countDocuments({ ...filter, status: UserStatus.ACTIVE }),
       UserModel.countDocuments({ ...filter, status: UserStatus.INACTIVE }),
       UserModel.countDocuments({ ...filter, status: UserStatus.POTENTIAL }),
@@ -292,6 +293,7 @@ export class UserService {
     ]);
 
     const summary = {
+      total: total,
       active: countActive,
       inactive: countInactive,
       potential: countPotential,

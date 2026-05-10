@@ -34,7 +34,7 @@ const ListNotificationTemplate = () => {
     title: '',
     message: '',
     type: 'success' as 'success' | 'danger' | 'warning' | 'info',
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   const queryParams = {
@@ -110,7 +110,7 @@ const ListNotificationTemplate = () => {
       isOpen: true,
       title: 'Xác nhận xóa',
       message: 'Bạn có chắc chắn muốn xóa mẫu thông báo này?',
-      type: 'warning',
+      type: 'danger',
       onConfirm: async () => {
         try {
           const data = await notificationTemplateService.deleteTemplate(id);

@@ -39,7 +39,7 @@ const ListRoom = () => {
     title: '',
     message: '',
     type: 'success' as 'success' | 'danger' | 'warning' | 'info',
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   const queryParams: GetRoomsParams = {
@@ -119,7 +119,7 @@ const ListRoom = () => {
       isOpen: true,
       title: 'Xác nhận xóa',
       message: 'Bạn có chắc chắn muốn xóa phòng này?',
-      type: 'warning',
+      type: 'danger',
       onConfirm: async () => {
         try {
           const data = await roomService.deleteRoom(id);

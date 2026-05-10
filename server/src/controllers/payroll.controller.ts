@@ -71,6 +71,17 @@ export class PayrollController {
     }
   }
 
+  //[POST] /payrolls/generatePayrollForUsers
+  async generatePayrollForUsers(req: Request, res: Response) {
+    try {
+      const { userIds, month } = req.body;
+      const { success, count } = await payrollService.generatePayrollForUsers(userIds, month as string);
+      return res.status(200).json({ success, message: `Tính lương cho ${count} nhân viên thành công`, count });
+    } catch (error: any) {
+      return res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
   // [POST] /payrolls/send-email
   async sendPayrollEmail(req: Request, res: Response) {
     try {

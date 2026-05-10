@@ -1,16 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import {
-  Search,
-  Download,
-  Plus,
-  ArrowUpRight,
-  ArrowDownRight,
-  Wallet,
-  TrendingUp,
-  TrendingDown,
-  RefreshCcw,
-  Calendar,
-} from 'lucide-react';
+import { Search, Download, Plus, ArrowUpRight, ArrowDownRight, RefreshCcw, Calendar } from 'lucide-react';
 
 import { formatCurrency, formatDate } from '../../../../utils/format.util';
 import Button from '../../../../components/Button';
@@ -64,6 +53,7 @@ const DATE_RANGE_OPTIONS: { value: DateRangeType; label: string }[] = [
   { value: 'this_quarter', label: 'Quý này' },
   { value: 'this_year', label: 'Năm nay' },
   { value: 'custom', label: 'Tùy chỉnh...' },
+  { value: 'all', label: 'Tất cả' },
 ];
 
 const CashbookManagement = () => {
@@ -84,35 +74,39 @@ const CashbookManagement = () => {
     switch (dateRange) {
       case 'this_month':
         return {
-          startDate: new Date(now.getFullYear(), now.getMonth(), 1),
-          endDate: new Date(),
+          startDate: new Date(now.getFullYear(), now.getMonth(), 1).toISOString(),
+          endDate: new Date().toISOString(),
         };
 
       case 'last_month':
         return {
-          startDate: new Date(now.getFullYear(), now.getMonth() - 1, 1),
-          endDate: new Date(now.getFullYear(), now.getMonth(), 0),
+          startDate: new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString(),
+          endDate: new Date(now.getFullYear(), now.getMonth(), 0).toISOString(),
         };
 
       case 'this_quarter':
         return {
-          startDate: new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1),
-          endDate: new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3 + 3, 0),
+          startDate: new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1).toISOString(),
+          endDate: new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3 + 3, 0).toISOString(),
         };
 
       case 'this_year':
         return {
-          startDate: new Date(now.getFullYear(), 0, 1),
-          endDate: new Date(now.getFullYear(), 11, 31),
+          startDate: new Date(now.getFullYear(), 0, 1).toISOString(),
+          endDate: new Date(now.getFullYear(), 11, 31).toISOString(),
         };
 
       case 'custom':
         if (!fromDate || !toDate) return null;
         return {
-          startDate: new Date(fromDate),
-          endDate: new Date(toDate),
+          startDate: new Date(fromDate).toISOString(),
+          endDate: new Date(toDate).toISOString(),
         };
-
+      case 'all':
+        return {
+          startDate: '',
+          endDate: '',
+        };
       default:
         return null;
     }
@@ -122,12 +116,12 @@ const CashbookManagement = () => {
     page,
     limit,
     type,
-    startDate: range?.startDate.toISOString(),
-    endDate: range?.endDate.toISOString(),
+    startDate: range?.startDate,
+    endDate: range?.endDate,
     search,
   };
 
-  const { data, loading, error, refetch, totalCount, summary } = useFetch(cashbookService.getCashBook, queryParams, [
+  const { data, loading, error, refetch, totalCount } = useFetch(cashbookService.getCashBook, queryParams, [
     page,
     limit,
     type,
@@ -137,17 +131,23 @@ const CashbookManagement = () => {
     toDate,
   ]);
 
-  console.log('data:', data);
-
-  const loadingSummary = loading;
-
   const totalPages = Math.ceil(totalCount / queryParams.limit);
+
+  const handleNavigate = (item: any) => {
+    if (item.type === 'IN') {
+      return navigate(PATHS.FINANCE_TRANSACTIONS_ID.replace(':id', item._id) + '?type=IN&table=transaction');
+    } else if (item.type === 'OUT' && item.invoiceId?.status === 'REFUNDED') {
+      return navigate(PATHS.FINANCE_TRANSACTIONS_ID.replace(':id', item._id) + '?type=OUT&table=transaction');
+    }
+
+    return navigate(PATHS.FINANCE_TRANSACTIONS_ID.replace(':id', item._id) + '?type=OUT&table=expenditure');
+  };
 
   return (
     <div className="p-4 sm:p-8 w-full min-h-screen bg-gray-50/50">
       {/* ===== HEADER ===== */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <PageHeader title="Sổ Quỹ & Báo cáo Thu Chi" />
+        <PageHeader title="Lịch sử giao dịch" />
         <div className="flex gap-3">
           <Button variant="outline" icon={<Download size={18} />} className="bg-white">
             Xuất Báo cáo
@@ -155,55 +155,6 @@ const CashbookManagement = () => {
           <Button variant="primary" icon={<Plus size={18} />} onClick={() => setIsModalOpen(true)}>
             Tạo Phiếu Thủ Công
           </Button>
-        </div>
-      </div>
-
-      {/* ===== SUMMARY CARDS ===== */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
-          <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0">
-            <TrendingUp size={28} />
-          </div>
-          <div>
-            <p className="text-sm text-gray-500 font-medium mb-1">Tổng Thu</p>
-            <p className="text-2xl font-bold text-gray-800">
-              {loadingSummary ? '---' : formatCurrency(summary.totalIn)}
-            </p>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
-          <div className="w-14 h-14 bg-orange-50 text-orange-600 rounded-2xl flex items-center justify-center shrink-0">
-            <TrendingDown size={28} />
-          </div>
-          <div>
-            <p className="text-sm text-gray-500 font-medium mb-1">Tổng Chi</p>
-            <p className="text-2xl font-bold text-gray-800">
-              {loadingSummary ? '---' : formatCurrency(summary.totalOut)}
-            </p>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
-          <div className="w-14 h-14 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center shrink-0">
-            <RefreshCcw size={28} />
-          </div>
-          <div>
-            <p className="text-sm text-gray-500 font-medium mb-1">Hoàn Tiền</p>
-            <p className="text-2xl font-bold text-gray-800">
-              {loadingSummary ? '---' : formatCurrency(summary.totalRefund)}
-            </p>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-2xl shadow-md flex items-center gap-4 text-white hover:shadow-lg transition-all transform hover:-translate-y-1">
-          <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center shrink-0">
-            <Wallet size={28} />
-          </div>
-          <div>
-            <p className="text-sm text-blue-100 font-medium mb-1">Tồn Quỹ Kỳ Này</p>
-            <p className="text-2xl font-bold">{loadingSummary ? '---' : formatCurrency(summary.balance)}</p>
-          </div>
         </div>
       </div>
 
@@ -215,7 +166,10 @@ const CashbookManagement = () => {
             {(['ALL', 'IN', 'OUT'] as const).map((tab) => (
               <button
                 key={tab}
-                onClick={() => setTab(tab)}
+                onClick={() => {
+                  setTab(tab);
+                  setPage(1);
+                }}
                 className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${
                   type === tab
                     ? 'bg-white text-blue-600 shadow-sm border border-gray-200/50'
@@ -235,7 +189,10 @@ const CashbookManagement = () => {
               <select
                 className="bg-transparent border-none outline-none text-sm font-medium text-gray-700 cursor-pointer"
                 value={dateRange}
-                onChange={(e) => setDateRange(e.target.value as DateRangeType)}
+                onChange={(e) => {
+                  setDateRange(e.target.value as DateRangeType);
+                  setPage(1);
+                }}
               >
                 {DATE_RANGE_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -271,7 +228,10 @@ const CashbookManagement = () => {
                 type="text"
                 placeholder="Tìm mã phiếu, nội dung..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
                 className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
               />
             </div>
@@ -288,8 +248,7 @@ const CashbookManagement = () => {
                 <th className="p-4 font-semibold">Thời gian</th>
                 <th className="p-4 font-semibold">Mã Phiếu</th>
                 <th className="p-4 font-semibold">Loại</th>
-                {/* <th className="p-4 font-semibold">Danh mục</th> */}
-                <th className="p-4 font-semibold w-1/3">Nội dung </th>
+                <th className="p-4 font-semibold w-1/3">Nội dung</th>
                 <th className="p-4 font-semibold text-right">Số tiền (VNĐ)</th>
                 <th className="p-4 font-semibold text-center">Hình thức</th>
                 <th className="p-4 font-semibold text-center">Người lập</th>
@@ -315,11 +274,12 @@ const CashbookManagement = () => {
                       <div className="font-medium text-gray-800">{formatDate(item.createdAt)}</div>
                       <div className="text-xs text-gray-400">{item.createdAt.split('T')[1]?.substring(0, 5)}</div>
                     </td>
-                    <td className="p-4">
-                      <span className="font-mono text-sm font-semibold text-blue-600">{item.code}</span>
+                    <td className="p-4 cursor-pointer" onClick={() => handleNavigate(item)}>
+                      <span className="font-mono text-sm font-semibold text-blue-600 hover:text-blue-400">
+                        {item.code}
+                      </span>
                     </td>
                     <td className="p-4">{renderTypeBadge(item.type)}</td>
-                    {/* <td className="p-4 text-sm font-medium text-gray-700">{item.category}</td> */}
                     <td className="p-4 text-sm text-gray-600">{item.description || item.note}</td>
                     <td className="p-4 text-right">
                       <span

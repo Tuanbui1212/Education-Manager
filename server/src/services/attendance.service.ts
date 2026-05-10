@@ -12,7 +12,7 @@ type UpsertAttendanceData = z.infer<typeof UpsertAttendanceItemSchema>;
 
 export class AttendanceService {
 
-    async getAllClasses(query: any, userId: string) {
+    async getAllClassesByTeacherId(query: any, userId: string) {
         const { page = 1, limit = 10, shiftId, search } = query;
         const match: any = {};
         if (shiftId) match.shiftId = new Types.ObjectId(shiftId);

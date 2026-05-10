@@ -29,6 +29,8 @@ import { userService } from '../../../services/user.service';
 import { roleService } from '../../../services/role.service';
 import type { IUser, UserStatus } from '../../../types/user.type';
 
+import { NAME_ROLES } from '../../../utils/constants';
+
 interface IVietQRBank {
   id: number;
   name: string;
@@ -550,11 +552,15 @@ const UserForm = () => {
                     value={formData.roleId as string}
                     onChange={(e) => handleChange('roleId', e.target.value)}
                   >
-                    {roles.map((role: any) => (
-                      <option key={role._id} value={role._id}>
-                        {role.name}
-                      </option>
-                    ))}
+                    {roles.map((role: any) => {
+                      const roleInfo = NAME_ROLES.find((r) => r.value === role.name.toUpperCase());
+
+                      return (
+                        <option key={role._id} value={role._id}>
+                          {roleInfo?.label || role.name}
+                        </option>
+                      );
+                    })}
                   </SelectField>
                   <SelectField
                     label="Trạng thái"

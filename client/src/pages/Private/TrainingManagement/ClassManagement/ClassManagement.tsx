@@ -44,7 +44,7 @@ const ClassManagement = () => {
     title: '',
     message: '',
     type: 'success' as 'success' | 'danger' | 'warning' | 'info',
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   const queryParams = {
@@ -124,7 +124,7 @@ const ClassManagement = () => {
       isOpen: true,
       title: 'Xác nhận xóa',
       message: 'Bạn có chắc chắn muốn xóa lớp học này? Mọi dữ liệu liên quan sẽ bị ảnh hưởng.',
-      type: 'warning',
+      type: 'danger',
       onConfirm: async () => {
         try {
           const res = await classService.deleteClass(id);

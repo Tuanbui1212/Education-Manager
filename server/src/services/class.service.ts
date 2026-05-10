@@ -56,7 +56,7 @@ export class ClassService {
   }
 
   async getAllClasses(query: GetClassesQuery) {
-    const { page = 1, limit = 10, search = '', status = '' } = query;
+    const { page = 1, limit = 10, search = '', status = '', courseId = '', startDate = '', endDate = '' } = query;
     const skip = (Number(page) - 1) * Number(limit);
     const filter: any = {
       name: { $regex: search, $options: 'i' },
@@ -64,6 +64,16 @@ export class ClassService {
     if (status) {
       filter.status = status.toUpperCase();
     }
+    if (courseId) {
+      filter.courseId = new Types.ObjectId(courseId);
+    }
+    if (startDate) {
+      filter.startDate = { $gte: new Date(startDate) };
+    }
+    if (endDate) {
+      filter.startDate = { $lte: new Date(endDate) };
+    }
+
     const [total, classes] = await Promise.all([
       ClassModel.countDocuments(filter),
       ClassModel.find(filter)

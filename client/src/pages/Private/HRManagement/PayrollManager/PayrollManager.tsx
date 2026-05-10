@@ -15,6 +15,7 @@ import {
   QrCode,
   X,
   Lock,
+  RefreshCw,
 } from 'lucide-react';
 import Button from '../../../../components/Button';
 import PageHeader from '../../../../components/PageHeader';
@@ -54,8 +55,7 @@ const PayrollManager = () => {
     loading,
     refetch: fetchPayrollData,
   } = useFetch(payrollService.getPayrolls, { month: selectedMonth }, [selectedMonth]);
-  console.log(payrollData);
-  // State Modal QR
+
   const [qrModal, setQrModal] = useState<{ isOpen: boolean; payload: IPayroll | null }>({
     isOpen: false,
     payload: null,
@@ -253,7 +253,6 @@ const PayrollManager = () => {
   };
 
   const handleExportExcel = async () => {
-    console.log('Exporting payroll data to Excel for month:', selectedMonth);
     try {
       const fileExcelBlob = await payrollService.exportPayrollToExcel(selectedMonth);
       const url = window.URL.createObjectURL(fileExcelBlob);
@@ -325,6 +324,71 @@ const PayrollManager = () => {
         title: 'Lỗi',
         type: 'danger',
         message: `Đã có lỗi xảy ra khi tạo bảng lương cho tháng ${formatMonthDisplay(month)}. Vui lòng thử lại sau hoặc liên hệ bộ phận IT.\n\nChi tiết lỗi: ${(error as Error).message}`,
+        confirmText: 'Đóng',
+        cancelText: '',
+        onConfirm: closeConfirm,
+      });
+    } finally {
+      setIsActioning(false);
+    }
+  };
+
+  const handleRecalculatePayroll = () => {
+    if (selectedRowIds.length === 0) {
+      setConfirmConfig({
+        isOpen: true,
+        title: 'Lưu ý',
+        type: 'warning',
+        message: 'Vui lòng tích chọn ít nhất 1 nhân sự để tính lại lương.',
+        confirmText: 'Đã hiểu',
+        cancelText: '',
+        onConfirm: closeConfirm,
+      });
+      return;
+    }
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Tính lại lương cho nhân sự đã chọn',
+      type: 'info',
+      message: `Hệ thống sẽ tính lại lương tháng ${formatMonthDisplay(selectedMonth)} cho ${selectedRowIds.length} nhân sự đã tích.\n\nDữ liệu sẽ được cập nhật theo chấm công và giờ dạy mới nhất. Bạn có chắc chắn?`,
+      confirmText: 'Bắt đầu tính lại',
+      cancelText: 'Hủy',
+      onConfirm: () => {
+        closeConfirm();
+        recalculatePayrollForSelected();
+      },
+    });
+  };
+
+  const recalculatePayrollForSelected = async () => {
+    setActionText('Đang tính lại lương, vui lòng chờ...');
+    setIsActioning(true);
+    console.log('selectedRowIds:', selectedRowIds);
+    console.log('selectedMonth:', selectedMonth);
+    try {
+      const result = await payrollService.generatePayrollForUsers(selectedRowIds, selectedMonth);
+
+      if (result.success) {
+        setConfirmConfig({
+          isOpen: true,
+          title: 'Thành công',
+          type: 'success',
+          message: `Đã tính lại lương tháng ${formatMonthDisplay(selectedMonth)} cho ${result.count} nhân sự.\n\n${result.message ?? ''}`,
+          confirmText: 'Đóng',
+          cancelText: '',
+          onConfirm: () => {
+            closeConfirm();
+            setSelectedRowIds([]);
+            fetchPayrollData();
+          },
+        });
+      }
+    } catch (error) {
+      setConfirmConfig({
+        isOpen: true,
+        title: 'Lỗi',
+        type: 'danger',
+        message: `Đã có lỗi xảy ra khi tính lại lương. Vui lòng thử lại sau hoặc liên hệ bộ phận IT.\n\nChi tiết lỗi: ${(error as Error).message}`,
         confirmText: 'Đóng',
         cancelText: '',
         onConfirm: closeConfirm,
@@ -423,7 +487,7 @@ const PayrollManager = () => {
         </div>
       );
     }
-    // TEACHER_PART_TIME
+
     return (
       <div className="text-xs space-y-1">
         <p className="text-gray-600">
@@ -651,6 +715,18 @@ const PayrollManager = () => {
         </div>
 
         <div className="flex gap-3">
+          <Button
+            variant="outline"
+            icon={<RefreshCw size={18} />}
+            onClick={handleRecalculatePayroll}
+            className={`transition-all ${
+              selectedRowIds.length > 0
+                ? 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100 shadow-sm'
+                : 'text-gray-400 border-gray-200'
+            }`}
+          >
+            Tính lại lương {selectedRowIds.length > 0 ? `(${selectedRowIds.length})` : ''}
+          </Button>
           <Button
             variant="outline"
             icon={<Mail size={18} />}

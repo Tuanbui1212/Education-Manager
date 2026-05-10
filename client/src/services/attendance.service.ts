@@ -2,7 +2,7 @@ import axios from './axiosClient';
 import type { IAttendance, IAttendanceRecord, IScheduleStat, IActiveClass } from '../types/attendance.type';
 
 export const attendanceService = {
-    getActiveClasses: async (
+    getActiveClassesByTeacherId: async (
         params?: { page?: number; limit?: number; search?: string; }
     ): Promise<{ success: boolean; data: IActiveClass[]; totalCount: number; message: string }> => {
         const response = await axios.get('/attendances', { params });

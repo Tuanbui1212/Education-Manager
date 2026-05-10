@@ -24,22 +24,22 @@ import {
 import { startOfWeek, addDays, subWeeks, addWeeks, format, isSameDay } from 'date-fns';
 
 import { vi } from 'date-fns/locale';
-import { ClassStatus } from '../types/class.type';
+import { ClassStatus } from '../../../types/class.type';
 
-import { PATHS } from '../utils/constants';
-import { CLASS_STATUS_CONFIG } from '../utils/constants';
-import { getDecodedToken } from '../utils/auth';
+import { PATHS } from '../../../utils/constants';
+import { CLASS_STATUS_CONFIG } from '../../../utils/constants';
+import { getDecodedToken } from '../../../utils/auth';
 
-import useFetch from '../hooks/useFetch';
-import useDebounce from '../hooks/useDebounce';
+import useFetch from '../../../hooks/useFetch';
+import useDebounce from '../../../hooks/useDebounce';
 
-import { classService } from '../services/class.service';
-import { scheduleService } from '../services/schedule.service';
-import { shiftService } from '../services/shift.service';
-import { invoiceService } from '../services/invoice.service';
-import { paymentService } from '../services/payment.service';
-import { examService } from '../services/exam.service';
-import type { IExam, IExamSubmission } from '../types/exam.type';
+import { classService } from '../../../services/class.service';
+import { scheduleService } from '../../../services/schedule.service';
+import { shiftService } from '../../../services/shift.service';
+import { invoiceService } from '../../../services/invoice.service';
+import { paymentService } from '../../../services/payment.service';
+import { examService } from '../../../services/exam.service';
+import type { IExam, IExamSubmission } from '../../../types/exam.type';
 
 const MOCK_INVOICES = [
   { id: 'inv1', title: 'Học phí Tiếng Anh (Tháng 10)', amount: 2500000, dueDate: '2023-10-15', status: 'PENDING' },
@@ -116,7 +116,7 @@ const StudentPortal = () => {
     examService
       .getExamsByClasses(ids, currentUser?.id!)
       .then((res) => setAllExams(res.data ?? []))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setExamsLoading(false));
   }, [classesRaw]);
 
@@ -313,11 +313,10 @@ const StudentPortal = () => {
           <div className="bg-white border border-gray-200 p-1.5 rounded-2xl flex items-center gap-1.5 shadow-xs">
             <button
               onClick={() => setActiveTab('classes')}
-              className={`px-6 py-2.5 cursor-pointer rounded-xl justify-center min-w-[140px] text-sm font-bold transition-all duration-300 flex items-center gap-2 ${
-                activeTab === 'classes'
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600 active:scale-95'
-              }`}
+              className={`px-6 py-2.5 cursor-pointer rounded-xl justify-center min-w-[140px] text-sm font-bold transition-all duration-300 flex items-center gap-2 ${activeTab === 'classes'
+                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
+                : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600 active:scale-95'
+                }`}
             >
               <BookOpen size={18} />
               Lớp học
@@ -325,11 +324,10 @@ const StudentPortal = () => {
 
             <button
               onClick={() => setActiveTab('timetable')}
-              className={`px-6 py-2.5 cursor-pointer rounded-xl justify-center min-w-[140px] text-sm font-bold transition-all duration-300 flex items-center gap-2 ${
-                activeTab === 'timetable'
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600 active:scale-95'
-              }`}
+              className={`px-6 py-2.5 cursor-pointer rounded-xl justify-center min-w-[140px] text-sm font-bold transition-all duration-300 flex items-center gap-2 ${activeTab === 'timetable'
+                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
+                : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600 active:scale-95'
+                }`}
             >
               <CalendarIcon size={18} />
               Lịch học
@@ -337,11 +335,10 @@ const StudentPortal = () => {
 
             <button
               onClick={() => setActiveTab('invoices')}
-              className={`px-6 py-2.5 cursor-pointer rounded-xl justify-center min-w-[140px] text-sm font-bold transition-all duration-300 flex items-center gap-2 ${
-                activeTab === 'invoices'
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-indigo-600 active:scale-95'
-              }`}
+              className={`px-6 py-2.5 cursor-pointer rounded-xl justify-center min-w-[140px] text-sm font-bold transition-all duration-300 flex items-center gap-2 ${activeTab === 'invoices'
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+                : 'text-gray-600 hover:bg-gray-50 hover:text-indigo-600 active:scale-95'
+                }`}
             >
               <CreditCard size={18} />
               Học phí
@@ -349,11 +346,10 @@ const StudentPortal = () => {
 
             <button
               onClick={() => setActiveTab('exams')}
-              className={`px-6 py-2.5 cursor-pointer rounded-xl justify-center min-w-[140px] text-sm font-bold transition-all duration-300 flex items-center gap-2 ${
-                activeTab === 'exams'
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600 active:scale-95'
-              }`}
+              className={`px-6 py-2.5 cursor-pointer rounded-xl justify-center min-w-[140px] text-sm font-bold transition-all duration-300 flex items-center gap-2 ${activeTab === 'exams'
+                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
+                : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600 active:scale-95'
+                }`}
             >
               <FileText size={18} />
               Bài kiểm tra
@@ -776,8 +772,7 @@ const StudentPortal = () => {
                           {new Date(exam.endDate).toLocaleDateString('vi-VN')}
                         </span>
                       </div>
-
-                      {!isOverdue && (
+                      {isOverdue && exam.submissions?.status !== 'SUBMITTED' ? <span className="text-xs text-red-500">Bạn chưa làm bài kiểm tra này</span> :
                         <button
                           onClick={() => {
                             if (exam.submissions?.status === 'SUBMITTED') {
@@ -788,10 +783,9 @@ const StudentPortal = () => {
                           }}
                           className={`cursor-pointer w-full py-2 ${exam.submissions?.status === 'SUBMITTED' ? 'bg-gray-400 hover:bg-gray-500' : 'bg-blue-600 hover:bg-blue-700'} text-white text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-md shadow-blue-600/20`}
                         >
-                          <FileText size={14} />{' '}
+                          <FileText size={14} />
                           {exam.submissions?.status === 'SUBMITTED' ? 'Xem lại bài kiểm tra' : 'Làm bài'}
-                        </button>
-                      )}
+                        </button>}
                     </div>
                   );
                 })}

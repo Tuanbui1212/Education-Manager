@@ -15,9 +15,9 @@ import {
 import { format, isBefore, startOfDay } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
-import useFetch from '../hooks/useFetch';
-import { attendanceService } from '../services/attendance.service';
-import { PATHS } from '../utils/constants';
+import useFetch from '../../../hooks/useFetch';
+import { attendanceService } from '../../../services/attendance.service';
+import { PATHS } from '../../../utils/constants';
 
 const ScheduleRowSkeleton = () => (
   <div className="bg-white rounded-2xl border border-gray-100 p-5 flex flex-col sm:flex-row sm:items-center gap-4 animate-pulse">

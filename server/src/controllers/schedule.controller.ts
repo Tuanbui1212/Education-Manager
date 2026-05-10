@@ -101,4 +101,16 @@ export class ScheduleController {
       return res.status(400).json({ success: false, message: error.message });
     }
   };
+
+  //[GET] /schedules/class/today
+  getTodaySchedules = async (req: Request, res: Response) => {
+    try {
+      const schedules = await this.scheduleService.getTodaySchedules();
+      return res
+        .status(200)
+        .json({ success: true, message: 'Lấy danh sách lịch học hôm nay thành công', data: schedules });
+    } catch (error: any) {
+      return res.status(400).json({ success: false, message: error.message });
+    }
+  };
 }

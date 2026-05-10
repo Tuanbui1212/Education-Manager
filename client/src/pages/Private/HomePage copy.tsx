@@ -1,25 +1,47 @@
 import React from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { Users, BookOpen, DollarSign, FileText, PlusCircle, CreditCard, UserPlus } from 'lucide-react';
+import { PATHS } from '../../utils/constants';
+import useFetch from '../../hooks/useFetch';
+import { userService } from '../../services/user.service';
+import { classService } from '../../services/class.service';
+import { cashbookService } from '../../services/cashbook.service';
+import { transactionService } from '../../services/transaction.service';
+import { formatCurrency, formatDate } from '../../utils/format.util';
+import { PAYMENT_CONFIG } from '../../utils/constants';
 
 const HomePage = () => {
-  // Dữ liệu giả lập (Sau này bạn sẽ call API từ Backend để đắp vào)
+  const navigate = useNavigate();
+  const now = new Date();
+
+  const { totalCount: totalCountStudent } = useFetch(
+    userService.getAllStudents,
+    { status: 'ACTIVE', limit: 1, page: 1 },
+    [],
+  );
+  const { totalCount: totalCountClass } = useFetch(
+    classService.getClasses,
+    { status: 'ACTIVE', limit: 1, page: 1 },
+    [],
+  );
+
+  const { data: recentTransactions, summary } = useFetch(
+    transactionService.getTransactions,
+    { limit: 10, page: 1, month: now.getMonth() + 1, year: now.getFullYear() },
+    [],
+  );
+
   const stats = [
-    { title: 'Tổng Học Sinh', value: '1,250', icon: Users, color: 'text-blue-600', bg: 'bg-blue-100' },
-    { title: 'Lớp Đang Mở', value: '45', icon: BookOpen, color: 'text-green-600', bg: 'bg-green-100' },
+    { title: 'Tổng Học Sinh', value: totalCountStudent, icon: Users, color: 'text-blue-600', bg: 'bg-blue-100' },
+    { title: 'Lớp Đang Mở', value: totalCountClass, icon: BookOpen, color: 'text-green-600', bg: 'bg-green-100' },
     {
       title: 'Doanh Thu Tháng',
-      value: '125,000,000 đ',
+      value: formatCurrency(summary?.totalIn | 0),
       icon: DollarSign,
       color: 'text-purple-600',
       bg: 'bg-purple-100',
     },
     { title: 'Hóa Đơn Chờ T.Toán', value: '12', icon: FileText, color: 'text-red-600', bg: 'bg-red-100' },
-  ];
-
-  const recentTransactions = [
-    { id: 'TX001', student: 'Nguyễn Văn A', amount: '2,500,000 đ', status: 'PAID', date: '24/04/2026' },
-    { id: 'TX002', student: 'Trần Thị B', amount: '1,200,000 đ', status: 'UNPAID', date: '23/04/2026' },
-    { id: 'TX003', student: 'Lê Văn C', amount: '3,000,000 đ', status: 'PAID', date: '23/04/2026' },
   ];
 
   return (
@@ -50,10 +72,16 @@ const HomePage = () => {
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-1">
           <h2 className="text-lg font-bold text-gray-800 mb-4">Thao tác nhanh</h2>
           <div className="space-y-3">
-            <button className="w-full flex items-center p-3 text-sm text-gray-700 bg-gray-50 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors">
+            <button
+              onClick={() => navigate(PATHS.TRAINING_STUDENT_CREATE)}
+              className="w-full flex items-center p-3 text-sm text-gray-700 bg-gray-50 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
+            >
               <UserPlus className="w-5 h-5 mr-3" /> Thêm học sinh mới
             </button>
-            <button className="w-full flex items-center p-3 text-sm text-gray-700 bg-gray-50 hover:bg-green-50 hover:text-green-600 rounded-lg transition-colors">
+            <button
+              onClick={() => navigate(PATHS.TRAINING_CLASSES)}
+              className="w-full flex items-center p-3 text-sm text-gray-700 bg-gray-50 hover:bg-green-50 hover:text-green-600 rounded-lg transition-colors"
+            >
               <PlusCircle className="w-5 h-5 mr-3" /> Mở lớp học mới
             </button>
             <button className="w-full flex items-center p-3 text-sm text-gray-700 bg-gray-50 hover:bg-purple-50 hover:text-purple-600 rounded-lg transition-colors">
@@ -66,37 +94,37 @@ const HomePage = () => {
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-bold text-gray-800">Giao dịch gần đây</h2>
-            <a href="/cashbook" className="text-sm text-blue-600 hover:underline">
+            <Link to={PATHS.FINANCE_TRANSACTIONS} className="text-sm text-blue-600 hover:underline">
               Xem tất cả
-            </a>
+            </Link>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-gray-200 text-sm text-gray-500">
                   <th className="pb-3 font-medium">Mã GD</th>
-                  <th className="pb-3 font-medium">Học sinh</th>
+                  <th className="pb-3 font-medium">Người thực hiện</th>
                   <th className="pb-3 font-medium">Số tiền</th>
-                  <th className="pb-3 font-medium">Trạng thái</th>
+                  <th className="pb-3 font-medium">Hình thức</th>
                   <th className="pb-3 font-medium">Ngày</th>
                 </tr>
               </thead>
               <tbody className="text-sm">
-                {recentTransactions.map((tx, idx) => (
+                {recentTransactions?.map((tx, idx) => (
                   <tr key={idx} className="border-b border-gray-100 last:border-0 hover:bg-gray-50">
-                    <td className="py-3 font-medium text-gray-800">{tx.id}</td>
-                    <td className="py-3 text-gray-600">{tx.student}</td>
-                    <td className="py-3 font-semibold text-gray-800">{tx.amount}</td>
+                    <td className="py-3 font-medium text-gray-800">{tx.code}</td>
+                    <td className="py-3 text-gray-600">{tx.processedBy?.fullName}</td>
+                    <td className="py-3 font-semibold text-gray-800">{formatCurrency(tx.amount)}</td>
                     <td className="py-3">
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          tx.status === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                          PAYMENT_CONFIG[tx.paymentMethod].className || 'bg-gray-100 text-gray-700'
                         }`}
                       >
-                        {tx.status}
+                        {PAYMENT_CONFIG[tx.paymentMethod]?.label || 'Không xác định'}
                       </span>
                     </td>
-                    <td className="py-3 text-gray-500">{tx.date}</td>
+                    <td className="py-3 text-gray-500">{formatDate(tx.createdAt)}</td>
                   </tr>
                 ))}
               </tbody>
