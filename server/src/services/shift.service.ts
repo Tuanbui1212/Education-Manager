@@ -8,6 +8,7 @@ export class ShiftService {
     if (existingShift) {
       throw new Error(`Ca làm việc mang tên '${data.name}' đã tồn tại!`);
     }
+
     return await ShiftModel.create(data);
   }
 
@@ -37,6 +38,13 @@ export class ShiftService {
 
   // Cập nhật ca làm việc
   async updateShift(id: string, data: Partial<IShift>) {
+    if (data.name) {
+      const existingShift = await ShiftModel.findOne({ name: data.name, _id: { $ne: id } });
+      if (existingShift) {
+        throw new Error(`Ca làm việc mang tên '${data.name}' đã tồn tại!`);
+      }
+    }
+
     return await ShiftModel.findByIdAndUpdate(id, data, { new: true });
   }
 

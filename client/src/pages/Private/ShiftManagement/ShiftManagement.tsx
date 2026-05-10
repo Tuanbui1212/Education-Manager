@@ -67,13 +67,19 @@ const ShiftManagement = () => {
         fetchShifts();
         setIsModalOpen(false);
         setPage(1);
+      } else {
+        setConfirmConfig({
+          isOpen: true,
+          title: 'Lỗi',
+          message: data.message || 'Có lỗi xảy ra khi thêm mới!',
+          type: 'danger',
+        });
       }
     } catch (error: any) {
-      const detailError = error.response?.data ? Object.values(error.response?.data?.errors).flat()[0] : null;
       setConfirmConfig({
         isOpen: true,
         title: 'Lỗi',
-        message: (detailError as string) || 'Có lỗi xảy ra khi thêm mới!',
+        message: error.response?.data?.message || 'Có lỗi xảy ra khi thêm mới!',
         type: 'danger',
       });
     }
@@ -107,14 +113,19 @@ const ShiftManagement = () => {
         fetchShifts();
         setIsModalOpen(false);
         setSelectedShift(null);
+      } else {
+        setConfirmConfig({
+          isOpen: true,
+          title: 'Lỗi',
+          message: data.message || 'Có lỗi xảy ra khi thay đổi!',
+          type: 'danger',
+        });
       }
     } catch (error: any) {
-      const detailError = error.response?.data?.errors ? Object.values(error.response.data.errors).flat()[0] : null;
-
       setConfirmConfig({
         isOpen: true,
         title: 'Lỗi',
-        message: (detailError as string) || 'Có lỗi xảy ra khi thay đổi!',
+        message: error.response?.data?.message || 'Có lỗi xảy ra khi thay đổi!',
         type: 'danger',
       });
     }
