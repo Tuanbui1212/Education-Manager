@@ -20,6 +20,7 @@ import {
   ClipboardList,
   FileText,
   AlertCircle,
+  Award,
 } from 'lucide-react';
 import { startOfWeek, addDays, subWeeks, addWeeks, format, isSameDay } from 'date-fns';
 
@@ -50,6 +51,137 @@ const MOCK_INVOICES = [
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 
+const StudentGradesList = ({ classes, studentId, allExams }: { classes: any[], studentId: string, allExams: any[] }) => {
+  const [gradesData, setGradesData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!classes || classes.length === 0) return;
+    const fetchGrades = async () => {
+      setLoading(true);
+      try {
+        const data = await Promise.all(
+          classes.map(async (cls) => {
+            let avgAttendanceMark = null;
+            try {
+              const attRes = await attendanceService.getStudentAttendancesByClass(cls._id);
+              const records = attRes.data || [];
+              const markedRecords = records.filter((r: any) => typeof r.mark === 'number');
+              if (markedRecords.length > 0) {
+                const totalMark = markedRecords.reduce((sum: number, r: any) => sum + r.mark, 0);
+                avgAttendanceMark = totalMark / markedRecords.length;
+              }
+            } catch (e) { console.error(e); }
+
+            const classExams = allExams.filter(e => typeof e.classId === 'object' ? e.classId._id === cls._id : e.classId === cls._id);
+            const examsWithMarks = await Promise.all(
+              classExams.map(async (exam) => {
+                let score = null;
+                let status = 'Chưa làm';
+                try {
+                  const subRes = await examService.getSubmission(exam._id, studentId);
+                  if (subRes.data) {
+                    if (subRes.data.status === 'SUBMITTED') {
+                      score = subRes.data.score;
+                      status = 'Đã hoàn thành';
+                    } else if (subRes.data.status === 'IN_PROGRESS') {
+                      status = 'Đang làm';
+                    }
+                  }
+                } catch (e) { console.error(e); }
+                return {
+                  examId: exam._id,
+                  title: exam.title,
+                  score,
+                  status
+                };
+              })
+            );
+
+            return {
+              classId: cls._id,
+              className: cls.name,
+              courseName: typeof cls.courseId === 'object' && cls.courseId !== null ? cls.courseId?.title : '',
+              avgAttendanceMark,
+              exams: examsWithMarks
+            };
+          })
+        );
+        setGradesData(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchGrades();
+  }, [classes, studentId, allExams]);
+
+  if (loading) {
+    return <div className="p-10 flex justify-center text-blue-600"><div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" /></div>;
+  }
+
+  if (gradesData.length === 0) {
+    return <div className="p-10 text-center text-gray-500 bg-gray-50 rounded-2xl border border-dashed border-gray-200">Chưa có dữ liệu bảng điểm.</div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      {gradesData.map((clsGrade) => (
+        <div key={clsGrade.classId} className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all">
+          <div className="bg-blue-50/50 border-b border-blue-100/50 p-4">
+            <h4 className="font-bold text-lg text-blue-900">{clsGrade.className}</h4>
+            <p className="text-sm text-blue-700/70">{clsGrade.courseName}</p>
+          </div>
+          <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white rounded-xl p-4 border border-gray-100 flex items-center justify-between shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                  <ClipboardList size={20} />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-700">Điểm danh trung bình</p>
+                  <p className="text-xs text-gray-500">Dựa trên các buổi đã học</p>
+                </div>
+              </div>
+              <div className="text-2xl font-black text-emerald-600">
+                {clsGrade.avgAttendanceMark !== null ? Number(clsGrade.avgAttendanceMark).toFixed(1) : '-'}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h5 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                <FileText size={16} className="text-blue-500" /> Điểm các bài kiểm tra
+              </h5>
+              {clsGrade.exams.length > 0 ? (
+                <div className="space-y-2">
+                  {clsGrade.exams.map((exam: any) => (
+                    <div key={exam.examId} className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl hover:border-blue-200 transition-colors shadow-sm">
+                      <div className="truncate pr-4">
+                        <p className="text-sm font-semibold text-gray-800 truncate">{exam.title}</p>
+                        <p className={`text-xs mt-0.5 font-medium ${exam.status === 'Đã hoàn thành' ? 'text-emerald-500' : 'text-amber-500'}`}>{exam.status}</p>
+                      </div>
+                      <div className="shrink-0">
+                        {exam.score !== null ? (
+                          <span className="text-lg font-bold text-gray-800">{exam.score}</span>
+                        ) : (
+                          <span className="text-xs font-semibold text-gray-400 bg-gray-50 px-2 py-1 rounded-md border border-gray-200">Chưa có điểm</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400 italic bg-gray-50 p-3 rounded-xl border border-dashed border-gray-200 text-center">Chưa có bài kiểm tra nào</p>
+              )}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 // --- COMPONENT CHÍNH ---
 const StudentPortal = () => {
   const navigate = useNavigate();
@@ -59,7 +191,7 @@ const StudentPortal = () => {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentWeekStart, setCurrentWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
-  const [activeTab, setActiveTab] = useState<'classes' | 'timetable' | 'invoices' | 'exams'>('classes');
+  const [activeTab, setActiveTab] = useState<'classes' | 'timetable' | 'invoices' | 'exams' | 'grades'>('classes');
 
   const [searchInput, setSearchInput] = useState('');
   const debouncedSearch = useDebounce(searchInput, 400);
@@ -482,6 +614,17 @@ const StudentPortal = () => {
               <FileText size={18} />
               Bài kiểm tra
             </button>
+
+            <button
+              onClick={() => setActiveTab('grades')}
+              className={`px-6 py-2.5 cursor-pointer rounded-xl justify-center min-w-[140px] text-sm font-bold transition-all duration-300 flex items-center gap-2 ${activeTab === 'grades'
+                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
+                : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600 active:scale-95'
+                }`}
+            >
+              <Award size={18} />
+              Bảng điểm
+            </button>
           </div>
         </div>
 
@@ -667,8 +810,8 @@ const StudentPortal = () => {
                                   <div
                                     id={`schedule-${cellSchedule._id}`}
                                     className={`h-full border rounded-xl p-3 cursor-pointer hover:shadow-md transition-all group/card flex flex-col gap-2 ${highlightedScheduleId === cellSchedule._id
-                                        ? 'bg-blue-100 border-blue-400 ring-2 ring-blue-400 ring-offset-1'
-                                        : 'bg-violet-50 border-violet-200 hover:bg-violet-100'
+                                      ? 'bg-blue-100 border-blue-400 ring-2 ring-blue-400 ring-offset-1'
+                                      : 'bg-violet-50 border-violet-200 hover:bg-violet-100'
                                       }`}
                                   >
                                     <div className="flex items-start justify-between gap-1">
@@ -881,8 +1024,8 @@ const StudentPortal = () => {
                       key={exam._id}
                       id={`exam-${exam._id}`}
                       className={`bg-white rounded-2xl border shadow-sm hover:shadow-md transition-all p-5 flex flex-col gap-3 ${highlightedExamId === exam._id
-                          ? 'border-amber-400 ring-2 ring-amber-400 ring-offset-1'
-                          : isOverdue ? 'border-red-100 opacity-80' : 'border-gray-100 hover:border-blue-200'
+                        ? 'border-amber-400 ring-2 ring-amber-400 ring-offset-1'
+                        : isOverdue ? 'border-red-100 opacity-80' : 'border-gray-100 hover:border-blue-200'
                         }`}
                     >
                       <div className="flex justify-between items-start">
@@ -938,8 +1081,20 @@ const StudentPortal = () => {
             )}
           </section>
         )}
-      </>
 
+        {/* GRADES TAB */}
+        {activeTab === 'grades' && (
+          <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <Award className="text-emerald-600" />
+                Bảng điểm cá nhân
+              </h3>
+            </div>
+            <StudentGradesList classes={classesRaw as any[]} studentId={currentUser?.id!} allExams={allExams} />
+          </section>
+        )}
+      </>
       {/* CONFIRM START EXAM MODAL */}
       {selectedExamToStart && (
         <div className="fixed inset-0 z-100 flex items-center justify-center">
@@ -954,7 +1109,7 @@ const StudentPortal = () => {
             </div>
             <h3 className="text-xl font-bold text-gray-800 mb-2">Bắt đầu làm bài?</h3>
             <p className="text-sm text-gray-500 mb-6">
-              Bạn có chắc chắn muốn bắt đầu bài kiểm tra{' '}
+              Bạn có chắc chắn muốn bắt đầu bài kiểm tra
               <span className="font-semibold text-gray-800">"{selectedExamToStart.title}"</span>?<br />
               <br />
               Thời gian đếm ngược <span className="font-bold text-red-500">{selectedExamToStart.duration} phút</span> sẽ
