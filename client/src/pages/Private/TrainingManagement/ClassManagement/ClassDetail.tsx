@@ -25,6 +25,7 @@ import {
 import useFetch from '../../../../hooks/useFetch';
 import { classService } from '../../../../services/class.service';
 import { scheduleService } from '../../../../services/schedule.service';
+import { shiftService } from '../../../../services/shift.service';
 
 import Button from '../../../../components/Button';
 import SearchInput from '../../../../components/SearchInput';
@@ -37,6 +38,11 @@ import EnrollStudentModal from './EnrollStudentModal';
 import { PATHS } from '../../../../utils/constants';
 import type { IClass } from '../../../../types/class.type';
 import { formatDate } from '../../../../utils/format.util';
+
+const DAYS_WEEK = [
+  { label: 'Thứ 2', dow: 1 }, { label: 'Thứ 3', dow: 2 }, { label: 'Thứ 4', dow: 3 },
+  { label: 'Thứ 5', dow: 4 }, { label: 'Thứ 6', dow: 5 }, { label: 'Thứ 7', dow: 6 },
+];
 
 const ClassDetail = () => {
   const { id } = useParams();
@@ -57,49 +63,25 @@ const ClassDetail = () => {
 
   const schedulesList = Array.isArray(schedulesResponse) ? schedulesResponse : (schedulesResponse as any)?.data || [];
 
-  const scheduleSummary = useMemo(() => {
-    if (!schedulesList || schedulesList.length === 0) return null;
+  const { data: shiftsResponse } = useFetch(shiftService.getShifts, { limit: 100 }, []);
+  const shifts = Array.isArray(shiftsResponse) ? shiftsResponse : (shiftsResponse as any)?.data || [];
 
-    const dayShiftMap = new Map<number, Set<string>>();
+  const sortedShifts = useMemo(() => {
+    return [...shifts].sort((a: any, b: any) => (a.startTime || '').localeCompare(b.startTime || ''));
+  }, [shifts]);
 
+  const classSlots = useMemo(() => {
+    const slots = new Set<string>();
     schedulesList.forEach((s: any) => {
-      if (s.date) {
+      if (s.date && s.shiftId) {
         const dateObj = new Date(s.date);
-        const day = dateObj.getDay();
-
-        let shiftName = '';
-        if (s.shiftId?.name) {
-          shiftName = s.shiftId.name;
-        } else if (typeof s.shiftId === 'string') {
-          shiftName = s.shiftId;
-        }
-
-        if (shiftName) {
-          if (!dayShiftMap.has(day)) {
-            dayShiftMap.set(day, new Set());
-          }
-          dayShiftMap.get(day)!.add(shiftName);
-        }
+        let dow = dateObj.getDay();
+        if (dow === 0) dow = 7;
+        const shiftId = typeof s.shiftId === 'string' ? s.shiftId : s.shiftId._id;
+        slots.add(`${shiftId}-${dow}`);
       }
     });
-
-    const dayNames = ['Chủ Nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
-
-    const sortedDays = Array.from(dayShiftMap.keys()).sort((a, b) => {
-      const dayA = a === 0 ? 7 : a;
-      const dayB = b === 0 ? 7 : b;
-      return dayA - dayB;
-    });
-
-    const details = sortedDays.map((day) => ({
-      dayName: dayNames[day],
-      shifts: Array.from(dayShiftMap.get(day)!).join(', '),
-    }));
-
-    return {
-      details,
-      total: schedulesList.length,
-    };
+    return slots;
   }, [schedulesList]);
 
   const [searchInput, setSearchInput] = useState('');
@@ -447,9 +429,9 @@ const ClassDetail = () => {
                   variant="outline"
                   icon={<Sparkles size={16} className="text-indigo-500" />}
                   className="border-indigo-200 hover:bg-indigo-50 text-indigo-700"
-                  onClick={() => setShowAutoScheduleModal(true)}
+                  onClick={() => navigate(PATHS.TRAINING_CLASSES_CREATE_SCHEDULE.replace(':id', id as string))}
                 >
-                  Sinh lịch tự động
+                  Tạo lịch học ngay
                 </Button>
               )}
             </div>
@@ -458,50 +440,83 @@ const ClassDetail = () => {
               <div className="h-20 flex items-center justify-center text-gray-400 animate-pulse">
                 Đang tải thông tin lịch...
               </div>
-            ) : scheduleSummary ? (
-              <div className="flex flex-col md:flex-row gap-6 md:items-start justify-between bg-indigo-50/50 border border-indigo-100 rounded-xl p-5 relative overflow-hidden">
-                <div className="flex items-start gap-5 relative z-10">
-                  <div className="w-14 h-14 bg-white border border-indigo-100 rounded-full flex items-center justify-center text-indigo-600 shrink-0 shadow-sm">
-                    <Clock size={26} />
-                  </div>
-                  <div className="space-y-3 pt-1">
-                    {scheduleSummary.details.map((item, idx) => (
-                      <div key={idx} className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-gray-800 w-[70px]">{item.dayName}:</span>
-                        <span className="text-sm font-semibold text-indigo-700 bg-indigo-100/70 px-3 py-1 rounded-md border border-indigo-200 shadow-sm">
-                          {item.shifts}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+            ) : schedulesList.length > 0 ? (
+              <div className="space-y-4">
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse bg-white rounded-xl overflow-hidden ring-1 ring-gray-100 table-fixed">
+                    <thead>
+                      <tr>
+                        <th className="p-3 border-b border-r border-gray-100 bg-gray-50 w-20"></th>
+                        {DAYS_WEEK.map(d => (
+                          <th key={d.dow} className="p-3 border-b border-r border-gray-100 bg-gray-50 text-center font-semibold text-gray-700 text-xs">
+                            {d.label}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sortedShifts.map(shift => (
+                        <tr key={shift._id}>
+                          <td className="p-2 border-b border-r border-gray-100 bg-gray-50/80 text-center">
+                            <div className="font-semibold text-gray-700 text-xs">{shift.name}</div>
+                            <div className="text-gray-400 text-[10px]">{shift.startTime}–{shift.endTime}</div>
+                          </td>
+                          {DAYS_WEEK.map(d => {
+                            const isSelected = classSlots.has(`${shift._id?.toString()}-${d.dow}`);
+
+                            let cellClasses = 'p-1.5 border-b border-r border-gray-100 align-top transition-all duration-150 ';
+                            if (isSelected) {
+                              cellClasses += 'bg-emerald-50 ring-2 ring-emerald-400 ring-inset ';
+                            } else {
+                              cellClasses += 'bg-gray-50/30 ';
+                            }
+
+                            return (
+                              <td key={d.dow} className={cellClasses} style={{ minHeight: 70 }}>
+                                {isSelected && (
+                                  <div className="flex flex-col items-center justify-center h-full min-h-16 border-emerald-200 bg-emerald-100 shadow-sm rounded-md animate-in zoom-in-95">
+                                    <div className="font-semibold text-xs text-emerald-800 truncate text-center max-w-[80px]">Lớp: {classData.name}</div>
+                                    <span className="text-[10px] text-emerald-600 font-medium">{shift.name}</span>
+                                  </div>
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
 
-                <div className="flex flex-col md:items-end gap-3 mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 border-indigo-100 w-full md:w-auto relative z-10">
-                  <span className="text-sm font-bold bg-white border border-indigo-200 text-indigo-700 px-5 py-2 rounded-full shadow-sm mb-2">
-                    Tổng cộng: {scheduleSummary.total} buổi học
+                <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-gray-100">
+                  <span className="text-sm font-bold bg-white border border-indigo-200 text-indigo-700 px-5 py-2 rounded-full shadow-sm">
+                    Tổng cộng: {schedulesList.length} buổi học
                   </span>
 
-                  <Button
-                    variant="outline"
-                    icon={<Trash2 size={14} />}
-                    className="w-full text-xs font-bold border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition-colors"
-                    onClick={() =>
-                      setConfirmDeleteAll({
-                        isOpen: true,
-                        title: 'Xóa toàn bộ lịch học của lớp',
-                        message: `Bạn chuẩn bị xóa sạch ${scheduleSummary.total} buổi học của lớp ${classData.name}. Hệ thống sẽ thu hồi toàn bộ lịch để bạn có thể sinh lại tự động từ đầu.\n\nHành động này không thể hoàn tác!`,
-                      })
-                    }
-                  >
-                    Làm lại lịch (Xóa tất cả)
-                  </Button>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="outline"
+                      icon={<Trash2 size={14} />}
+                      className="text-xs font-bold border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition-colors"
+                      onClick={() =>
+                        setConfirmDeleteAll({
+                          isOpen: true,
+                          title: 'Xóa toàn bộ lịch học của lớp',
+                          message: `Bạn chuẩn bị xóa sạch ${schedulesList.length} buổi học của lớp ${classData.name}. Hành động này không thể hoàn tác!`,
+                        })
+                      }
+                    >
+                      Làm lại lịch (Xóa tất cả)
+                    </Button>
 
-                  <button
-                    onClick={() => navigate(PATHS.TRAINING_SCHEDULES)}
-                    className="text-xs mt-2 font-semibold text-indigo-600 hover:text-indigo-800 hover:underline flex items-center justify-end gap-1 transition-colors w-full"
-                  >
-                    Chỉnh sửa từng buổi ở TKB →
-                  </button>
+                    <Button
+                      variant="outline"
+                      onClick={() => navigate(PATHS.TRAINING_SCHEDULES)}
+                      className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
+                    >
+                      Chỉnh sửa từng buổi ở TKB →
+                    </Button>
+                  </div>
                 </div>
               </div>
             ) : (

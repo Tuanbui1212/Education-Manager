@@ -15,7 +15,6 @@ import { scheduleService } from '../../../../services/schedule.service';
 
 import type { IClass } from '../../../../types/class.type';
 import type { IShift } from '../../../../types/shift.type';
-import type { IRoom } from '../../../../types/room.type';
 import type { ISchedule } from '../../../../types/schedule.type';
 
 const DAYS_WEEK = [
@@ -39,6 +38,9 @@ export default function CreateClassSchedulePage() {
     // Lịch cũ của giảng viên để phát hiện trùng lặp
     const [teacherSchedules, setTeacherSchedules] = useState<ISchedule[]>([]);
 
+    // Lịch của phòng để phát hiện trùng lặp
+    const [roomSchedules, setRoomSchedules] = useState<ISchedule[]>([]);
+
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
@@ -48,6 +50,25 @@ export default function CreateClassSchedulePage() {
 
     // Danh sách slot được chọn
     const [slots, setSlots] = useState<{ dow: number, shiftId: string }[]>([]);
+
+    useEffect(() => {
+        const fetchRoomSchedules = async () => {
+            if (roomId && classData?.startDate) {
+                try {
+                    const schedRes = await scheduleService.getSchedules({ 
+                        roomId, 
+                        limit: 2000 
+                    });
+                    setRoomSchedules(schedRes.data || []);
+                } catch (error) {
+                    toast.error('Lỗi khi tải lịch sử dụng phòng');
+                }
+            } else {
+                setRoomSchedules([]);
+            }
+        };
+        fetchRoomSchedules();
+    }, [roomId, classData?.startDate]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -93,8 +114,20 @@ export default function CreateClassSchedulePage() {
         return busy;
     }, [teacherSchedules]);
 
+    const roomBusySlots = useMemo(() => {
+        const busy = new Set<string>();
+        roomSchedules.forEach(sched => {
+            const date = new Date(sched.date as string | Date);
+            let dow = date.getDay();
+            if (dow === 0) dow = 7;
+            const shiftId = typeof sched.shiftId === 'string' ? sched.shiftId : sched.shiftId._id;
+            busy.add(`${shiftId}-${dow}`);
+        });
+        return busy;
+    }, [roomSchedules]);
+
     const searchRooms = async (q: string) => {
-        const r = await roomService.getRooms({ search: q, limit: 10 });
+        const r = await roomService.getRooms({ search: q, limit: 10, capacity: classData?.maxNumberOfStudents });
         return r.data || [];
     };
 
@@ -111,7 +144,8 @@ export default function CreateClassSchedulePage() {
             const exists = prev.find(s => s.shiftId === shiftId && s.dow === dow);
             if (exists) return prev.filter(s => s.shiftId !== shiftId || s.dow !== dow);
             if (prev.length >= (classData?.lessonsPerWeek || 0)) {
-                toast.error(`Không thể chọn quá ${classData?.lessonsPerWeek} buổi học/tuần`);
+                if (classData?.lessonsPerWeek) toast.error(`Không thể chọn quá ${classData?.lessonsPerWeek} buổi học/tuần`);
+                else toast.error(`Không có dữ liệu buổi học/tuần`);
                 return prev;
             }
             return [...prev, { shiftId, dow }];
@@ -135,16 +169,19 @@ export default function CreateClassSchedulePage() {
             let currentDow = currentDate.getDay();
             if (currentDow === 0) currentDow = 7;
 
-            const matchingSlot = sortedSlots.find(s => s.dow === currentDow);
-            if (matchingSlot) {
-                result.push({
-                    classId: classData._id,
-                    teacherId: typeof classData.teacherId === 'string' ? classData.teacherId : classData.teacherId?._id,
-                    roomId: roomId || undefined,
-                    shiftId: matchingSlot.shiftId,
-                    date: new Date(currentDate).toISOString()
-                });
-                lessonsScheduled++;
+            const matchingSlots = sortedSlots.filter(s => s.dow === currentDow);
+            if (matchingSlots.length > 0) {
+                for (const matchingSlot of matchingSlots) {
+                    if (lessonsScheduled >= total) break;
+                    result.push({
+                        classId: classData._id,
+                        teacherId: typeof classData.teacherId === 'string' ? classData.teacherId : classData.teacherId?._id,
+                        roomId: roomId,
+                        shiftId: matchingSlot.shiftId,
+                        date: new Date(currentDate).toISOString()
+                    });
+                    lessonsScheduled++;
+                }
             }
             currentDate.setDate(currentDate.getDate() + 1);
         }
@@ -153,6 +190,10 @@ export default function CreateClassSchedulePage() {
 
     const saveAll = async () => {
         if (!classData) return;
+        if (!roomId) {
+            toast.warn('Vui lòng chọn phòng học');
+            return;
+        }
         if (slots.length === 0) {
             toast.warn('Vui lòng chọn ít nhất 1 buổi học trong thời khóa biểu');
             return;
@@ -204,30 +245,30 @@ export default function CreateClassSchedulePage() {
             </div>
 
 
-            <div className="flex gap-5" style={{ alignItems: 'flex-start' }}>
+            <div className="flex flex-col lg:flex-row gap-5 mt-5" style={{ alignItems: 'flex-start' }}>
                 {/* ── LEFT PANEL ── */}
-                <div className="w-80 shrink-0 space-y-4">
+                <div className="w-full lg:w-80 shrink-0 space-y-4">
                     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                         <div className="bg-primary px-5 py-3 flex items-center gap-2">
                             <span className="text-white font-semibold text-sm">Thông tin lớp học</span>
                         </div>
                         <div className="p-4 space-y-3">
-                            <InputField label="Tên lớp" value={classData.name} onChange={() => { }} disabled />
+                            <InputField label="Tên lớp" value={classData.name} onChange={() => { }} disabled className='bg-gray-100 text-gray-600' />
 
-                            <InputField label="Khóa học" value={(classData.courseId as any)?.title || ''} onChange={() => { }} disabled />
+                            <InputField label="Khóa học" value={(classData.courseId as any)?.title || ''} onChange={() => { }} disabled className='bg-gray-100 text-gray-600' />
 
-                            <InputField label="Giáo viên" value={(classData.teacherId as any)?.fullName || ''} onChange={() => { }} disabled />
+                            <InputField label="Giáo viên" value={(classData.teacherId as any)?.fullName || ''} onChange={() => { }} disabled className='bg-gray-100 text-gray-600' />
 
                             <div className="grid grid-cols-2 gap-2">
-                                <InputField label="Buổi/tuần" value={classData.lessonsPerWeek?.toString()} onChange={() => { }} disabled />
-                                <InputField label="Tổng số buổi" value={classData.totalLessons?.toString()} onChange={() => { }} disabled />
+                                <InputField label="Buổi/tuần" value={classData.lessonsPerWeek?.toString()} onChange={() => { }} disabled className='bg-gray-100 text-gray-600' />
+                                <InputField label="Tổng số buổi" value={classData.totalLessons?.toString()} onChange={() => { }} disabled className='bg-gray-100 text-gray-600' />
                             </div>
 
-                            <InputField label="Sĩ số tối đa" value={classData.maxNumberOfStudents?.toString()} onChange={() => { }} disabled />
+                            <InputField label="Sĩ số tối đa" value={classData.maxNumberOfStudents?.toString()} onChange={() => { }} disabled className='bg-gray-100 text-gray-600' />
 
-                            <InputField label="Ngày bắt đầu" value={classData.startDate ? new Date(classData.startDate).toLocaleDateString('vi-VN') : ''} onChange={() => { }} disabled />
+                            <InputField label="Ngày bắt đầu" value={classData.startDate ? new Date(classData.startDate).toLocaleDateString('vi-VN') : ''} onChange={() => { }} disabled className='bg-gray-100 text-gray-600' />
 
-                            <Combobox label="Phòng mong muốn (tùy chọn)" placeholder="Để trống → tự chọn phòng"
+                            <Combobox label="Phòng học (*)" placeholder="Chọn phòng học"
                                 initialValue={(classData.roomId as any)?.name || ''}
                                 onSearch={searchRooms}
                                 onSelect={r => setRoomId(r?._id || '')}
@@ -284,9 +325,9 @@ export default function CreateClassSchedulePage() {
                             <div className="space-y-2 pt-1">
                                 <label className="text-xs font-medium text-gray-500 block">Tùy chọn xếp lịch</label>
                                 {[
-                                    { key: 'preferEarlyWeek', label: 'Ưu tiên đầu tuần', badge: '+5đ' },
-                                    { key: 'noSameDay', label: 'Không dạy 2 buổi cùng ngày', badge: '-40đ/buổi' },
-                                    { key: 'noConsec', label: 'Không dạy ngày liền – dãn đều', badge: '-35đ/cặp' },
+                                    { key: 'preferEarlyWeek', label: 'Ưu tiên đầu tuần' },
+                                    { key: 'noSameDay', label: 'Không dạy 2 buổi cùng ngày' },
+                                    { key: 'noConsec', label: 'Không dạy ngày liền – dãn đều' },
                                 ].map(opt => (
                                     <label key={opt.key} className="flex items-center gap-2 cursor-pointer">
                                         <input type="checkbox"
@@ -294,9 +335,6 @@ export default function CreateClassSchedulePage() {
                                             onChange={() => toggleRequirement(opt.key)}
                                             className="w-3.5 h-3.5 accent-primary" />
                                         <span className="text-xs text-gray-600">{opt.label}</span>
-                                        <span className={`text-xs px-1.5 py-0.5 rounded-full ml-auto ${opt.badge.startsWith('+') ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
-                                            {opt.badge}
-                                        </span>
                                     </label>
                                 ))}
                             </div>
@@ -343,12 +381,13 @@ export default function CreateClassSchedulePage() {
                                                 {DAYS_WEEK.map(d => {
                                                     const isSelected = slots.some(s => s.shiftId === shift._id?.toString() && s.dow === d.dow);
                                                     const isTeacherBusy = teacherBusySlots.has(`${shift._id?.toString()}-${d.dow}`);
+                                                    const isRoomBusy = roomBusySlots.has(`${shift._id?.toString()}-${d.dow}`);
 
                                                     let cellClasses = 'p-1.5 border-b border-r border-gray-100 align-top transition-all duration-150 cursor-pointer ';
 
                                                     if (isSelected) {
                                                         cellClasses += 'bg-emerald-50 ring-2 ring-emerald-400 ring-inset hover:bg-emerald-100 ';
-                                                    } else if (isTeacherBusy) {
+                                                    } else if (isTeacherBusy || isRoomBusy) {
                                                         cellClasses += 'bg-red-50/30 ring-2 ring-red-400 ring-inset hover:bg-red-50 ';
                                                     } else {
                                                         cellClasses += 'hover:bg-gray-50 ';
@@ -358,21 +397,23 @@ export default function CreateClassSchedulePage() {
                                                         <td key={d.dow}
                                                             className={cellClasses}
                                                             style={{ minHeight: 70 }}
-                                                            onClick={() => handleCellClick(shift._id?.toString() || "", d.dow)}>
+                                                            onClick={() => {
+                                                                if (isTeacherBusy) { toast.error('Giáo viên bận!'); return; }
+                                                                if (isRoomBusy) { toast.error('Phòng học đã được sử dụng!'); return; }
+                                                                handleCellClick(shift._id?.toString() || "", d.dow)
+                                                            }}>
 
                                                             {isSelected && (
-                                                                <div className="flex flex-col items-center justify-center h-full min-h-[4rem] p-1.5 rounded-lg border border-emerald-200 bg-emerald-100 shadow-sm animate-in zoom-in-95">
-                                                                    <div className="flex items-center gap-1.5">
-                                                                        <div className="w-2 h-2 rounded-full shrink-0 bg-emerald-500" />
-                                                                        <div className="font-semibold text-xs text-emerald-800 truncate text-center max-w-[80px]">{classData.name}</div>
-                                                                    </div>
+                                                                <div className="flex flex-col items-center justify-center h-full min-h-16 border-emerald-200 bg-emerald-100 shadow-sm animate-in zoom-in-95">
+                                                                    <div className="font-semibold text-xs text-emerald-800 truncate text-center max-w-[80px]">Lớp: {classData.name}</div>
+                                                                    <span className="text-[10px] text-emerald-600 font-medium">{shift.name}</span>
                                                                 </div>
                                                             )}
 
-                                                            {isTeacherBusy && !isSelected && (
-                                                                <div className="flex flex-col items-center justify-center h-full min-h-[4rem] p-1.5">
+                                                            {(isTeacherBusy || isRoomBusy) && !isSelected && (
+                                                                <div className="flex flex-col items-center justify-center h-full min-h-16 p-1.5">
                                                                     <AlertCircle size={14} className="text-red-400 mb-1" />
-                                                                    <div className="text-[10px] text-red-500 font-medium text-center">Giáo viên bận</div>
+                                                                    <div className="text-[10px] text-red-500 font-medium text-center">{isTeacherBusy ? 'Giáo viên bận' : 'Phòng kín'}</div>
                                                                 </div>
                                                             )}
                                                         </td>

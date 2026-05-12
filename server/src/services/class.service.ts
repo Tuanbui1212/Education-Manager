@@ -113,14 +113,25 @@ export class ClassService {
       throw new Error('Lớp học đã tồn tại');
     }
 
-    const existingCourse = await CourseModel.findById(classData.courseId);
-    if (!existingCourse) {
-      throw new Error('Khóa học không tồn tại');
+    if (classData.courseId) {
+      const existingCourse = await CourseModel.findById(classData.courseId);
+      if (!existingCourse) {
+        throw new Error('Khóa học không tồn tại');
+      }
+      if (!classData.totalLessons || classData.totalLessons <= 0) {
+        if (existingCourse?.totalLessons && existingCourse.totalLessons > 0) {
+          classData.totalLessons = existingCourse.totalLessons;
+        } else {
+          throw new Error('Số lượng bài học không hợp lệ');
+        }
+      }
     }
 
-    const existingTeacher = await UserModel.findById(classData.teacherId);
-    if (!existingTeacher) {
-      throw new Error('Giáo viên không tồn tại');
+    if (classData.teacherId) {
+      const existingTeacher = await UserModel.findById(classData.teacherId);
+      if (!existingTeacher) {
+        throw new Error('Giáo viên không tồn tại');
+      }
     }
 
     if (classData.roomId) {
@@ -130,13 +141,6 @@ export class ClassService {
       }
     }
 
-    if (!classData.totalLessons || classData.totalLessons <= 0) {
-      if (existingCourse.totalLessons && existingCourse.totalLessons > 0) {
-        classData.totalLessons = existingCourse.totalLessons;
-      } else {
-        throw new Error('Số lượng bài học không hợp lệ');
-      }
-    }
 
     if (classData.studentIds && classData.studentIds.length > 0) {
       const existingStudents = await UserModel.find({ _id: { $in: classData.studentIds } });

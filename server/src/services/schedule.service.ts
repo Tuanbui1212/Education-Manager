@@ -81,9 +81,13 @@ export class ScheduleService {
     if (roomId) filter.roomId = new Types.ObjectId(roomId);
     if (teacherId) filter.teacherId = new Types.ObjectId(teacherId);
     if (date) {
-      const [day, month, year] = date.split('/');
-      const formattedDate = `${month}/${day}/${year}`;
-      filter.date = new Date(formattedDate);
+      if (date.includes('/')) {
+        const [day, month, year] = date.split('/');
+        const formattedDate = `${month}/${day}/${year}`;
+        filter.date = new Date(formattedDate);
+      } else {
+        filter.date = new Date(date);
+      }
     }
     const [total, schedules] = await Promise.all([
       ScheduleModel.countDocuments(filter),

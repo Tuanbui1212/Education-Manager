@@ -5,6 +5,7 @@ export interface GetRoomsParams {
   limit?: number;
   search?: string;
   status?: RoomStatus;
+  capacity?: number;
 }
 
 export interface IRoom {
