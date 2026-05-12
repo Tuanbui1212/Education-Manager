@@ -175,7 +175,6 @@ const MOCK_EXPENDITURES = [
 const QUICK_MONTHS = Array.from({ length: 12 }, (_, i) => {
   const d = new Date(2026, i, 1);
   const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-  console.log('Quick Month Option:', { label: `T${d.getMonth() + 1}`, value });
   return { label: `T${d.getMonth() + 1}`, value };
 });
 
@@ -561,8 +560,6 @@ export default function FinancialReport() {
     { month: selectedMonth },
     [selectedMonth],
   );
-
-  
 
   return (
     <div className="p-8 w-full space-y-6 bg-gray-50 min-h-screen">

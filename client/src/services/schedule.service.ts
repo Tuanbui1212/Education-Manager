@@ -56,4 +56,33 @@ export const scheduleService = {
     const response = await axios.get(`/schedules/class/today`);
     return response.data;
   },
+
+  initScheduleRequest: async (classIds: string[]): Promise<{ success: boolean; message: string; data: any }> => {
+    const response = await axios.post('/scheduleRequests/init', { classIds });
+    return response.data;
+  },
+
+  updateSchedulePreference: async (
+    requestId: string,
+    classId: string,
+    prefs: string[],
+  ): Promise<{ success: boolean; message: string; data: any }> => {
+    const response = await axios.patch('/scheduleRequests/update-pref', { requestId, classId, prefs });
+    return response.data;
+  },
+
+  getScheduleRequestById: async (requestId: string): Promise<{ success: boolean; message: string; data: any }> => {
+    const response = await axios.get(`/scheduleRequests/${requestId}`);
+    return response.data;
+  },
+
+  cancelScheduleRequest: async (requestId: string): Promise<{ success: boolean; message: string; data: any }> => {
+    const response = await axios.delete(`/scheduleRequests/${requestId}`);
+    return response.data;
+  },
+
+  executeScheduleAlgorithm: async (requestId: string): Promise<{ success: boolean; message: string; data: any }> => {
+    const response = await axios.post(`/scheduleRequests/execute/${requestId}`);
+    return response.data;
+  },
 };
