@@ -89,7 +89,7 @@ const TeacherManager = () => {
     type: 'success' as 'success' | 'danger' | 'warning' | 'info',
     confirmText: '',
     cancelText: '',
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   // ── Click-outside: filter dropdown ───────────────────────────────────────
@@ -266,10 +266,9 @@ const TeacherManager = () => {
               className={`
                 flex items-center gap-2 pl-4 pr-3 py-2 rounded-xl border text-sm font-medium
                 transition-all whitespace-nowrap
-                ${
-                  statusFilter !== 'ALL'
-                    ? 'bg-primary text-white border-transparent shadow-md shadow-primary/30'
-                    : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
+                ${statusFilter !== 'ALL'
+                  ? 'bg-primary text-white border-transparent shadow-md shadow-primary/30'
+                  : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
                 }
               `}
             >
@@ -308,10 +307,9 @@ const TeacherManager = () => {
                     }}
                     className={`
                       px-4 py-2.5 cursor-pointer text-sm transition-colors flex items-center gap-3
-                      ${
-                        statusFilter === opt.value
-                          ? 'bg-indigo-50 text-indigo-600 font-semibold'
-                          : 'text-gray-700 hover:bg-gray-50'
+                      ${statusFilter === opt.value
+                        ? 'bg-indigo-50 text-indigo-600 font-semibold'
+                        : 'text-gray-700 hover:bg-gray-50'
                       }
                     `}
                   >
@@ -362,7 +360,7 @@ const TeacherManager = () => {
           <table className="w-full text-left border-collapse min-w-[900px]">
             <thead className="sticky top-0 z-20">
               <tr className="bg-primary text-white text-sm">
-                <th className="px-5 py-3.5 font-semibold w-12 text-center">No.</th>
+                <th className="px-5 py-3.5 font-semibold w-12 text-center">STT</th>
                 <th className="px-5 py-3.5 font-semibold">Giáo viên</th>
                 <th className="px-5 py-3.5 font-semibold">Liên hệ</th>
                 <th className="px-5 py-3.5 font-semibold w-56">Hồ sơ & Bằng cấp</th>
@@ -380,7 +378,7 @@ const TeacherManager = () => {
                   const color = getColor(teacher.fullName);
                   return (
                     <tr key={teacher._id} className="group hover:bg-indigo-50/30 transition-colors">
-                      {/* No. */}
+                      {/* STT */}
                       <td className="px-5 py-4 text-gray-400 text-sm text-center font-medium">
                         {index + 1 + (page - 1) * limit}
                       </td>

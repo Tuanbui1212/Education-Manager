@@ -52,7 +52,7 @@ const StaffManager = () => {
     type: 'danger' as 'success' | 'danger' | 'warning' | 'info',
     confirmText: '',
     cancelText: '',
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   // ── Click-outside ─────────────────────────────────────────────────────────
@@ -263,10 +263,9 @@ const StaffManager = () => {
                   setOpenRole(false);
                 }}
                 className={`px-4 py-2.5 cursor-pointer text-sm transition-colors flex items-center gap-3
-                  ${
-                    roleFilter === role._id
-                      ? 'bg-violet-50 text-violet-600 font-semibold'
-                      : 'text-gray-700 hover:bg-gray-50'
+                  ${roleFilter === role._id
+                    ? 'bg-violet-50 text-violet-600 font-semibold'
+                    : 'text-gray-700 hover:bg-gray-50'
                   }`}
               >
                 <span className="w-2 h-2 rounded-full bg-violet-400 shrink-0" />
@@ -302,17 +301,15 @@ const StaffManager = () => {
                   setOpenStatus(false);
                 }}
                 className={`px-4 py-2.5 cursor-pointer text-sm transition-colors flex items-center gap-3
-                  ${
-                    statusFilter === opt.value
-                      ? 'bg-violet-50 text-violet-600 font-semibold'
-                      : 'text-gray-700 hover:bg-gray-50'
+                  ${statusFilter === opt.value
+                    ? 'bg-violet-50 text-violet-600 font-semibold'
+                    : 'text-gray-700 hover:bg-gray-50'
                   }`}
               >
                 <span
                   className={`w-2 h-2 rounded-full shrink-0
-                  ${
-                    opt.value === 'ACTIVE' ? 'bg-emerald-400' : opt.value === 'INACTIVE' ? 'bg-gray-400' : 'bg-gray-300'
-                  }`}
+                  ${opt.value === 'ACTIVE' ? 'bg-emerald-400' : opt.value === 'INACTIVE' ? 'bg-gray-400' : 'bg-gray-300'
+                    }`}
                 />
                 {opt.label}
                 {statusFilter === opt.value && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-600" />}
@@ -374,7 +371,7 @@ const StaffManager = () => {
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead className="sticky top-0 z-20">
               <tr className="bg-primary text-white text-sm">
-                <th className="px-5 py-3.5 font-semibold w-12 text-center">No.</th>
+                <th className="px-5 py-3.5 font-semibold w-12 text-center">STT</th>
                 <th className="px-5 py-3.5 font-semibold">Nhân sự</th>
                 <th className="px-5 py-3.5 font-semibold">Liên hệ</th>
                 <th className="px-5 py-3.5 font-semibold">Phòng ban / Chức vụ</th>
@@ -392,7 +389,7 @@ const StaffManager = () => {
                   const roleName = (staff.roleId as any)?.name || 'N/A';
                   return (
                     <tr key={staff._id} className="group hover:bg-violet-50/40 transition-colors">
-                      {/* No. */}
+                      {/* STT */}
                       <td className="px-5 py-4 text-gray-400 text-sm text-center font-medium">
                         {index + 1 + (page - 1) * limit}
                       </td>

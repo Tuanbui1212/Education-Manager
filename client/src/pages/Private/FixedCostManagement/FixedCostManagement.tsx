@@ -62,7 +62,7 @@ const FixedCostManagement = () => {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-primary text-white text-sm">
-              <th className="p-4 font-semibold w-16 text-center">No.</th>
+              <th className="p-4 font-semibold w-16 text-center">STT</th>
               <th className="p-4 font-semibold">Tên khoản chi</th>
               <th className="p-4 font-semibold text-right">Mức phí</th>
               <th className="p-4 font-semibold text-center">Quy tắc thanh toán</th>

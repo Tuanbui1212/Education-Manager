@@ -227,7 +227,7 @@ const ListRoom = () => {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-primary text-white text-sm sticky top-0 z-10 ">
-              <th className="p-4 font-semibold w-16 text-center rounded-tl-xl">No.</th>
+              <th className="p-4 font-semibold w-16 text-center rounded-tl-xl">STT</th>
               <th className="p-4 font-semibold">Tên phòng</th>
               <th className="p-4 font-semibold">Sức chứa</th>
               <th className="p-4 font-semibold">Trạng thái</th>
@@ -250,7 +250,7 @@ const ListRoom = () => {
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-bold shadow-sm ${getRoomStatusStyles(room.status)}`}
                     >
-                      {room.status}
+                      {room.status === 'ACTIVE' ? 'Hoạt động' : room.status === 'MAINTENANCE' ? 'Bảo trì' : 'Ngừng hoạt động'}
                     </span>
                   </td>
                   <td className="p-4">

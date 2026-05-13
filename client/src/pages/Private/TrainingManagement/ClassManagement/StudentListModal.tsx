@@ -87,7 +87,7 @@ const StudentListModal: React.FC<StudentListModalProps> = ({ isOpen, onClose, cl
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-gray-200/50 text-gray-700 text-xs uppercase tracking-wider">
-                                    <th className="p-4 font-bold w-16 text-center">No.</th>
+                                    <th className="p-4 font-bold w-16 text-center">STT</th>
                                     <th className="p-4 font-bold text-center">Tên học viên</th>
                                 </tr>
                             </thead>

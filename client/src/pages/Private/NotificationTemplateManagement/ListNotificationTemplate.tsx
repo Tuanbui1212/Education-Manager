@@ -215,7 +215,7 @@ const ListNotificationTemplate = () => {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-primary text-white text-sm sticky top-0 z-10 ">
-              <th className="p-4 font-semibold w-16 text-center rounded-tl-xl">No.</th>
+              <th className="p-4 font-semibold w-16 text-center rounded-tl-xl">STT</th>
               <th className="p-4 font-semibold">Sự kiện áp dụng</th>
               <th className="p-4 font-semibold">Tiêu đề</th>
               <th className="p-4 font-semibold">Loại</th>

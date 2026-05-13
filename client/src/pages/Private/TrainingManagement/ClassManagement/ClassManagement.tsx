@@ -256,7 +256,7 @@ const ClassManagement = () => {
 
           <div className="relative inline-block">
             <Button variant="outline" icon={<Filter size={18} />} onClick={() => setOpenFilter(!openFilter)}>
-              Filter
+              Lọc
             </Button>
 
             {openFilter && (

@@ -286,7 +286,7 @@ const ScheduleManagement = () => {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-primary text-white text-sm sticky top-0 z-10">
-              <th className="p-4 font-semibold w-16 text-center">No.</th>
+              <th className="p-4 font-semibold w-16 text-center">STT</th>
               <th className="p-4 font-semibold">Lớp học</th>
               <th className="p-4 font-semibold">Ngày & Ca học</th>
               <th className="p-4 font-semibold">Giảng viên</th>

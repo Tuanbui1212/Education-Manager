@@ -304,7 +304,7 @@ const UserList = () => {
         </div>
 
         <Button variant="primary" icon={<Plus size={18} />} onClick={() => navigate(PATHS.ACCOUNT_USERS_CREATE)}>
-          Thêm User
+          Thêm Người dùng
         </Button>
       </div>
 
