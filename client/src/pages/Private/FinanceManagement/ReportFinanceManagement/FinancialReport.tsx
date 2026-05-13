@@ -30,11 +30,13 @@ import { PATHS } from '../../../../utils/constants';
 
 // ===================== HELPERS =====================
 
-const QUICK_MONTHS = Array.from({ length: 12 }, (_, i) => {
-  const d = new Date(2026, i, 1);
-  const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-  return { label: `T${d.getMonth() + 1}`, value };
-});
+// FIX Bug 4: QUICK_MONTHS nhận year động, không hardcode 2026
+const getQuickMonths = (year: number) =>
+  Array.from({ length: 12 }, (_, i) => {
+    const d = new Date(year, i, 1);
+    const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    return { label: `T${d.getMonth() + 1}`, value };
+  });
 
 const EXPENDITURE_TYPE_LABEL: Record<string, string> = {
   SALARY_TEACHER: 'Lương giáo viên',
@@ -371,6 +373,12 @@ export default function FinancialReport() {
     cashbookService.getCashBook,
     { month: selectedMonth },
     [selectedMonth],
+  );
+
+  const { data: kpiData, loading: kpiDataLoading } = useFetch(
+    cashbookService.getCashBookYearlySummary,
+    { year: yearNow },
+    [yearNow],
   );
 
   return (
