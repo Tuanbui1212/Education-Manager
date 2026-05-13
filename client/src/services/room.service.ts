@@ -14,7 +14,7 @@ export const roomService = {
     };
   },
 
-  getRoomById: async (id: any): Promise<{ success: boolean; message: string; data?: IRoom }> => {
+  getRoomById: async (id: any): Promise<{ success: boolean; message: string; data: IRoom }> => {
     const response = await axios.get(`/rooms/${id}`);
     return {
       success: true,

@@ -10,6 +10,7 @@ import classRouter from './class.routes';
 import fixedCostRouter from './fixedCost.route';
 import roleRouter from './role.route';
 import scheduleRouter from './schedule.routes';
+import scheduleRequestRouter from './scheduleRequest.routes';
 import attendanceRouter from './attendance.routes';
 import invoiceRouter from './invoice.route';
 import transactionRoute from './transaction.route';
@@ -18,6 +19,7 @@ import payrollRouter from './payroll.route';
 import paymentRouter from './payment.route';
 import examRouter from './exam.routes';
 import cashbookRouter from './cashbook.route';
+import classRequestRouter from './classRequest.routes';
 
 function router(app: Application) {
   app.get('/', (req, res) => res.send('Server is running!'));
@@ -30,8 +32,10 @@ function router(app: Application) {
   app.use('/api/notification-templates', notificationTemplateRouter);
   app.use('/api/courses', courseRouter);
   app.use('/api/classes', classRouter);
+  app.use('/api/classRequests', classRequestRouter);
   app.use('/api/fixed-costs', fixedCostRouter);
   app.use('/api/schedules', scheduleRouter);
+  app.use('/api/scheduleRequests', scheduleRequestRouter);
   app.use('/api/attendances', attendanceRouter);
   app.use('/api/invoices', invoiceRouter);
   app.use('/api/transactions', transactionRoute);

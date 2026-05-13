@@ -35,6 +35,7 @@ export interface GetClassesParams {
   limit?: number;
   search?: string;
   status?: string;
+  schedule?: boolean;
 }
 
 export interface GetStudentsByClassParams {

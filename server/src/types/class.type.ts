@@ -32,6 +32,7 @@ export interface GetClassesQuery {
   courseId?: string;
   startDate?: Date;
   endDate?: Date;
+  schedule?: boolean;
 }
 
 export interface GetStudentsByClassQuery {

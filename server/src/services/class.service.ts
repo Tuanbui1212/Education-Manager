@@ -67,7 +67,16 @@ export class ClassService {
   }
 
   async getAllClasses(query: GetClassesQuery) {
-    const { page = 1, limit = 10, search = '', status = '', courseId = '', startDate = '', endDate = '' } = query;
+    const {
+      page = 1,
+      limit = 10,
+      search = '',
+      status = '',
+      courseId = '',
+      startDate = '',
+      endDate = '',
+      schedule = undefined,
+    } = query;
     const skip = (Number(page) - 1) * Number(limit);
     const filter: any = {
       name: { $regex: search, $options: 'i' },
@@ -84,11 +93,14 @@ export class ClassService {
     if (endDate) {
       filter.startDate = { $lte: new Date(endDate) };
     }
+    if (schedule !== undefined) {
+      filter.schedule = schedule;
+    }
 
     const [total, classes] = await Promise.all([
       ClassModel.countDocuments(filter),
       ClassModel.find(filter)
-        .sort({ name: 1 })
+        .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .populate('studentIds', 'fullName')

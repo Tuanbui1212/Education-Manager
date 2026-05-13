@@ -68,10 +68,11 @@ const menuConfig = [
       },
       { label: 'Quản lý lớp học', path: PATHS.TRAINING_CLASSES, permission: PERMISSIONS.CLASS.VIEW },
       {
-        label: 'Xếp thời khóa biểu',
+        label: 'Quản lý thời khóa biểu',
         path: PATHS.TRAINING_SCHEDULES,
         permission: PERMISSIONS.SHIFT.VIEW || PERMISSIONS.CLASS.VIEW,
       },
+      { label: 'Xếp lịch tự động', path: PATHS.TRAINING_AUTO_SCHEDULES, permission: PERMISSIONS.CLASS.VIEW },
     ],
   },
   {
