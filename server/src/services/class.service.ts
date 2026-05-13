@@ -9,9 +9,10 @@ import { Types } from 'mongoose';
 import { InvoiceService } from './invoice.service';
 import { InvoiceModel } from '../models/invoice.model';
 import { ScheduleModel } from '../models/schedule.model';
+import { ShiftModel } from '../models/shift.model';
 
 import mongoose from 'mongoose';
-import { fi } from 'zod/v4/locales';
+
 export class ClassService {
   private invoiceService: InvoiceService;
 
@@ -361,6 +362,37 @@ export class ClassService {
 
         if (exists) {
           throw new Error('Học viên này đã có tên trong danh sách lớp');
+        }
+
+        const activeClasses = await ClassModel.find({
+          studentIds: data.studentId,
+          status: 'ACTIVE',
+        }).session(session);
+
+        if (activeClasses.length > 0) {
+          const activeClassIds = activeClasses.map((c) => c._id);
+
+          const [studentSchedules, targetClassSchedules] = await Promise.all([
+            ScheduleModel.find({ classId: { $in: activeClassIds } }).session(session),
+            ScheduleModel.find({ classId: data.classId }).session(session),
+          ]);
+
+          if (targetClassSchedules.length > 0 && studentSchedules.length > 0) {
+            for (const targetSchedule of targetClassSchedules) {
+              for (const studentSchedule of studentSchedules) {
+                const isSameDate =
+                  new Date(targetSchedule.date).toDateString() ===
+                  new Date(studentSchedule.date).toDateString();
+                const isSameShift =
+                  targetSchedule.shiftId.toString() === studentSchedule.shiftId.toString();
+
+                if (isSameDate && isSameShift) {
+                  const studentShift = await ShiftModel.findById(studentSchedule.shiftId).session(session);
+                  throw new Error(`Lịch học của lớp này bị trùng với ca học ${studentShift?.startTime} - ${studentShift?.endTime} của học viên`);
+                }
+              }
+            }
+          }
         }
 
         await ClassModel.findByIdAndUpdate(data.classId, { $push: { studentIds: data.studentId } }, { session });
