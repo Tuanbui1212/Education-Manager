@@ -14,6 +14,7 @@ export interface IClassRequest {
   maxNumberOfStudents: number;
   lessonsPerWeek: number;
   optionalRequirements?: string[];
+  schedule?: any;
 }
 
 export interface Gene {
@@ -36,4 +37,19 @@ export interface GAInput {
   rooms: any[];
   shifts: any[];
   busySlots: Set<string>;
+}
+
+export interface IGene {
+  classRequestId: string;
+  teacherId: string;
+  dayOfWeek: number;
+  shiftId: string;
+  roomId: string;
+}
+
+interface IScheduleItem {
+  day: number;
+  shiftId: Types.ObjectId;
+  roomId: Types.ObjectId;
+  slotScore: number;
 }

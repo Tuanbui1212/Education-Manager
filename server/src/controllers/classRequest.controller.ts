@@ -69,12 +69,15 @@ export class ClassRequestController {
   runGA = async (req: Request, res: Response) => {
     try {
       const creatorId = (req as any).user?._id || (req as any).user?.id;
-      const enrichedChromosome = await this.geneticAlgorithmService.runGA(creatorId);
 
-      console.log('GA Response sample:', JSON.stringify(enrichedChromosome[0], null, 2));
-      console.log('Total genes:', enrichedChromosome.length);
+      console.log('Dữ liệu đầu vào cho GA:', { creatorId });
 
-      res.status(200).json({ success: true, data: enrichedChromosome });
+      const gaResult = await this.geneticAlgorithmService.runGA(creatorId);
+
+      console.log('GA Response sample:', JSON.stringify(gaResult, null, 2));
+      console.log('Total genes:', gaResult.length);
+
+      res.status(200).json({ success: true, data: gaResult, message: 'Tạo lịch thành công' });
     } catch (error: any) {
       res.status(400).json({ success: false, message: error.message });
     }

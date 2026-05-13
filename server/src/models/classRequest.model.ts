@@ -13,6 +13,14 @@ const ClassRequestSchema = new Schema<IClassRequest>(
     maxNumberOfStudents: { type: Number, required: [true, 'Số lượng học viên tối đa là bắt buộc'] },
     lessonsPerWeek: { type: Number, required: [true, 'Số lượng bài học mỗi tuần là bắt buộc'] },
     optionalRequirements: { type: [String], default: [] },
+    schedule: [
+      {
+        day: { type: Number },
+        shiftId: { type: Schema.Types.ObjectId, ref: 'Shift' },
+        roomId: { type: Schema.Types.ObjectId, ref: 'Room' },
+        slotScore: { type: Number },
+      },
+    ],
   },
   { timestamps: true },
 );

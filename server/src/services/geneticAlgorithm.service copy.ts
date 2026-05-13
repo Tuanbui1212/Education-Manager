@@ -144,15 +144,10 @@ export class GeneticAlgorithmService {
       const reqs: string[] = req.optionalRequirements || [];
 
       // Pool ngày hợp lệ (loại bỏ noDay ngay từ đầu)
-      // let possibleDays = [1, 2, 3, 4, 5, 6].filter((d) => d >= req.startDayOfWeek);
-      // const blockedDays = reqs.filter((r) => r.startsWith('noDay.')).map((r) => parseInt(r.split('.')[1], 10));
-      // possibleDays = possibleDays.filter((d) => !blockedDays.includes(d));
-      // if (possibleDays.length === 0) possibleDays = [1, 2, 3, 4, 5, 6].filter((d) => d >= req.startDayOfWeek);
-      let possibleDays = [1, 2, 3, 4, 5, 6];
+      let possibleDays = [1, 2, 3, 4, 5, 6].filter((d) => d >= req.startDayOfWeek);
       const blockedDays = reqs.filter((r) => r.startsWith('noDay.')).map((r) => parseInt(r.split('.')[1], 10));
       possibleDays = possibleDays.filter((d) => !blockedDays.includes(d));
-
-      if (possibleDays.length === 0) possibleDays = [1, 2, 3, 4, 5, 6];
+      if (possibleDays.length === 0) possibleDays = [1, 2, 3, 4, 5, 6].filter((d) => d >= req.startDayOfWeek);
 
       // Pool ca hợp lệ (lọc theo morning/afternoon/evening nếu có)
       const sessionPrefs = ['morning', 'afternoon', 'evening'].filter((s) => reqs.includes(s));
@@ -162,28 +157,10 @@ export class GeneticAlgorithmService {
         if (filtered.length > 0) possibleShifts = filtered;
       }
 
-      // FIX 1: Chỉ lấy các phòng đủ sức chứa
-      const validRooms = rooms.filter((r: any) => r.capacity >= req.maxNumberOfStudents);
-      // Fallback: Nếu không có phòng nào to bằng, lấy phòng to nhất hiện có để đỡ bị phạt nặng nhất
-      const safeRooms = validRooms.length > 0 ? validRooms : [rooms.sort((a: any, b: any) => b.capacity - a.capacity)];
-
-      // FIX 2: Xử lý noSameDay ngay lúc sinh ngẫu nhiên
-      let availableDaysForThisClass = [...possibleDays];
-
       for (let i = 0; i < req.lessonsPerWeek; i++) {
-        let day;
-
-        // Nếu yêu cầu không học trùng ngày, bốc ngày nào ra thì xóa ngày đó khỏi pool
-        if (reqs.includes('noSameDay') && availableDaysForThisClass.length > 0) {
-          const randomIdx = Math.floor(Math.random() * availableDaysForThisClass.length);
-          day = availableDaysForThisClass[randomIdx];
-          availableDaysForThisClass.splice(randomIdx, 1);
-        } else {
-          day = possibleDays[Math.floor(Math.random() * possibleDays.length)];
-        }
-
+        const day = possibleDays[Math.floor(Math.random() * possibleDays.length)];
         const shift = possibleShifts[Math.floor(Math.random() * possibleShifts.length)];
-        const room = safeRooms[Math.floor(Math.random() * safeRooms.length)]; // Dùng safeRooms thay vì rooms
+        const room = rooms[Math.floor(Math.random() * rooms.length)];
 
         chromosome.push({
           classRequestId: req._id,
@@ -330,16 +307,18 @@ export class GeneticAlgorithmService {
   // Tôn trọng optionalRequirements khi chọn ngẫu nhiên lại
   // ═══════════════════════════════════════════
   private mutate(chromosome: any[], data: any) {
-    const mutationRate = 0.08;
+    const mutationRate = 0.08; // tăng lên 8% để đa dạng hơn
     return chromosome.map((gene) => {
       if (Math.random() >= mutationRate) return gene;
 
       const currentReq = data.enrichedRequests.find((r: any) => r._id.toString() === gene.classRequestId.toString());
       const reqs: string[] = currentReq?.optionalRequirements || [];
+      const startDay = currentReq ? currentReq.startDayOfWeek : 0;
 
+      // Pool ngày (loại bỏ noDay)
       const blockedDays = reqs.filter((r) => r.startsWith('noDay.')).map((r) => parseInt(r.split('.')[1], 10));
-      let possibleDays = [1, 2, 3, 4, 5, 6].filter((d) => !blockedDays.includes(d));
-      if (possibleDays.length === 0) possibleDays = [1, 2, 3, 4, 5, 6];
+      let possibleDays = [1, 2, 3, 4, 5, 6].filter((d) => d >= startDay && !blockedDays.includes(d));
+      if (possibleDays.length === 0) possibleDays = [1, 2, 3, 4, 5, 6].filter((d) => d >= startDay);
 
       // Pool ca (lọc theo morning/afternoon/evening)
       const sessionPrefs = ['morning', 'afternoon', 'evening'].filter((s) => reqs.includes(s));
@@ -349,17 +328,11 @@ export class GeneticAlgorithmService {
         if (filtered.length > 0) possibleShifts = filtered;
       }
 
-      const validRooms = data.rooms.filter((r: any) => r.capacity >= gene.maxNumberOfStudents);
-      const safeRooms =
-        validRooms.length > 0 ? validRooms : [data.rooms.sort((a: any, b: any) => b.capacity - a.capacity)];
-      const newRoom = safeRooms[Math.floor(Math.random() * safeRooms.length)];
-
       return {
         ...gene,
         day: possibleDays[Math.floor(Math.random() * possibleDays.length)],
         shiftId: possibleShifts[Math.floor(Math.random() * possibleShifts.length)]._id,
-        roomId: newRoom._id,
-        roomCapacity: newRoom.capacity,
+        roomId: data.rooms[Math.floor(Math.random() * data.rooms.length)]._id,
       };
     });
   }
@@ -388,11 +361,15 @@ export class GeneticAlgorithmService {
     }));
 
     for (let g = 0; g < GENERATIONS; g++) {
+      // Sắp xếp giảm dần
       scoredPop.sort((a, b) => b.score - a.score);
 
+      // Elitism: giữ lại top ELITE_SIZE
       const newScoredPop = scoredPop.slice(0, ELITE_SIZE);
 
+      // Tournament selection + crossover + mutation để tạo phần còn lại
       while (newScoredPop.length < POPULATION_SIZE) {
+        // Chọn parent1 bằng tournament
         const t1 = this.tournamentSelect(scoredPop, TOURNAMENT_K);
         const t2 = this.tournamentSelect(scoredPop, TOURNAMENT_K);
 
@@ -404,6 +381,7 @@ export class GeneticAlgorithmService {
       scoredPop = newScoredPop;
     }
 
+    // Sắp xếp lần cuối và lấy chromosome tốt nhất
     scoredPop.sort((a, b) => b.score - a.score);
     const best = scoredPop[0];
 
@@ -416,6 +394,7 @@ export class GeneticAlgorithmService {
     const reqMap = new Map<string, any>();
     data.enrichedRequests.forEach((r: any) => reqMap.set(r._id.toString(), r));
 
+    // Tính slotScore riêng từng gene để trả về FE
     const enrichedChromosome = best.chrom.map((gene: any) => {
       const shift = shiftMap.get(gene.shiftId.toString());
       const req = reqMap.get(gene.classRequestId.toString());

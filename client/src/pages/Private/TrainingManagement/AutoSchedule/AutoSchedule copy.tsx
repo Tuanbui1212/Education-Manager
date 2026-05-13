@@ -9,7 +9,7 @@ import Page1 from './Page1';
 import Page2 from './Page2';
 import Page3 from './Page3';
 import LoadingOverlay from '../../../../components/LoadingOverlay';
-import { PRIMARY, SLOTS } from '../../../../utils/constants';
+import { PRIMARY } from '../../../../utils/constants';
 import { roomService } from '../../../../services/room.service';
 import { shiftService } from '../../../../services/shift.service';
 
@@ -25,22 +25,15 @@ export default function SchedulingUI() {
     return savedPage ? parseInt(savedPage, 10) : 1;
   });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-
-  // Dữ liệu nháp kéo từ DB về ở Bước 2
   const [draftClasses, setDraftClasses] = useState<IClassRequest[]>([]);
   const [prefs, setPrefs] = useState<Record<string, string[]>>({});
-
   const [result, setResult] = useState<IBackendResult | null>(null);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    // Khi ứng dụng load, nếu đang ở Bước 2, hãy kéo dữ liệu nháp về ngay
-    if (page === 2) {
-      loadDraftClasses();
-    }
-  }, [page]);
+  // State lưu trữ ca học để truyền xuống Page3 tránh bất đồng bộ
+  const [allShifts, setAllShifts] = useState<any[]>([]);
 
-  // --- BƯỚC 1: LẤY DANH SÁCH LỚP CHƯA CÓ LỊCH TỪ BẢNG THẬT ---
+  // ── BƯỚC 1: Lấy danh sách lớp chưa có lịch ──────────────────────
   const {
     data: ClassNoSchedule,
     loading: ClassNoScheduleLoading,
@@ -56,18 +49,14 @@ export default function SchedulingUI() {
   const toggleAll = () =>
     setSelectedIds((prev) => (prev.length === apiData.length ? [] : apiData.map((c) => c._id as string)));
 
-  // --- BƯỚC 1 -> BƯỚC 2: TẠO SNAPSHOT VÀO BẢNG TẠM ---
+  // ── BƯỚC 1 → 2: Tạo snapshot vào bảng tạm ──────────────────────
   const handleGoToStep2 = async () => {
     if (selectedIds.length === 0) return;
     setLoading(true);
     try {
-      // 1. Dọn dẹp các bản nháp cũ của người dùng này (nếu có) để làm mới hoàn toàn
       await classRequestService.deleteMyClassRequests();
-
-      // 2. Tạo bản nháp mới từ danh sách ID đã chọn
       await classRequestService.createClassRequest(selectedIds);
-
-      setPage(2); // Chuyển trang thành công
+      setPage(2);
       localStorage.setItem('schedule_page', '2');
     } catch (error) {
       console.error('Lỗi khởi tạo request:', error);
@@ -77,11 +66,9 @@ export default function SchedulingUI() {
     }
   };
 
-  // --- BƯỚC 2: LẤY DỮ LIỆU NHÁP VÀ CẬP NHẬT PREFERENCES ---
+  // ── BƯỚC 2: Load dữ liệu nháp ───────────────────────────────────
   useEffect(() => {
-    if (page === 2) {
-      loadDraftClasses();
-    }
+    if (page === 2) loadDraftClasses();
   }, [page]);
 
   const loadDraftClasses = async () => {
@@ -90,8 +77,6 @@ export default function SchedulingUI() {
       const res = await classRequestService.getClassRequests();
       if (res.success && res.data) {
         setDraftClasses(res.data);
-
-        // Map lại các options đã lưu vào state prefs để hiển thị UI
         const mappedPrefs: Record<string, string[]> = {};
         res.data.forEach((draft: IClassRequest) => {
           mappedPrefs[draft._id as string] = draft.optionalRequirements || [];
@@ -100,17 +85,14 @@ export default function SchedulingUI() {
       }
     } catch (error) {
       console.error('Lỗi khi tải dữ liệu nháp:', error);
-      handleReset(); // Nếu lỗi thì cho về Bước 1
+      handleReset();
     } finally {
       setLoading(false);
     }
   };
 
   const updatePrefs = async (draftId: string, newReqs: string[]) => {
-    // Optimistic UI: Cập nhật giao diện trước cho mượt
     setPrefs((prev) => ({ ...prev, [draftId]: newReqs }));
-
-    // Gửi ngầm xuống Database để update (Không cần chờ)
     try {
       await classRequestService.updateClassRequest(draftId, { optionalRequirements: newReqs });
     } catch (error) {
@@ -118,50 +100,93 @@ export default function SchedulingUI() {
     }
   };
 
-  // --- BƯỚC 2 -> BƯỚC 3: CHẠY THUẬT TOÁN  ---
+  // ── BƯỚC 2 → 3: Chạy GA và xử lý dữ liệu hiển thị ────────────────
   const handleRunAlgorithm = async () => {
     setLoading(true);
     try {
       const response = await classRequestService.runGeneticAlgorithm();
-      if (response.success && response.data) {
-        const bestChromosome: any[] = response.data;
+      if (!response.success || !response.data) throw new Error('Không có dữ liệu từ GA');
 
-        const finalSchedule = bestChromosome.map((gene: any, idx: number) => ({
-          classId: gene.classRequestId,
-          className: gene.className ?? `Lớp ${idx + 1}`,
+      const raw = response.data;
+      const bestChromosome: any[] = Array.isArray(raw) ? raw : raw;
+
+      // 1. Lấy dữ liệu Ca học và lưu vào state để Page3 dùng ngay
+      const shiftsRes = await shiftService.getShifts({ limit: 1000 });
+
+      const sortedShiftsForMap: any[] =
+        shiftsRes && shiftsRes.success && shiftsRes.data
+          ? [...shiftsRes.data].sort((a: any, b: any) => a.startTime.localeCompare(b.startTime))
+          : [];
+      setAllShifts(sortedShiftsForMap);
+
+      const shiftIndexMap = new Map<string, number>();
+      sortedShiftsForMap.forEach((s: any, i: number) => {
+        shiftIndexMap.set(s._id?.toString(), i);
+      });
+
+      // 2. Map Tên lớp từ draftClasses
+      const classNameMap = new Map<string, string>();
+      draftClasses.forEach((cls: any) => {
+        classNameMap.set((cls._id as string).toString(), cls.name ?? `Lớp #${(cls._id as string).slice(-4)}`);
+      });
+
+      // 3. Resolve tên phòng học
+      const uniqueRoomIds = [...new Set(bestChromosome.map((g: any) => g.roomId?.toString()))];
+      const roomResults = await Promise.all(uniqueRoomIds.map((id) => roomService.getRoomById(id).catch(() => null)));
+      const roomNameMap = new Map<string, string>();
+      uniqueRoomIds.forEach((id, i) => {
+        const res = roomResults[i];
+        if (res?.success && res.data?.name) roomNameMap.set(id, res.data.name);
+        else roomNameMap.set(id, `Phòng #${id.slice(-4)}`);
+      });
+
+      // 4. Build finalSchedule (Xử lý mapping DAY Index)
+      const finalSchedule = bestChromosome.map((gene: any, idx: number) => {
+        const classIdStr = gene.classRequestId?.toString();
+        const roomIdStr = gene.roomId?.toString();
+        const shiftIdStr = gene.shiftId?.toString();
+
+        // Chuyển đổi Day: Backend 0 (CN) -> Frontend 6. Backend 1 (T2) -> Frontend 0.
+        const displayDay = gene.day - 1;
+
+        return {
+          classId: classIdStr,
+          className: classNameMap.get(classIdStr) ?? `Lớp ${idx + 1}`,
           classIdx: gene.classIdx ?? idx,
-          day: gene.day,
-          slot: gene.slotIndex ?? gene.slot ?? 0,
-          roomName: gene.roomName ?? gene.roomId,
+          day: displayDay,
+          slot: shiftIndexMap.get(shiftIdStr) ?? 0,
+          shiftId: shiftIdStr,
+          roomName: roomNameMap.get(roomIdStr) ?? `Phòng #${roomIdStr?.slice(-4)}`,
           slotScore: gene.slotScore ?? 0,
-        }));
+        };
+      });
 
-        const classResults = draftClasses.map((cls, i) => {
-          const sessions = bestChromosome
-            .filter((g: any) => g.classRequestId?.toString() === (cls._id as string)?.toString())
-            .map((g: any) => ({
-              day: g.day,
-              slot: g.slotIndex ?? g.slot ?? 0,
-              room: g.roomName ?? g.roomId,
-            }));
+      // 5. Build classResults cho View Phân tích điểm
+      const classResults = draftClasses.map((cls, i) => {
+        const clsIdStr = (cls._id as string)?.toString();
+        const sessions = bestChromosome
+          .filter((g: any) => g.classRequestId?.toString() === clsIdStr)
+          .map((g: any) => ({
+            day: g.day - 1,
+            slot: shiftIndexMap.get(g.shiftId?.toString()) ?? 0,
+            shiftId: g.shiftId?.toString(),
+            room: roomNameMap.get(g.roomId?.toString()) ?? `Phòng #${g.roomId?.toString()?.slice(-4)}`,
+            slotScore: g.slotScore ?? 0,
+          }));
 
-          const days = [...new Set(sessions.map((s: any) => s.day))];
+        return {
+          cls,
+          days: [...new Set(sessions.map((s: any) => s.day))],
+          sessions,
+          totalScore: sessions.reduce((sum: number, s: any) => sum + (s.slotScore ?? 0), 0),
+          colorIdx: i,
+        };
+      });
 
-          return {
-            cls,
-            days,
-            sessions,
-            totalScore: sessions.reduce((sum: number, s: any) => sum + (s.slotScore ?? 0), 0),
-            colorIdx: i,
-          };
-        });
+      const totalScore = classResults.reduce((sum, r) => sum + r.totalScore, 0);
 
-        const totalScore = classResults.reduce((sum, r) => sum + r.totalScore, 0);
-
-        setResult({ finalSchedule, classResults, totalScore });
-
-        setPage(3);
-      }
+      setResult({ finalSchedule, classResults, totalScore });
+      setPage(3);
     } catch (error: any) {
       console.error('Lỗi chạy GA:', error);
       alert(error?.response?.data?.message || 'Không thể chạy thuật toán xếp lịch.');
@@ -170,13 +195,12 @@ export default function SchedulingUI() {
     }
   };
 
-  // --- DỌN DẸP & RESET ---
+  // ── Reset ────────────────────────────────────────────────────────
   const handleReset = async () => {
     setLoading(true);
     try {
       await classRequestService.deleteMyClassRequests();
       localStorage.removeItem('schedule_page');
-      setPage(1);
     } catch (e) {
       console.error('Lỗi khi dọn dẹp DB', e);
     } finally {
@@ -189,9 +213,7 @@ export default function SchedulingUI() {
     }
   };
 
-  const handleBackFromStep3 = () => {
-    setPage(2);
-  };
+  const handleBackFromStep3 = () => setPage(2);
 
   const steps = ['Chọn lớp', 'Tùy chọn & xác nhận', 'Kết quả'];
 
@@ -250,7 +272,12 @@ export default function SchedulingUI() {
                 </div>
                 {i < 2 && (
                   <div
-                    style={{ width: 24, height: 1, background: done ? PRIMARY : '#ddd', transition: 'background .2s' }}
+                    style={{
+                      width: 24,
+                      height: 1,
+                      background: done ? PRIMARY : '#ddd',
+                      transition: 'background .2s',
+                    }}
                   />
                 )}
               </div>
@@ -283,6 +310,7 @@ export default function SchedulingUI() {
           <Page3
             result={result}
             selectedClasses={draftClasses as any}
+            shifts={allShifts} // Truyền dữ liệu shifts đã load ở bước xử lý thuật toán
             onBack={handleBackFromStep3}
             onReset={handleReset}
           />

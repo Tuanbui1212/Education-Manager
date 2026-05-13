@@ -69,6 +69,7 @@ export default function SchedulingUI() {
   // ── BƯỚC 2: Load dữ liệu nháp ───────────────────────────────────
   useEffect(() => {
     if (page === 2) loadDraftClasses();
+    if (page === 3) loadSavedSchedule();
   }, [page]);
 
   const loadDraftClasses = async () => {
@@ -100,23 +101,38 @@ export default function SchedulingUI() {
     }
   };
 
-  // ── BƯỚC 2 → 3: Chạy GA và xử lý dữ liệu hiển thị ────────────────
+  // ── BƯỚC 2 → 3: Chạy GA ──────────────────────────────────────────
   const handleRunAlgorithm = async () => {
     setLoading(true);
     try {
       const response = await classRequestService.runGeneticAlgorithm();
-      if (!response.success || !response.data) throw new Error('Không có dữ liệu từ GA');
+      if (!response.success) throw new Error('Thuật toán chạy thất bại');
 
-      const raw = response.data;
-      const bestChromosome: any[] = Array.isArray(raw) ? raw : raw;
+      setPage(3);
+      localStorage.setItem('schedule_page', '3');
+    } catch (error: any) {
+      console.error('Lỗi chạy GA:', error);
+      alert(error?.response?.data?.message || 'Không thể chạy thuật toán xếp lịch.');
+      setLoading(false);
+    }
+  };
 
-      // 1. Lấy dữ liệu Ca học và lưu vào state để Page3 dùng ngay
+  // ── BƯỚC 3: Fetch lịch đã lưu từ DB và map dữ liệu cho Page 3 ────
+  const loadSavedSchedule = async () => {
+    setLoading(true);
+    try {
+      // 1. Fetch ClassRequests (lúc này đã có data trong mảng schedule)
+      const res = await classRequestService.getClassRequests();
+      if (!res.success || !res.data) return;
+
+      const classesWithSchedule = res.data;
+      setDraftClasses(classesWithSchedule); // Cập nhật state lớp học
+
+      // 2. Fetch Shifts (Ca học) để hiển thị tên ca
       const shiftsRes = await shiftService.getShifts({ limit: 1000 });
-
-      const sortedShiftsForMap: any[] =
-        shiftsRes && shiftsRes.success && shiftsRes.data
-          ? [...shiftsRes.data].sort((a: any, b: any) => a.startTime.localeCompare(b.startTime))
-          : [];
+      const sortedShiftsForMap = shiftsRes?.data
+        ? [...shiftsRes.data].sort((a: any, b: any) => a.startTime.localeCompare(b.startTime))
+        : [];
       setAllShifts(sortedShiftsForMap);
 
       const shiftIndexMap = new Map<string, number>();
@@ -124,72 +140,83 @@ export default function SchedulingUI() {
         shiftIndexMap.set(s._id?.toString(), i);
       });
 
-      // 2. Map Tên lớp từ draftClasses
-      const classNameMap = new Map<string, string>();
-      draftClasses.forEach((cls: any) => {
-        classNameMap.set((cls._id as string).toString(), cls.name ?? `Lớp #${(cls._id as string).slice(-4)}`);
+      // 3. Resolve tên phòng học từ tất cả các slot đã được xếp
+      const allRoomIds = new Set<string>();
+      classesWithSchedule.forEach((cls: any) => {
+        cls.schedule?.forEach((slot: any) => {
+          if (slot.roomId) allRoomIds.add(slot.roomId.toString());
+        });
       });
 
-      // 3. Resolve tên phòng học
-      const uniqueRoomIds = [...new Set(bestChromosome.map((g: any) => g.roomId?.toString()))];
+      const uniqueRoomIds = [...allRoomIds];
       const roomResults = await Promise.all(uniqueRoomIds.map((id) => roomService.getRoomById(id).catch(() => null)));
       const roomNameMap = new Map<string, string>();
       uniqueRoomIds.forEach((id, i) => {
-        const res = roomResults[i];
-        if (res?.success && res.data?.name) roomNameMap.set(id, res.data.name);
+        const roomRes = roomResults[i];
+        if (roomRes?.success && roomRes.data?.name) roomNameMap.set(id, roomRes.data.name);
         else roomNameMap.set(id, `Phòng #${id.slice(-4)}`);
       });
 
-      // 4. Build finalSchedule (Xử lý mapping DAY Index)
-      const finalSchedule = bestChromosome.map((gene: any, idx: number) => {
-        const classIdStr = gene.classRequestId?.toString();
-        const roomIdStr = gene.roomId?.toString();
-        const shiftIdStr = gene.shiftId?.toString();
+      // 4. Build finalSchedule & classResults từ dữ liệu DB
+      const finalSchedule: any[] = [];
+      const classResults: any[] = [];
+      let totalScore = 0;
 
-        // Chuyển đổi Day: Backend 0 (CN) -> Frontend 6. Backend 1 (T2) -> Frontend 0.
-        const displayDay = gene.day === 0 ? 6 : gene.day - 1;
+      classesWithSchedule.forEach((cls: any, i: number) => {
+        const clsIdStr = cls._id.toString();
+        const clsName = cls.name ?? `Lớp #${clsIdStr.slice(-4)}`;
+        let clsTotalScore = 0;
+        const sessions: any[] = [];
 
-        return {
-          classId: classIdStr,
-          className: classNameMap.get(classIdStr) ?? `Lớp ${idx + 1}`,
-          classIdx: gene.classIdx ?? idx,
-          day: displayDay,
-          slot: shiftIndexMap.get(shiftIdStr) ?? 0,
-          shiftId: shiftIdStr,
-          roomName: roomNameMap.get(roomIdStr) ?? `Phòng #${roomIdStr?.slice(-4)}`,
-          slotScore: gene.slotScore ?? 0,
-        };
-      });
+        (cls.schedule || []).forEach((slot: any) => {
+          // Xử lý ObjectId an toàn
+          const shiftIdStr = slot.shiftId?.toString();
+          const roomIdStr = slot.roomId?.toString();
 
-      // 5. Build classResults cho View Phân tích điểm
-      const classResults = draftClasses.map((cls, i) => {
-        const clsIdStr = (cls._id as string)?.toString();
-        const sessions = bestChromosome
-          .filter((g: any) => g.classRequestId?.toString() === clsIdStr)
-          .map((g: any) => ({
-            day: g.day === 0 ? 6 : g.day - 1,
-            slot: shiftIndexMap.get(g.shiftId?.toString()) ?? 0,
-            shiftId: g.shiftId?.toString(),
-            room: roomNameMap.get(g.roomId?.toString()) ?? `Phòng #${g.roomId?.toString()?.slice(-4)}`,
-            slotScore: g.slotScore ?? 0,
-          }));
+          // Chuyển đổi Day: Backend 1-7 (T2-CN) -> Frontend 0-6 (T2-CN)
+          const displayDay = slot.day - 1;
+          const slotIdx = shiftIndexMap.get(shiftIdStr) ?? 0;
+          const roomName = roomNameMap.get(roomIdStr) ?? `Phòng #${roomIdStr?.slice(-4)}`;
 
-        return {
+          // Đẩy vào bảng tổng
+          finalSchedule.push({
+            classId: clsIdStr,
+            className: clsName,
+            classIdx: i, // dùng index để lấy màu sắc
+            day: displayDay,
+            slot: slotIdx,
+            shiftId: shiftIdStr,
+            roomName: roomName,
+            slotScore: slot.slotScore ?? 0,
+          });
+
+          // Đẩy vào bảng chi tiết từng lớp
+          sessions.push({
+            day: displayDay,
+            slot: slotIdx,
+            shiftId: shiftIdStr,
+            room: roomName,
+            slotScore: slot.slotScore ?? 0,
+          });
+
+          clsTotalScore += slot.slotScore ?? 0;
+        });
+
+        totalScore += clsTotalScore;
+
+        classResults.push({
           cls,
           days: [...new Set(sessions.map((s: any) => s.day))],
           sessions,
-          totalScore: sessions.reduce((sum: number, s: any) => sum + (s.slotScore ?? 0), 0),
+          totalScore: clsTotalScore,
           colorIdx: i,
-        };
+        });
       });
 
-      const totalScore = classResults.reduce((sum, r) => sum + r.totalScore, 0);
-
+      // Cập nhật state cuối cùng cho Page3
       setResult({ finalSchedule, classResults, totalScore });
-      setPage(3);
-    } catch (error: any) {
-      console.error('Lỗi chạy GA:', error);
-      alert(error?.response?.data?.message || 'Không thể chạy thuật toán xếp lịch.');
+    } catch (error) {
+      console.error('Lỗi khi tải lịch từ DB:', error);
     } finally {
       setLoading(false);
     }

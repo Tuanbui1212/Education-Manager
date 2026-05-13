@@ -99,9 +99,9 @@ function ClassPrefsCard({
               <Pill
                 key={`pref-${d}`}
                 label={d}
-                active={reqs.includes(`day.${i}`)}
+                active={reqs.includes(`day.${i + 1}`)}
                 activeStyle={{ bg: '#D1FAE5', color: '#065F46', border: '#10B981' }}
-                onClick={() => toggleDayPref(i)}
+                onClick={() => toggleDayPref(i + 1)}
               />
             ))}
           </div>
@@ -114,9 +114,9 @@ function ClassPrefsCard({
               <Pill
                 key={`block-${d}`}
                 label={d}
-                active={reqs.includes(`noDay.${i}`)}
+                active={reqs.includes(`noDay.${i + 1}`)}
                 activeStyle={{ bg: '#FEE2E2', color: '#991B1B', border: '#DC2626' }}
-                onClick={() => toggleDayBlock(i)}
+                onClick={() => toggleDayBlock(i + 1)}
               />
             ))}
           </div>
