@@ -30,10 +30,8 @@ export default function SchedulingUI() {
   const [result, setResult] = useState<IBackendResult | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // State lưu trữ ca học để truyền xuống Page3 tránh bất đồng bộ
   const [allShifts, setAllShifts] = useState<any[]>([]);
 
-  // ── BƯỚC 1: Lấy danh sách lớp chưa có lịch ──────────────────────
   const {
     data: ClassNoSchedule,
     loading: ClassNoScheduleLoading,
@@ -104,8 +102,14 @@ export default function SchedulingUI() {
   // ── BƯỚC 2 → 3: Chạy GA ──────────────────────────────────────────
   const handleRunAlgorithm = async () => {
     setLoading(true);
+    const startTime = performance.now();
     try {
       const response = await classRequestService.runGeneticAlgorithm();
+
+      const endTime = performance.now();
+      const executionTimeSeconds = ((endTime - startTime) / 1000).toFixed(2);
+      console.log(`⏱️ Thuật toán chạy thành công trong: ${executionTimeSeconds} giây`);
+
       if (!response.success) throw new Error('Thuật toán chạy thất bại');
 
       setPage(3);

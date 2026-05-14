@@ -43,31 +43,25 @@ const ACTION_ITEMS = [
     label: 'Mở lớp học mới',
     icon: PlusCircle,
     hover: 'hover:bg-green-50 hover:text-green-600',
-    path: PATHS.TRAINING_CLASSES,
+    path: PATHS.TRAINING_CLASSES_CREATE,
   },
-  {
-    label: 'Lập hóa đơn thu tiền',
-    icon: CreditCard,
-    hover: 'hover:bg-purple-50 hover:text-purple-600',
-    path: PATHS.FINANCE_INVOICES,
-  },
-  {
-    label: 'Thêm khoản thu / chi',
-    icon: Wallet,
-    hover: 'hover:bg-orange-50 hover:text-orange-600',
-    path: PATHS.FINANCE_TRANSACTIONS,
-  },
+  // {
+  //   label: 'Lập hóa đơn thu tiền',
+  //   icon: CreditCard,
+  //   hover: 'hover:bg-purple-50 hover:text-purple-600',
+  //   path: PATHS.FINANCE_INVOICES,
+  // },
+  // {
+  //   label: 'Thêm khoản thu / chi',
+  //   icon: Wallet,
+  //   hover: 'hover:bg-orange-50 hover:text-orange-600',
+  //   path: PATHS.FINANCE_TRANSACTIONS,
+  // },
   {
     label: 'Xếp lịch dạy',
     icon: CalendarDays,
     hover: 'hover:bg-teal-50 hover:text-teal-600',
-    path: PATHS.TRAINING_SCHEDULES,
-  },
-  {
-    label: 'Nhắc nợ học phí (SMS)',
-    icon: Bell,
-    hover: 'hover:bg-red-50 hover:text-red-600',
-    path: PATHS.FINANCE_INVOICES,
+    path: PATHS.TRAINING_AUTO_SCHEDULES,
   },
 ];
 

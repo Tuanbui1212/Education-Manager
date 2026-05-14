@@ -95,7 +95,6 @@ export class GeneticAlgorithmService {
       ScheduleModel.find(),
     ]);
 
-    // Bản đồ bận từ lịch thật
     const busySlots = new Set<string>();
     schedules.forEach((s) => {
       const d = new Date(s.date);
@@ -108,7 +107,6 @@ export class GeneticAlgorithmService {
       busySlots.add(`TEACHER_${s.teacherId}_DAY_${dateString}_SHIFT_${s.shiftId}`);
     });
 
-    // Enrich requests + đánh index thứ tự (dùng để resolve tên sau)
     const enrichedRequests = requests.map((req, idx) => {
       const startDt = req.startDate ? new Date(req.startDate) : new Date();
       const jsDay = startDt.getDay();
@@ -120,7 +118,6 @@ export class GeneticAlgorithmService {
       };
     });
 
-    // Gắn thêm session type vào từng shift để không tính lại nhiều lần
     const enrichedShifts = shifts.map((s) => ({
       ...s.toObject(),
       sessionType: getShiftSession(s.startTime),
@@ -143,18 +140,12 @@ export class GeneticAlgorithmService {
     enrichedRequests.forEach((req: any) => {
       const reqs: string[] = req.optionalRequirements || [];
 
-      // Pool ngày hợp lệ (loại bỏ noDay ngay từ đầu)
-      // let possibleDays = [1, 2, 3, 4, 5, 6].filter((d) => d >= req.startDayOfWeek);
-      // const blockedDays = reqs.filter((r) => r.startsWith('noDay.')).map((r) => parseInt(r.split('.')[1], 10));
-      // possibleDays = possibleDays.filter((d) => !blockedDays.includes(d));
-      // if (possibleDays.length === 0) possibleDays = [1, 2, 3, 4, 5, 6].filter((d) => d >= req.startDayOfWeek);
       let possibleDays = [1, 2, 3, 4, 5, 6];
       const blockedDays = reqs.filter((r) => r.startsWith('noDay.')).map((r) => parseInt(r.split('.')[1], 10));
       possibleDays = possibleDays.filter((d) => !blockedDays.includes(d));
 
       if (possibleDays.length === 0) possibleDays = [1, 2, 3, 4, 5, 6];
 
-      // Pool ca hợp lệ (lọc theo morning/afternoon/evening nếu có)
       const sessionPrefs = ['morning', 'afternoon', 'evening'].filter((s) => reqs.includes(s));
       let possibleShifts = shifts;
       if (sessionPrefs.length > 0) {
@@ -162,18 +153,14 @@ export class GeneticAlgorithmService {
         if (filtered.length > 0) possibleShifts = filtered;
       }
 
-      // FIX 1: Chỉ lấy các phòng đủ sức chứa
       const validRooms = rooms.filter((r: any) => r.capacity >= req.maxNumberOfStudents);
-      // Fallback: Nếu không có phòng nào to bằng, lấy phòng to nhất hiện có để đỡ bị phạt nặng nhất
       const safeRooms = validRooms.length > 0 ? validRooms : [rooms.sort((a: any, b: any) => b.capacity - a.capacity)];
 
-      // FIX 2: Xử lý noSameDay ngay lúc sinh ngẫu nhiên
       let availableDaysForThisClass = [...possibleDays];
 
       for (let i = 0; i < req.lessonsPerWeek; i++) {
         let day;
 
-        // Nếu yêu cầu không học trùng ngày, bốc ngày nào ra thì xóa ngày đó khỏi pool
         if (reqs.includes('noSameDay') && availableDaysForThisClass.length > 0) {
           const randomIdx = Math.floor(Math.random() * availableDaysForThisClass.length);
           day = availableDaysForThisClass[randomIdx];
@@ -183,7 +170,7 @@ export class GeneticAlgorithmService {
         }
 
         const shift = possibleShifts[Math.floor(Math.random() * possibleShifts.length)];
-        const room = safeRooms[Math.floor(Math.random() * safeRooms.length)]; // Dùng safeRooms thay vì rooms
+        const room = safeRooms[Math.floor(Math.random() * safeRooms.length)];
 
         chromosome.push({
           classRequestId: req._id,
@@ -225,21 +212,17 @@ export class GeneticAlgorithmService {
     let fitness = 0;
     const { busySlots, enrichedRequests, shifts } = data;
 
-    // Map shiftId → shift object để tra nhanh
     const shiftMap = new Map<string, any>();
     shifts.forEach((s: any) => shiftMap.set(s._id.toString(), s));
 
-    // Map classRequestId → optionalRequirements
     const reqMap = new Map<string, string[]>();
     enrichedRequests.forEach((r: any) => {
       reqMap.set(r._id.toString(), r.optionalRequirements || []);
     });
 
-    // Theo dõi xung đột nội bộ
     const usedRooms = new Set<string>();
     const usedTeachers = new Set<string>();
 
-    // Gom các buổi theo lớp để kiểm tra noSameDay / noConsec
     const classDayMap = new Map<string, number[]>();
 
     chromosome.forEach((gene) => {
@@ -274,7 +257,6 @@ export class GeneticAlgorithmService {
       if (!classDayMap.has(rid)) classDayMap.set(rid, []);
       classDayMap.get(rid)!.push(day);
 
-      // ── RÀNG BUỘC MỀM (optionalRequirements) ────────
       const reqs = reqMap.get(rid) || [];
       const shift = shiftMap.get(sid);
 
@@ -294,7 +276,6 @@ export class GeneticAlgorithmService {
       if (reqs.includes('preferEarlyWeek') && isEarlyWeek(day)) fitness += 200;
     });
 
-    // ── Kiểm tra noSameDay & noConsec sau khi gom xong ──
     classDayMap.forEach((days, rid) => {
       const reqs = reqMap.get(rid) || [];
 
@@ -378,10 +359,8 @@ export class GeneticAlgorithmService {
     const ELITE_SIZE = 15;
     const TOURNAMENT_K = 5;
 
-    // Khởi tạo quần thểs
     let population = Array.from({ length: POPULATION_SIZE }, () => this.generateRandomChromosome(data));
 
-    // Cache điểm để không tính lại nhiều lần trong cùng 1 thế hệ
     let scoredPop = population.map((chrom) => ({
       chrom,
       score: this.calculateFitness(chrom, data),
