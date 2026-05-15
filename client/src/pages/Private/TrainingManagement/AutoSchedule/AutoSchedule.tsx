@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { CheckCircle2 } from 'lucide-react';
 import useFetch from '../../../../hooks/useFetch';
 import { classService } from '../../../../services/class.service';
 import { classRequestService } from '../../../../services/classRequest.service';
@@ -9,7 +10,6 @@ import Page1 from './Page1';
 import Page2 from './Page2';
 import Page3 from './Page3';
 import LoadingOverlay from '../../../../components/LoadingOverlay';
-import { PRIMARY } from '../../../../utils/constants';
 import { roomService } from '../../../../services/room.service';
 import { shiftService } from '../../../../services/shift.service';
 
@@ -18,6 +18,8 @@ interface IBackendResult {
   classResults: any[];
   totalScore: number;
 }
+
+const STEPS = ['Chọn lớp', 'Tùy chọn & xác nhận', 'Kết quả'];
 
 export default function SchedulingUI() {
   const [page, setPage] = useState<number>(() => {
@@ -29,7 +31,6 @@ export default function SchedulingUI() {
   const [prefs, setPrefs] = useState<Record<string, string[]>>({});
   const [result, setResult] = useState<IBackendResult | null>(null);
   const [loading, setLoading] = useState(false);
-
   const [allShifts, setAllShifts] = useState<any[]>([]);
 
   const {
@@ -47,7 +48,6 @@ export default function SchedulingUI() {
   const toggleAll = () =>
     setSelectedIds((prev) => (prev.length === apiData.length ? [] : apiData.map((c) => c._id as string)));
 
-  // ── BƯỚC 1 → 2: Tạo snapshot vào bảng tạm ──────────────────────
   const handleGoToStep2 = async () => {
     if (selectedIds.length === 0) return;
     setLoading(true);
@@ -64,7 +64,6 @@ export default function SchedulingUI() {
     }
   };
 
-  // ── BƯỚC 2: Load dữ liệu nháp ───────────────────────────────────
   useEffect(() => {
     if (page === 2) loadDraftClasses();
     if (page === 3) loadSavedSchedule();
@@ -96,22 +95,19 @@ export default function SchedulingUI() {
       await classRequestService.updateClassRequest(draftId, { optionalRequirements: newReqs });
     } catch (error) {
       console.error('Lỗi đồng bộ cấu hình với DB:', error);
+      setLoading(false);
     }
   };
 
-  // ── BƯỚC 2 → 3: Chạy GA ──────────────────────────────────────────
   const handleRunAlgorithm = async () => {
     setLoading(true);
     const startTime = performance.now();
     try {
       const response = await classRequestService.runGeneticAlgorithm();
-
       const endTime = performance.now();
-      const executionTimeSeconds = ((endTime - startTime) / 1000).toFixed(2);
-      console.log(`⏱️ Thuật toán chạy thành công trong: ${executionTimeSeconds} giây`);
-
+      console.log(`⏱️ Thuật toán chạy thành công trong: ${((endTime - startTime) / 1000).toFixed(2)} giây`);
       if (!response.success) throw new Error('Thuật toán chạy thất bại');
-
+      if (page === 3) await loadSavedSchedule();
       setPage(3);
       localStorage.setItem('schedule_page', '3');
     } catch (error: any) {
@@ -121,18 +117,14 @@ export default function SchedulingUI() {
     }
   };
 
-  // ── BƯỚC 3: Fetch lịch đã lưu từ DB và map dữ liệu cho Page 3 ────
   const loadSavedSchedule = async () => {
     setLoading(true);
     try {
-      // 1. Fetch ClassRequests (lúc này đã có data trong mảng schedule)
       const res = await classRequestService.getClassRequests();
       if (!res.success || !res.data) return;
-
       const classesWithSchedule = res.data;
-      setDraftClasses(classesWithSchedule); // Cập nhật state lớp học
+      setDraftClasses(classesWithSchedule);
 
-      // 2. Fetch Shifts (Ca học) để hiển thị tên ca
       const shiftsRes = await shiftService.getShifts({ limit: 1000 });
       const sortedShiftsForMap = shiftsRes?.data
         ? [...shiftsRes.data].sort((a: any, b: any) => a.startTime.localeCompare(b.startTime))
@@ -140,11 +132,8 @@ export default function SchedulingUI() {
       setAllShifts(sortedShiftsForMap);
 
       const shiftIndexMap = new Map<string, number>();
-      sortedShiftsForMap.forEach((s: any, i: number) => {
-        shiftIndexMap.set(s._id?.toString(), i);
-      });
+      sortedShiftsForMap.forEach((s: any, i: number) => shiftIndexMap.set(s._id?.toString(), i));
 
-      // 3. Resolve tên phòng học từ tất cả các slot đã được xếp
       const allRoomIds = new Set<string>();
       classesWithSchedule.forEach((cls: any) => {
         cls.schedule?.forEach((slot: any) => {
@@ -157,11 +146,9 @@ export default function SchedulingUI() {
       const roomNameMap = new Map<string, string>();
       uniqueRoomIds.forEach((id, i) => {
         const roomRes = roomResults[i];
-        if (roomRes?.success && roomRes.data?.name) roomNameMap.set(id, roomRes.data.name);
-        else roomNameMap.set(id, `Phòng #${id.slice(-4)}`);
+        roomNameMap.set(id, roomRes?.success && roomRes.data?.name ? roomRes.data.name : `Phòng #${id.slice(-4)}`);
       });
 
-      // 4. Build finalSchedule & classResults từ dữ liệu DB
       const finalSchedule: any[] = [];
       const classResults: any[] = [];
       let totalScore = 0;
@@ -173,28 +160,22 @@ export default function SchedulingUI() {
         const sessions: any[] = [];
 
         (cls.schedule || []).forEach((slot: any) => {
-          // Xử lý ObjectId an toàn
           const shiftIdStr = slot.shiftId?.toString();
           const roomIdStr = slot.roomId?.toString();
-
-          // Chuyển đổi Day: Backend 1-7 (T2-CN) -> Frontend 0-6 (T2-CN)
           const displayDay = slot.day - 1;
           const slotIdx = shiftIndexMap.get(shiftIdStr) ?? 0;
           const roomName = roomNameMap.get(roomIdStr) ?? `Phòng #${roomIdStr?.slice(-4)}`;
 
-          // Đẩy vào bảng tổng
           finalSchedule.push({
             classId: clsIdStr,
             className: clsName,
-            classIdx: i, // dùng index để lấy màu sắc
+            classIdx: i,
             day: displayDay,
             slot: slotIdx,
             shiftId: shiftIdStr,
-            roomName: roomName,
+            roomName,
             slotScore: slot.slotScore ?? 0,
           });
-
-          // Đẩy vào bảng chi tiết từng lớp
           sessions.push({
             day: displayDay,
             slot: slotIdx,
@@ -202,12 +183,10 @@ export default function SchedulingUI() {
             room: roomName,
             slotScore: slot.slotScore ?? 0,
           });
-
           clsTotalScore += slot.slotScore ?? 0;
         });
 
         totalScore += clsTotalScore;
-
         classResults.push({
           cls,
           days: [...new Set(sessions.map((s: any) => s.day))],
@@ -217,7 +196,6 @@ export default function SchedulingUI() {
         });
       });
 
-      // Cập nhật state cuối cùng cho Page3
       setResult({ finalSchedule, classResults, totalScore });
     } catch (error) {
       console.error('Lỗi khi tải lịch từ DB:', error);
@@ -226,7 +204,6 @@ export default function SchedulingUI() {
     }
   };
 
-  // ── Reset ────────────────────────────────────────────────────────
   const handleReset = async () => {
     setLoading(true);
     try {
@@ -244,72 +221,39 @@ export default function SchedulingUI() {
     }
   };
 
-  const handleBackFromStep3 = () => setPage(2);
-
-  const steps = ['Chọn lớp', 'Tùy chọn & xác nhận', 'Kết quả'];
-
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: '#f5f5f3',
-        fontFamily: 'system-ui, sans-serif',
-        color: '#1a1a1a',
-        fontSize: 14,
-      }}
-    >
+    <div className="min-h-screen bg-gray-50 p-8 animate-in fade-in duration-500">
       {loading && <LoadingOverlay />}
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '28px 16px' }}>
-        {/* Step indicator */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 0, marginBottom: 24, fontSize: 12 }}>
-          {steps.map((label, i) => {
+
+      <div className="max-w-5xl mx-auto">
+        {/* Step Indicator */}
+        <div className="flex items-center mb-8">
+          {STEPS.map((label, i) => {
             const step = i + 1;
             const done = page > step;
             const active = page === step;
             return (
-              <div key={step} style={{ display: 'flex', alignItems: 'center' }}>
+              <div key={step} className="flex items-center">
                 <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    padding: '5px 12px',
-                    borderRadius: 20,
-                    background: active ? PRIMARY : done ? '#E9E8FC' : '#e8e8e4',
-                    color: active ? '#fff' : done ? PRIMARY : '#999',
-                    fontWeight: active ? 600 : 400,
-                    fontSize: 12,
-                    transition: 'all .2s',
-                  }}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium transition-all duration-200
+                    ${
+                      active
+                        ? 'bg-primary text-white shadow-md shadow-primary/30'
+                        : done
+                          ? 'bg-primary/10 text-primary'
+                          : 'bg-white border border-gray-200 text-gray-400'
+                    }`}
                 >
                   <span
-                    style={{
-                      width: 18,
-                      height: 18,
-                      borderRadius: '50%',
-                      background: active ? 'rgba(255,255,255,.25)' : done ? PRIMARY : '#ccc',
-                      color: active ? '#fff' : done ? '#fff' : '#888',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 10,
-                      fontWeight: 700,
-                      flexShrink: 0,
-                    }}
+                    className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0
+                      ${active ? 'bg-white/25 text-white' : done ? 'bg-primary text-white' : 'bg-gray-200 text-gray-500'}`}
                   >
-                    {done ? '✓' : step}
+                    {done ? <CheckCircle2 size={12} /> : step}
                   </span>
                   {label}
                 </div>
-                {i < 2 && (
-                  <div
-                    style={{
-                      width: 24,
-                      height: 1,
-                      background: done ? PRIMARY : '#ddd',
-                      transition: 'background .2s',
-                    }}
-                  />
+                {i < STEPS.length - 1 && (
+                  <div className={`w-8 h-px transition-colors duration-200 ${done ? 'bg-primary' : 'bg-gray-200'}`} />
                 )}
               </div>
             );
@@ -341,8 +285,9 @@ export default function SchedulingUI() {
           <Page3
             result={result}
             selectedClasses={draftClasses as any}
-            shifts={allShifts} // Truyền dữ liệu shifts đã load ở bước xử lý thuật toán
-            onBack={handleBackFromStep3}
+            shifts={allShifts}
+            onBack={() => setPage(2)}
+            onRerun={handleRunAlgorithm}
             onReset={handleReset}
           />
         )}

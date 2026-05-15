@@ -1,6 +1,8 @@
+import { ArrowLeft, Play } from 'lucide-react';
 import type { IClass } from '../../../../types/class.type';
 import ClassPrefsCard from './ClassPrefsCard';
-import { CLASS_COLORS, GREEN } from '../../../../utils/constants';
+import { CLASS_COLORS } from '../../../../utils/constants';
+import Button from '../../../../components/Button';
 
 function Page2({
   selectedClasses,
@@ -16,90 +18,57 @@ function Page2({
   onRun: () => void;
 }) {
   return (
-    <div>
-      <div style={{ marginBottom: 20, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-        <button
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-start gap-4">
+        <Button
+          variant="outline"
+          icon={<ArrowLeft size={15} />}
           onClick={onBack}
-          style={{
-            padding: '7px 12px',
-            borderRadius: 8,
-            border: '0.5px solid #ccc',
-            background: '#fff',
-            fontSize: 13,
-            cursor: 'pointer',
-            color: '#555',
-            flexShrink: 0,
-            marginTop: 2,
-          }}
+          className="flex-shrink-0 mt-0.5 px-3 py-2"
         >
-          ← Quay lại
-        </button>
+          Quay lại
+        </Button>
         <div>
-          <h1 style={{ fontSize: 18, fontWeight: 600, color: '#1a1a1a' }}>Xác nhận & tùy chọn xếp lịch</h1>
-          <p style={{ fontSize: 13, color: '#666', marginTop: 3 }}>
-            Các tùy chọn này sẽ được gửi xuống Backend dưới dạng mảng <code>optionalRequirements</code>
+          <h1 className="text-2xl font-bold text-gray-800">Xác nhận & tùy chọn xếp lịch</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Các tùy chọn sẽ được gửi xuống Backend dưới dạng mảng{' '}
+            <code className="bg-gray-100 text-primary px-1.5 py-0.5 rounded text-xs font-mono">
+              optionalRequirements
+            </code>
           </p>
         </div>
       </div>
 
-      {selectedClasses.map((cls, i) => {
-        const reqs = prefs[cls._id as string] || (cls as any).optionalRequirements || [];
-        return (
-          <ClassPrefsCard
-            key={cls._id}
-            cls={cls}
-            color={CLASS_COLORS[i % CLASS_COLORS.length]}
-            reqs={reqs}
-            onChange={(newReqs) => onChangePrefs(cls._id as string, newReqs)}
-          />
-        );
-      })}
+      {/* Class Prefs Cards */}
+      <div className="space-y-3">
+        {selectedClasses.map((cls, i) => {
+          const reqs = prefs[cls._id as string] || (cls as any).optionalRequirements || [];
+          return (
+            <ClassPrefsCard
+              key={cls._id}
+              cls={cls}
+              color={CLASS_COLORS[i % CLASS_COLORS.length]}
+              reqs={reqs}
+              onChange={(newReqs) => onChangePrefs(cls._id as string, newReqs)}
+            />
+          );
+        })}
+      </div>
 
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          gap: 8,
-          marginTop: 8,
-          background: '#fff',
-          border: '0.5px solid #ddd',
-          borderRadius: 10,
-          padding: '12px 16px',
-        }}
-      >
-        <button
-          onClick={onBack}
-          style={{
-            padding: '8px 18px',
-            borderRadius: 8,
-            fontSize: 13,
-            fontWeight: 500,
-            border: '0.5px solid #ccc',
-            background: '#fff',
-            cursor: 'pointer',
-            color: '#444',
-          }}
-        >
-          ← Quay lại
-        </button>
-        <button
+      {/* Footer */}
+      <div className="flex items-center justify-end gap-3 bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-3.5">
+        <Button variant="outline" icon={<ArrowLeft size={15} />} onClick={onBack}>
+          Quay lại
+        </Button>
+        <Button
+          variant="primary"
+          icon={<Play size={14} fill="currentColor" />}
           onClick={onRun}
-          style={{
-            padding: '8px 20px',
-            borderRadius: 8,
-            fontSize: 13,
-            fontWeight: 600,
-            border: 'none',
-            background: GREEN,
-            color: '#fff',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-          }}
+          className="bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20"
         >
-          ▶ Chạy xếp lịch
-        </button>
+          Chạy xếp lịch
+        </Button>
       </div>
     </div>
   );

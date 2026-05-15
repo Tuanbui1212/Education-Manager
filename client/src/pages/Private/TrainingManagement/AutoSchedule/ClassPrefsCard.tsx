@@ -51,34 +51,30 @@ function ClassPrefsCard({
   };
 
   return (
-    <div
-      style={{ background: '#fff', border: '0.5px solid #ddd', borderRadius: 10, overflow: 'hidden', marginBottom: 12 }}
-    >
-      <div
-        style={{
-          background: color.bg,
-          borderBottom: '0.5px solid #e0e0dc',
-          padding: '10px 14px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-        }}
-      >
-        <div style={{ width: 10, height: 10, borderRadius: '50%', background: color.dot, flexShrink: 0 }} />
-        <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 600, fontSize: 13, color: color.tc }}>{cls.name}</div>
-          <div style={{ fontSize: 11, color: '#666', marginTop: 1 }}>
-            {typeof cls.courseId === 'object' ? (cls.courseId?.title ?? '—') : '—'} ·{' '}
-            {typeof cls.teacherId === 'object' ? (cls.teacherId?.fullName ?? '—') : '—'} · {cls.lessonsPerWeek}{' '}
-            buổi/tuần · {cls.totalLessons} buổi · KG {formatDate(cls.startDate)}
+    <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200">
+      {/* Card header */}
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100" style={{ background: color.bg }}>
+        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: color.dot }} />
+        <div className="flex-1 min-w-0">
+          <div className="font-semibold text-sm truncate" style={{ color: color.tc }}>
+            {cls.name}
+          </div>
+          <div className="text-[11px] text-gray-500 mt-0.5 truncate">
+            {typeof cls.courseId === 'object' ? (cls.courseId?.title ?? '—') : '—'}
+            {' · '}
+            {typeof cls.teacherId === 'object' ? (cls.teacherId?.fullName ?? '—') : '—'}
+            {' · '}
+            {cls.lessonsPerWeek} buổi/tuần · {cls.totalLessons} buổi · KG {formatDate(cls.startDate)}
           </div>
         </div>
       </div>
-      <div style={{ padding: '12px 14px', display: 'grid', gap: 10 }}>
-        {/* Chọn Ca */}
+
+      {/* Card body */}
+      <div className="px-4 py-3 space-y-3">
+        {/* Ca học ưu tiên */}
         <div>
-          <div style={{ fontSize: 11, color: '#888', marginBottom: 5, fontWeight: 500 }}>Ca học ưu tiên</div>
-          <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+          <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Ca học ưu tiên</p>
+          <div className="flex flex-wrap gap-1.5">
             {SESSIONS.map((s) => (
               <Pill
                 key={s.value}
@@ -91,10 +87,10 @@ function ClassPrefsCard({
           </div>
         </div>
 
-        {/* Chọn Ngày ưu tiên */}
+        {/* Ngày ưu tiên */}
         <div>
-          <div style={{ fontSize: 11, color: '#888', marginBottom: 5, fontWeight: 500 }}>Ngày ưu tiên dạy</div>
-          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+          <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Ngày ưu tiên dạy</p>
+          <div className="flex flex-wrap gap-1.5">
             {DAYS.map((d, i) => (
               <Pill
                 key={`pref-${d}`}
@@ -107,9 +103,10 @@ function ClassPrefsCard({
           </div>
         </div>
 
+        {/* Ngày không muốn dạy */}
         <div>
-          <div style={{ fontSize: 11, color: '#888', marginBottom: 5, fontWeight: 500 }}>Ngày không muốn dạy</div>
-          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+          <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Ngày không muốn dạy</p>
+          <div className="flex flex-wrap gap-1.5">
             {DAYS.map((d, i) => (
               <Pill
                 key={`block-${d}`}
@@ -122,18 +119,19 @@ function ClassPrefsCard({
           </div>
         </div>
 
-        {/* Các Tùy chọn khác */}
-        <div style={{ borderTop: '0.5px solid #f0f0ee', paddingTop: 8, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+        {/* Tùy chọn khác */}
+        <div className="pt-2 border-t border-gray-100 flex flex-wrap gap-4">
           {SCHEDULE_OPTS.map((opt) => (
             <label
               key={opt.key}
-              style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#555', cursor: 'pointer' }}
+              className="flex items-center gap-2 text-[11px] text-gray-500 cursor-pointer select-none hover:text-gray-700 transition-colors"
             >
               <input
                 type="checkbox"
                 checked={reqs.includes(opt.key)}
                 onChange={() => toggleReq(opt.key)}
-                style={{ accentColor: PRIMARY, width: 12, height: 12 }}
+                className="w-3 h-3 rounded cursor-pointer"
+                style={{ accentColor: PRIMARY }}
               />
               {opt.label}
             </label>

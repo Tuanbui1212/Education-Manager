@@ -366,8 +366,29 @@ export class GeneticAlgorithmService {
       score: this.calculateFitness(chrom, data),
     }));
 
+    // === 1. KHAI BÁO BIẾN DỪNG SỚM (TRƯỚC VÒNG LẶP FOR) ===
+    let bestOverallScore = -Infinity;
+    let stagnantGenerations = 0;
+    const MAX_STAGNANT_GENERATIONS = 50;
+
     for (let g = 0; g < GENERATIONS; g++) {
       scoredPop.sort((a, b) => b.score - a.score);
+      // console.log(`[GA] Thế hệ ${g + 1} - Best Score: ${scoredPop[0].score}`);
+
+      // === 2. LOGIC KIỂM TRA DỪNG SỚM ===
+      const currentBestScore = scoredPop[0].score;
+      console.log(`[GA] Thế hệ ${g + 1} - Best Score: ${currentBestScore}`);
+      if (currentBestScore > bestOverallScore) {
+        bestOverallScore = currentBestScore;
+        stagnantGenerations = 0;
+      } else {
+        stagnantGenerations++;
+      }
+
+      if (stagnantGenerations >= MAX_STAGNANT_GENERATIONS) {
+        console.log(`[GA] 🛑 DỪNG SỚM tại thế hệ ${g + 1}! Lý do: 50 thế hệ liên tiếp không tiến bộ.`);
+        break;
+      }
 
       const newScoredPop = scoredPop.slice(0, ELITE_SIZE);
 

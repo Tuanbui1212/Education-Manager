@@ -1,9 +1,9 @@
 import { useState } from 'react';
+import { ArrowLeft, RotateCcw, CheckCircle2, AlertTriangle, CalendarDays, Star, Activity } from 'lucide-react';
 import type { IClass } from '../../../../types/class.type';
-import { CLASS_COLORS, DAYS, DAYS_FULL, GREEN, MORNING_SLOTS, PRIMARY, SLOTS } from '../../../../utils/constants';
-import useFetch from '../../../../hooks/useFetch';
-import { shiftService } from '../../../../services/shift.service';
-import { roomService } from '../../../../services/room.service';
+import { CLASS_COLORS, DAYS, DAYS_FULL } from '../../../../utils/constants';
+import Button from '../../../../components/Button';
+import StatCard from '../../../../components/StatCard';
 
 interface IBackendResult {
   finalSchedule: any[];
@@ -16,12 +16,14 @@ function Page3({
   selectedClasses,
   shifts,
   onBack,
+  onRerun,
   onReset,
 }: {
   result: IBackendResult;
   selectedClasses: IClass[];
   shifts: any[];
   onBack: () => void;
+  onRerun: () => void;
   onReset: () => void;
 }) {
   const { finalSchedule, classResults, totalScore } = result;
@@ -32,91 +34,72 @@ function Page3({
   }
 
   const unscheduled = classResults.filter((r) => r.sessions.length === 0);
-
+  const scheduledCount = classResults.filter((r) => r.sessions.length > 0).length;
   const sortedShifts = shifts ? [...shifts].sort((a, b) => a.startTime.localeCompare(b.startTime)) : [];
 
   return (
-    <div>
-      <div style={{ marginBottom: 20, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-        <button
+    <div className="space-y-5 animate-in fade-in duration-300">
+      {/* Header */}
+      <div className="flex items-start gap-4">
+        <Button
+          variant="outline"
+          icon={<ArrowLeft size={15} />}
           onClick={onBack}
-          style={{
-            padding: '7px 12px',
-            borderRadius: 8,
-            border: '0.5px solid #ccc',
-            background: '#fff',
-            fontSize: 13,
-            cursor: 'pointer',
-            color: '#555',
-            flexShrink: 0,
-            marginTop: 2,
-          }}
+          className="flex-shrink-0 mt-0.5 px-3 py-2"
         >
-          ← Quay lại
-        </button>
-        <div style={{ flex: 1 }}>
-          <h1 style={{ fontSize: 18, fontWeight: 600, color: '#1a1a1a' }}>Kết quả xếp lịch</h1>
-          <p style={{ fontSize: 13, color: '#666', marginTop: 3 }}>
-            API Result · {selectedClasses.length} lớp · Tổng điểm:{' '}
-            <strong style={{ color: PRIMARY }}>{totalScore}</strong>
+          Quay lại
+        </Button>
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold text-gray-800">Kết quả xếp lịch</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            {selectedClasses.length} lớp · Tổng điểm: <strong className="text-primary">{totalScore}</strong>
           </p>
         </div>
-        <button
-          onClick={onReset}
-          style={{
-            padding: '7px 14px',
-            borderRadius: 8,
-            border: '0.5px solid #ccc',
-            background: '#fff',
-            fontSize: 12,
-            cursor: 'pointer',
-            color: '#555',
-            flexShrink: 0,
-            marginTop: 2,
-          }}
+        <Button
+          variant="outline"
+          icon={<RotateCcw size={14} />}
+          onClick={onRerun}
+          className="flex-shrink-0 mt-0.5 px-3 py-2"
         >
-          ↺ Xếp lại
-        </button>
+          Xếp lại
+        </Button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginBottom: 16 }}>
-        {[
-          { val: selectedClasses.length, lbl: 'Lớp đưa vào' },
-          { val: classResults.filter((r) => r.sessions.length > 0).length, lbl: 'Lớp đã xếp được' },
-          { val: totalScore, lbl: 'Tổng điểm' },
-        ].map((s, i) => (
-          <div
-            key={i}
-            style={{
-              background: '#fff',
-              border: '0.5px solid #ddd',
-              borderRadius: 10,
-              padding: '12px',
-              textAlign: 'center',
-            }}
-          >
-            <div style={{ fontSize: 24, fontWeight: 600, color: i === 2 ? GREEN : PRIMARY }}>{s.val}</div>
-            <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>{s.lbl}</div>
-          </div>
-        ))}
+      {/* Stat Cards — dùng StatCard component */}
+      <div className="grid grid-cols-3 gap-4">
+        <StatCard
+          icon={<Activity size={20} />}
+          label="Lớp đưa vào"
+          value={selectedClasses.length}
+          gradient="bg-gradient-to-br from-primary to-primary/80"
+          textColor="text-primary"
+          active={false}
+          onClick={() => {}}
+        />
+        <StatCard
+          icon={<CheckCircle2 size={20} />}
+          label="Lớp đã xếp được"
+          value={scheduledCount}
+          gradient="bg-gradient-to-br from-primary to-primary/80"
+          textColor="text-primary"
+          active={false}
+          onClick={() => {}}
+        />
+        <StatCard
+          icon={<Star size={20} />}
+          label="Tổng điểm"
+          value={totalScore}
+          gradient="bg-gradient-to-br from-emerald-500 to-emerald-400"
+          textColor="text-emerald-600"
+          active={false}
+          onClick={() => {}}
+        />
       </div>
 
+      {/* Warning */}
       {unscheduled.length > 0 && (
-        <div
-          style={{
-            background: '#FEF3C7',
-            border: '0.5px solid #FDE68A',
-            borderRadius: 8,
-            padding: '10px 14px',
-            fontSize: 12,
-            color: '#92400E',
-            marginBottom: 12,
-            display: 'flex',
-            gap: 8,
-            alignItems: 'center',
-          }}
-        >
-          <span>⚠</span>
+        <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 text-sm text-amber-800">
+          <AlertTriangle size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
           <span>
             <strong>{unscheduled.length} lớp không xếp được</strong>: {unscheduled.map((r) => r.cls.name).join(', ')} —
             có thể do xung đột phòng/GV hoặc ràng buộc quá khắt khe.
@@ -124,278 +107,186 @@ function Page3({
         </div>
       )}
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', borderBottom: '1.5px solid #e0e0dc', marginBottom: 16 }}>
-        {(['timetable', 'scores'] as const).map((key) => (
-          <button
-            key={key}
-            onClick={() => setActiveView(key)}
-            style={{
-              padding: '8px 16px',
-              fontSize: 13,
-              fontWeight: 500,
-              color: activeView === key ? PRIMARY : '#888',
-              cursor: 'pointer',
-              border: 'none',
-              background: 'none',
-              borderBottom: activeView === key ? `2.5px solid ${PRIMARY}` : '2.5px solid transparent',
-              marginBottom: -1.5,
-              transition: 'all .15s',
-            }}
-          >
-            {key === 'timetable' ? '📅 Thời khoá biểu' : '★ Phân tích điểm'}
-          </button>
-        ))}
-      </div>
+      {/* Tabs + Content */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="flex border-b border-gray-100">
+          {(['timetable', 'scores'] as const).map((key) => (
+            <button
+              key={key}
+              onClick={() => setActiveView(key)}
+              className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium transition-colors border-b-2
+                ${
+                  activeView === key
+                    ? 'text-primary border-primary'
+                    : 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-50'
+                }`}
+            >
+              {key === 'timetable' ? (
+                <>
+                  <CalendarDays size={15} /> Thời khoá biểu
+                </>
+              ) : (
+                <>
+                  <Star size={15} /> Phân tích điểm
+                </>
+              )}
+            </button>
+          ))}
+        </div>
 
-      {/* Timetable View */}
-      {activeView === 'timetable' && (
-        <div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-            {classResults
-              .filter((r) => r.sessions.length > 0)
-              .map((r) => {
-                // Fix 5: Fallback về CLASS_COLORS[0] thay vì cả mảng
+        <div className="p-5">
+          {/* ── TIMETABLE VIEW ── */}
+          {activeView === 'timetable' && (
+            <div>
+              {/* Legend */}
+              <div className="flex flex-wrap gap-3 mb-4">
+                {classResults
+                  .filter((r) => r.sessions.length > 0)
+                  .map((r) => {
+                    const c = CLASS_COLORS[r.colorIdx % CLASS_COLORS.length] || CLASS_COLORS[0];
+                    return (
+                      <div key={r.cls._id} className="flex items-center gap-1.5 text-xs text-gray-600">
+                        <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: c.dot }} />
+                        {r.cls.name}
+                      </div>
+                    );
+                  })}
+              </div>
+
+              <div className="overflow-x-auto rounded-xl border border-gray-100">
+                <table className="w-full text-xs border-collapse">
+                  <thead>
+                    <tr>
+                      <th className="bg-gray-50 px-3 py-2.5 border border-gray-100 font-semibold text-gray-600 text-center whitespace-nowrap w-28">
+                        Ca học
+                      </th>
+                      {DAYS_FULL.map((d) => (
+                        <th
+                          key={d}
+                          className="bg-gray-50 px-3 py-2.5 border border-gray-100 font-semibold text-gray-600 text-center whitespace-nowrap min-w-[100px]"
+                        >
+                          {d}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedShifts.map((shift, slotIdx) => (
+                      <tr key={slotIdx}>
+                        <td className="px-3 py-2 border border-gray-100 bg-gray-50/70 text-center whitespace-nowrap">
+                          <div className="font-semibold text-gray-700">
+                            {shift.startTime} – {shift.endTime}
+                          </div>
+                          <div className="text-[10px] text-gray-400 mt-0.5">{shift.name || `Ca ${slotIdx + 1}`}</div>
+                        </td>
+                        {DAYS.map((_, dayIdx) => {
+                          const entries = getCellEntries(dayIdx, slotIdx);
+                          return (
+                            <td key={dayIdx} className="p-1.5 border border-gray-100 align-top">
+                              {entries.length === 0 ? (
+                                <span className="text-gray-200 block text-center py-2">—</span>
+                              ) : (
+                                entries.map((e) => {
+                                  const c = CLASS_COLORS[e.classIdx % CLASS_COLORS.length] || CLASS_COLORS[0];
+                                  return (
+                                    <div
+                                      key={`${e.classId}_${e.shiftId}`}
+                                      className="rounded-lg px-2 py-1.5 text-[10px] font-medium leading-relaxed my-0.5"
+                                      style={{ background: c.bg, color: c.tc }}
+                                    >
+                                      <div className="font-bold text-[11px]">{e.className}</div>
+                                      <div className="opacity-75">{e.roomName}</div>
+                                      <div className="opacity-60 mt-0.5">★ {e.slotScore}đ</div>
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* ── SCORES VIEW ── */}
+          {activeView === 'scores' && (
+            <div className="space-y-3">
+              {classResults.map((r) => {
                 const c = CLASS_COLORS[r.colorIdx % CLASS_COLORS.length] || CLASS_COLORS[0];
+                const maxScore = Math.max(...classResults.map((x) => x.totalScore), 1);
+                const pct = Math.max(0, Math.round((r.totalScore / maxScore) * 100));
+                const sortedDays = [...(r.days || [])].sort((a: number, b: number) => a - b);
+                const gaps =
+                  sortedDays.length > 1 ? sortedDays.slice(1).map((d: number, i: number) => d - sortedDays[i]) : [];
+
                 return (
                   <div
                     key={r.cls._id}
-                    style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#555' }}
+                    className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow"
                   >
-                    <div style={{ width: 10, height: 10, borderRadius: 3, background: c.dot, flexShrink: 0 }} />
-                    {r.cls.name}
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: c.dot }} />
+                      <span className="font-bold text-sm flex-1" style={{ color: c.tc }}>
+                        {r.cls.name}
+                      </span>
+                      <span className={`text-sm font-bold ${r.totalScore > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                        {r.totalScore}đ
+                      </span>
+                    </div>
+
+                    {r.sessions.length > 0 ? (
+                      <>
+                        <div className="h-2 bg-gray-100 rounded-full mb-2 overflow-hidden">
+                          <div
+                            className="h-2 rounded-full transition-all duration-500"
+                            style={{ width: `${pct}%`, background: c.dot }}
+                          />
+                        </div>
+                        <div className="text-xs text-gray-500 mb-2">
+                          {sortedDays.map((d: number) => DAYS_FULL[d]).join(' → ')}
+                          {gaps.length > 0 && <span className="text-gray-400"> (cách: {gaps.join(', ')} ngày)</span>}
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {r.sessions.map((s: any, si: number) => {
+                            const shiftObj = sortedShifts[s.slot];
+                            return (
+                              <span
+                                key={si}
+                                className="px-2.5 py-1 rounded-lg text-[11px] font-medium"
+                                style={{ background: c.bg, color: c.tc }}
+                              >
+                                {DAYS_FULL[s.day]}{' '}
+                                {shiftObj ? `${shiftObj.startTime}–${shiftObj.endTime}` : `Ca ${s.slot + 1}`} · {s.room}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex items-center gap-2 bg-red-50 text-red-600 text-xs rounded-xl px-3 py-2">
+                        <AlertTriangle size={13} /> Backend không tìm được lịch phù hợp
+                      </div>
+                    )}
                   </div>
                 );
               })}
-          </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
-              <thead>
-                <tr>
-                  <th
-                    style={{
-                      background: '#f0f0ee',
-                      padding: '7px 10px',
-                      border: '0.5px solid #ddd',
-                      fontWeight: 500,
-                      textAlign: 'center',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    Ca
-                  </th>
-                  {DAYS_FULL.map((d) => (
-                    <th
-                      key={d}
-                      style={{
-                        background: '#f0f0ee',
-                        padding: '7px 10px',
-                        border: '0.5px solid #ddd',
-                        fontWeight: 500,
-                        textAlign: 'center',
-                        whiteSpace: 'nowrap',
-                        minWidth: 90,
-                      }}
-                    >
-                      {d}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {sortedShifts?.map((slotLabel, slotIdx) => (
-                  <tr key={slotIdx}>
-                    <td
-                      style={{
-                        padding: '4px 8px',
-                        border: '0.5px solid #eee',
-                        fontWeight: 500,
-                        background: '#f5f5f3',
-                        fontSize: 11,
-                        textAlign: 'center',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {slotLabel.startTime} - {slotLabel.endTime}
-                      <br />
-                      <span style={{ fontSize: 9, color: '#999' }}>{slotLabel.name || `Ca ${slotIdx + 1}`}</span>
-                    </td>
-                    {DAYS.map((_, dayIdx) => {
-                      const entries = getCellEntries(dayIdx, slotIdx);
-                      return (
-                        <td
-                          key={dayIdx}
-                          style={{ padding: '4px 6px', border: '0.5px solid #eee', verticalAlign: 'top' }}
-                        >
-                          {entries.length === 0 ? (
-                            <span style={{ color: '#ddd' }}>—</span>
-                          ) : (
-                            entries.map((e) => {
-                              const c = CLASS_COLORS[e.classIdx % CLASS_COLORS.length] || CLASS_COLORS[0];
-                              return (
-                                <div
-                                  key={`${e.classId}_${e.shiftId}`}
-                                  style={{
-                                    background: c.bg,
-                                    color: c.tc,
-                                    borderRadius: 6,
-                                    padding: '4px 6px',
-                                    fontSize: 10,
-                                    fontWeight: 500,
-                                    lineHeight: 1.5,
-                                    margin: '2px 0',
-                                  }}
-                                >
-                                  <div style={{ fontSize: 11, fontWeight: 700 }}>{e.className}</div>
-                                  <div style={{ opacity: 0.8 }}>{e.roomName} </div>
-                                  <div style={{ fontSize: 9, opacity: 0.7, marginTop: 1 }}>★ {e.slotScore}đ</div>
-                                </div>
-                              );
-                            })
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
-      {/* Scores View */}
-      {activeView === 'scores' && (
-        <div>
-          {classResults.map((r) => {
-            // Fix 5: Fallback về CLASS_COLORS[0] thay vì cả mảng
-            const c = CLASS_COLORS[r.colorIdx % CLASS_COLORS.length] || CLASS_COLORS[0];
-            const maxScore = Math.max(...classResults.map((x) => x.totalScore), 1);
-            const pct = Math.max(0, Math.round((r.totalScore / maxScore) * 100));
-            const sortedDays = [...(r.days || [])].sort((a: number, b: number) => a - b);
-            const gaps =
-              sortedDays.length > 1 ? sortedDays.slice(1).map((d: number, i: number) => d - sortedDays[i]) : [];
-
-            return (
-              <div
-                key={r.cls._id}
-                style={{
-                  background: '#fff',
-                  border: '0.5px solid #ddd',
-                  borderRadius: 10,
-                  padding: '12px 14px',
-                  marginBottom: 10,
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: c.dot, flexShrink: 0 }} />
-                  <div style={{ fontWeight: 600, fontSize: 13, color: c.tc, flex: 1 }}>{r.cls.name}</div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: r.totalScore > 0 ? GREEN : '#DC2626' }}>
-                    {r.totalScore}đ
-                  </div>
-                </div>
-                {r.sessions.length > 0 ? (
-                  <>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                      <div style={{ flex: 1, background: '#eee', borderRadius: 20, height: 8 }}>
-                        <div
-                          style={{
-                            width: `${pct}%`,
-                            height: 8,
-                            borderRadius: 20,
-                            background: c.dot,
-                            transition: 'width .5s',
-                          }}
-                        />
-                      </div>
-                    </div>
-                    <div style={{ fontSize: 11, color: '#666', marginBottom: 6 }}>
-                      {sortedDays.map((d: number) => DAYS_FULL[d]).join(' → ')}
-                      {gaps.length > 0 && <span style={{ color: '#888' }}> (gap: {gaps.join(', ')} ngày)</span>}
-                    </div>
-                    <div style={{ marginTop: 8, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                      {r.sessions.map((s: any, si: number) => {
-                        const shiftObj = sortedShifts[s.slot];
-
-                        return (
-                          <div
-                            key={si}
-                            style={{
-                              background: c.bg,
-                              color: c.tc,
-                              borderRadius: 6,
-                              padding: '3px 8px',
-                              fontSize: 11,
-                              fontWeight: 500,
-                            }}
-                          >
-                            {DAYS_FULL[s.day]}{' '}
-                            {shiftObj ? `${shiftObj.startTime}–${shiftObj.endTime}` : `Ca ${s.slot + 1}`} · {s.room}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </>
-                ) : (
-                  <div
-                    style={{
-                      fontSize: 12,
-                      color: '#DC2626',
-                      background: '#FEE2E2',
-                      padding: '6px 10px',
-                      borderRadius: 6,
-                    }}
-                  >
-                    ⚠ Backend không tìm được lịch phù hợp
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      <div
-        style={{
-          marginTop: 20,
-          display: 'flex',
-          justifyContent: 'space-between',
-          background: '#fff',
-          border: '0.5px solid #ddd',
-          borderRadius: 10,
-          padding: '12px 16px',
-        }}
-      >
-        <button
-          onClick={onBack}
-          style={{
-            padding: '8px 18px',
-            borderRadius: 8,
-            fontSize: 13,
-            fontWeight: 500,
-            border: '0.5px solid #ccc',
-            background: '#fff',
-            cursor: 'pointer',
-            color: '#444',
-          }}
-        >
-          ← Sửa preference
-        </button>
-        <button
-          onClick={onReset}
-          style={{
-            padding: '8px 20px',
-            borderRadius: 8,
-            fontSize: 13,
-            fontWeight: 600,
-            border: 'none',
-            background: PRIMARY,
-            color: '#fff',
-            cursor: 'pointer',
-          }}
-        >
-          ✓ Xác nhận & lưu lịch
-        </button>
+      {/* Footer */}
+      <div className="flex items-center justify-between bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-3.5">
+        <Button variant="outline" icon={<ArrowLeft size={15} />} onClick={onBack}>
+          Sửa preference
+        </Button>
+        <Button variant="primary" icon={<CheckCircle2 size={15} />} onClick={onReset}>
+          Xác nhận & lưu lịch
+        </Button>
       </div>
     </div>
   );
