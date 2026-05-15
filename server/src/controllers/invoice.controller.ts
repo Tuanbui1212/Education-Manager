@@ -127,4 +127,27 @@ export class InvoiceController {
       });
     }
   };
+
+  //[POST] /api/invoices/cancelInvoice
+  cancelInvoice = async (req: Request, res: Response) => {
+    try {
+      const { invoiceId } = req.body;
+      const invoice = await this.invoiceService.cancelInvoice(invoiceId);
+      res.status(200).json({ success: true, message: 'Hủy học phí thành công', data: invoice });
+    } catch (error: any) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  };
+
+  //[POST] /api/invoices/refundInvoice
+  refundInvoice = async (req: Request, res: Response) => {
+    try {
+      const { invoiceId } = req.body;
+      const currentUserId = (req as any).user?._id || (req as any).user?.id;
+      const invoice = await this.invoiceService.refundInvoice(invoiceId, currentUserId);
+      res.status(200).json({ success: true, message: 'Hoàn học phí thành công', data: invoice });
+    } catch (error: any) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  };
 }

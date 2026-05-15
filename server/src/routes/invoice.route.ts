@@ -16,6 +16,8 @@ router.post(
   invoiceController.create,
 );
 router.get('/', verifyToken, requirePermission(PERMISSIONS.INVOICE.VIEW), invoiceController.getAll);
+router.post('/cancelInvoice', verifyToken, invoiceController.cancelInvoice);
+router.post('/refundInvoice', verifyToken, invoiceController.refundInvoice);
 router.get(
   '/student/:studentId',
   verifyToken,

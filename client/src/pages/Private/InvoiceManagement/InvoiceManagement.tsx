@@ -1,5 +1,17 @@
-import React, { useState } from 'react';
-import { Search, Filter, MoreVertical, Calendar, Bell, BellRing, BellOff } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  Search,
+  Filter,
+  MoreVertical,
+  Calendar,
+  Bell,
+  BellRing,
+  BellOff,
+  Eye,
+  Printer,
+  RotateCcw,
+  XCircle,
+} from 'lucide-react';
 
 import { formatCurrency, formatDate } from '../../../utils/format.util';
 import type { IInvoice, InvoiceStatus, InvoiceConfig } from '../../../types/invoice.type';
@@ -38,6 +50,18 @@ const InvoiceManagement = () => {
   const [filterDueDateFrom, setFilterDueDateFrom] = useState('');
   const [filterDueDateTo, setFilterDueDateTo] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenuId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const debouncedMinDebt = useDebounce(filterMinDebt, 500);
   const debouncedMaxDebt = useDebounce(filterMaxDebt, 500);
@@ -60,6 +84,7 @@ const InvoiceManagement = () => {
     data: response,
     loading,
     totalCount,
+    refetch,
   } = useFetch(invoiceService.getInvoices, queryParams, [
     activeTab,
     page,
@@ -394,9 +419,80 @@ const InvoiceManagement = () => {
                               Thu tiền
                             </button>
                           ) : (
-                            <button className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg">
-                              <MoreVertical size={20} />
-                            </button>
+                            <div
+                              className="relative inline-block"
+                              ref={openMenuId === (inv._id as string) ? menuRef : null}
+                            >
+                              <button
+                                onClick={() =>
+                                  setOpenMenuId(openMenuId === (inv._id as string) ? null : (inv._id as string))
+                                }
+                                className="p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700 rounded-lg transition-colors"
+                              >
+                                <MoreVertical size={20} />
+                              </button>
+
+                              {openMenuId === (inv._id as string) && (
+                                <div className="absolute right-0 z-50 mt-1 w-48 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                                  {/* Xem chi tiết — luôn hiển thị */}
+                                  {/* <button
+                                    onClick={() => {
+                                      setOpenMenuId(null);
+                                      navigation(
+                                        PATHS.TRAINING_STUDENT_ID.replace(':id', (inv?.studentId as any)?._id || ''),
+                                      );
+                                    }}
+                                    className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                  >
+                                    <Eye size={15} className="text-blue-500" />
+                                    Xem chi tiết
+                                  </button> */}
+
+                                  {/* In hóa đơn — luôn hiển thị */}
+                                  {/* <button
+                                    onClick={() => {
+                                      setOpenMenuId(null);
+                                      window.print();
+                                    }}
+                                    className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                  >
+                                    <Printer size={15} className="text-gray-500" />
+                                    In hóa đơn
+                                  </button> */}
+
+                                  {/* Hoàn tiền — chỉ khi PAID */}
+                                  {inv.status === 'PAID' && (
+                                    <>
+                                      <div className="border-t border-gray-100" />
+                                      <button
+                                        onClick={() => {
+                                          setOpenMenuId(null);
+                                          invoiceService.refundInvoice(inv._id as string);
+                                          refetch();
+                                        }}
+                                        className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-amber-600 hover:bg-amber-50 transition-colors"
+                                      >
+                                        <RotateCcw size={15} />
+                                        Hoàn tiền
+                                      </button>
+
+                                      {/* Hủy hóa đơn — chỉ khi PAID */}
+                                      <button
+                                        onClick={() => {
+                                          setOpenMenuId(null);
+                                          invoiceService.cancelInvoice(inv._id as string);
+                                          refetch();
+                                        }}
+                                        className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
+                                      >
+                                        <XCircle size={15} />
+                                        Hủy hóa đơn
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           )}
                         </td>
                       </tr>

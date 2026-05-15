@@ -1,5 +1,6 @@
 import axios from './axiosClient';
 import type { IInvoice, CreateInvoiceType } from '../types/invoice.type';
+import { id } from 'date-fns/locale';
 
 export const invoiceService = {
   getInvoices: async (
@@ -55,6 +56,16 @@ export const invoiceService = {
     isInstallment: boolean,
   ): Promise<{ success: boolean; message: string; data: IInvoice }> => {
     const response = await axios.patch(`/invoices/${id}/notify`, { isInstallment });
+    return response.data;
+  },
+
+  cancelInvoice: async (invoiceId: string): Promise<{ success: boolean; message: string; data: IInvoice }> => {
+    const response = await axios.post('/invoices/cancelInvoice', { invoiceId });
+    return response.data;
+  },
+
+  refundInvoice: async (invoiceId: string): Promise<{ success: boolean; message: string; data: IInvoice }> => {
+    const response = await axios.post('/invoices/refundInvoice', { invoiceId });
     return response.data;
   },
 };

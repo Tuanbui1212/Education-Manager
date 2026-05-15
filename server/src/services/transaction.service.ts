@@ -16,7 +16,6 @@ export class TransactionService {
 
     const newTransaction = new TransactionModel(data);
     newTransaction.processedBy = currentUserId;
-    console.log(currentUserId);
     newTransaction.code = code;
 
     return await newTransaction.save();

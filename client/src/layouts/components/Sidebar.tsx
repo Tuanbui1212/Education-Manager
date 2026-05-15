@@ -21,7 +21,6 @@ import { PATHS } from '../../utils/constants';
 import { PERMISSIONS } from '../../utils/permission.constant';
 import { getDecodedToken } from '../../utils/auth';
 
-// TỐI ƯU 1: Đưa menuConfig ra ngoài để Component không bị tạo lại mảng mỗi lần click mở sub-menu
 const menuConfig = [
   {
     key: 'accounts',
@@ -31,7 +30,7 @@ const menuConfig = [
     subItems: [
       { label: 'Danh sách tài khoản', path: PATHS.USER, permission: PERMISSIONS.USER.VIEW },
       { label: 'Phân quyền (Roles)', path: PATHS.SETTINGS_ROLES, permission: PERMISSIONS.ROLE.VIEW },
-      { label: 'Lịch sử hoạt động', path: PATHS.ACCOUNT_LOGS, permission: PERMISSIONS.USER.VIEW },
+      //{ label: 'Lịch sử hoạt động', path: PATHS.ACCOUNT_LOGS, permission: PERMISSIONS.USER.VIEW },
     ],
   },
   {
@@ -42,11 +41,11 @@ const menuConfig = [
     subItems: [
       { label: 'Đội ngũ giáo viên', path: PATHS.HR_TEACHERS, permission: PERMISSIONS.USER.VIEW },
       { label: 'Nhân viên văn phòng', path: PATHS.HR_STAFFS, permission: PERMISSIONS.USER.VIEW },
-      {
-        label: 'Hợp đồng & Lương',
-        path: PATHS.HR_CONTRACTS,
-        permission: PERMISSIONS.SALARY?.VIEW || PERMISSIONS.USER.VIEW,
-      },
+      // {
+      //   label: 'Hợp đồng & Lương',
+      //   path: PATHS.HR_CONTRACTS,
+      //   permission: PERMISSIONS.SALARY?.VIEW || PERMISSIONS.USER.VIEW,
+      // },
       {
         label: 'Bảng lương',
         path: PATHS.HR_PAYROLL,
