@@ -23,6 +23,8 @@ export interface GetSchedulesQuery {
   roomId?: string;
   teacherId?: string;
   date?: string;
+  startDateTime?: Date;
+  endDateTime?: Date;
 }
 
 export interface ScheduleStatus {

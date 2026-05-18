@@ -52,7 +52,7 @@ const StaffManager = () => {
     type: 'danger' as 'success' | 'danger' | 'warning' | 'info',
     confirmText: '',
     cancelText: '',
-    onConfirm: () => { },
+    onConfirm: () => {},
   });
 
   // ── Click-outside ─────────────────────────────────────────────────────────
@@ -187,8 +187,8 @@ const StaffManager = () => {
           icon={<UserCheck size={20} />}
           label="Đang làm việc"
           value={countActive ?? '—'}
-          gradient="bg-gradient-to-br from-violet-500 to-purple-600"
-          textColor="text-violet-600"
+          gradient="bg-gradient-to-br bg-primary"
+          textColor="text-primary"
           active={statusFilter === 'ACTIVE'}
           onClick={() => {
             setStatusFilter('ACTIVE');
@@ -230,7 +230,7 @@ const StaffManager = () => {
             label={activeRoleName || 'Phòng ban'}
             icon={<Shield size={15} />}
             isOpen={openRole}
-            accentColor="violet"
+            accentColor="primary"
             containerRef={roleFilterRef as React.RefObject<HTMLDivElement>}
             onToggle={() => {
               setOpenRole((o) => !o);
@@ -248,11 +248,11 @@ const StaffManager = () => {
                 setOpenRole(false);
               }}
               className={`px-4 py-2.5 cursor-pointer text-sm transition-colors flex items-center gap-3
-                ${!roleFilter ? 'bg-violet-50 text-violet-600 font-semibold' : 'text-gray-700 hover:bg-gray-50'}`}
+                ${!roleFilter ? 'bg-gray-50 text-primary font-semibold' : 'text-gray-700 hover:bg-gray-50'}`}
             >
               <span className="w-2 h-2 rounded-full bg-gray-400 shrink-0" />
               Tất cả phòng ban
-              {!roleFilter && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-600" />}
+              {!roleFilter && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />}
             </div>
             {officeRoles.map((role: any) => (
               <div
@@ -263,14 +263,13 @@ const StaffManager = () => {
                   setOpenRole(false);
                 }}
                 className={`px-4 py-2.5 cursor-pointer text-sm transition-colors flex items-center gap-3
-                  ${roleFilter === role._id
-                    ? 'bg-violet-50 text-violet-600 font-semibold'
-                    : 'text-gray-700 hover:bg-gray-50'
+                  ${
+                    roleFilter === role._id ? 'bg-gray-50 text-primary font-semibold' : 'text-gray-700 hover:bg-gray-50'
                   }`}
               >
-                <span className="w-2 h-2 rounded-full bg-violet-400 shrink-0" />
+                <span className="w-2 h-2 rounded-full bg-gray-400 shrink-0" />
                 {translateRole(role.name) || role.name}
-                {roleFilter === role._id && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-600" />}
+                {roleFilter === role._id && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />}
               </div>
             ))}
           </FilterBtn>
@@ -281,7 +280,7 @@ const StaffManager = () => {
             label={statusFilter !== 'ALL' ? activeStatusLabel : 'Trạng thái'}
             icon={<Filter size={15} />}
             isOpen={openStatus}
-            accentColor="violet"
+            accentColor="primary"
             containerRef={statusFilterRef as React.RefObject<HTMLDivElement>}
             onToggle={() => {
               setOpenStatus((o) => !o);
@@ -301,18 +300,18 @@ const StaffManager = () => {
                   setOpenStatus(false);
                 }}
                 className={`px-4 py-2.5 cursor-pointer text-sm transition-colors flex items-center gap-3
-                  ${statusFilter === opt.value
-                    ? 'bg-violet-50 text-violet-600 font-semibold'
-                    : 'text-gray-700 hover:bg-gray-50'
+                  ${
+                    statusFilter === opt.value
+                      ? 'bg-gray-50 text-primary font-semibold'
+                      : 'text-gray-700 hover:bg-gray-50'
                   }`}
               >
                 <span
                   className={`w-2 h-2 rounded-full shrink-0
-                  ${opt.value === 'ACTIVE' ? 'bg-emerald-400' : opt.value === 'INACTIVE' ? 'bg-gray-400' : 'bg-gray-300'
-                    }`}
+                  ${opt.value === 'ACTIVE' ? 'bg-success' : opt.value === 'INACTIVE' ? 'bg-gray-400' : 'bg-gray-300'}`}
                 />
                 {opt.label}
-                {statusFilter === opt.value && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-600" />}
+                {statusFilter === opt.value && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />}
               </div>
             ))}
           </FilterBtn>
@@ -338,7 +337,7 @@ const StaffManager = () => {
               </span>{' '}
               trong <span className="font-semibold text-gray-700">{totalCount}</span> nhân sự
               {isFiltered && (
-                <button onClick={handleReset} className="ml-2 text-violet-500 hover:underline">
+                <button onClick={handleReset} className="ml-2 text-primary hover:underline">
                   xóa bộ lọc
                 </button>
               )}
@@ -348,7 +347,7 @@ const StaffManager = () => {
               <div className="flex items-center gap-2 flex-wrap">
                 {activeRoleName && (
                   <span
-                    className="text-xs px-2.5 py-1 bg-violet-50 text-violet-600
+                    className="text-xs px-2.5 py-1 bg-gray-50 text-primary
                     font-medium rounded-full flex items-center gap-1"
                   >
                     <Shield size={11} /> {translateRole(activeRoleName) || activeRoleName}
@@ -356,7 +355,7 @@ const StaffManager = () => {
                 )}
                 {statusFilter !== 'ALL' && (
                   <span
-                    className="text-xs px-2.5 py-1 bg-violet-50 text-violet-600
+                    className="text-xs px-2.5 py-1 bg-gray-50 text-primary
                     font-medium rounded-full flex items-center gap-1"
                   >
                     <Filter size={11} /> {activeStatusLabel}
@@ -388,7 +387,7 @@ const StaffManager = () => {
                   const color = getColor(staff.fullName);
                   const roleName = (staff.roleId as any)?.name || 'N/A';
                   return (
-                    <tr key={staff._id} className="group hover:bg-violet-50/40 transition-colors">
+                    <tr key={staff._id} className="group hover:bg-gray-50/40 transition-colors">
                       {/* STT */}
                       <td className="px-5 py-4 text-gray-400 text-sm text-center font-medium">
                         {index + 1 + (page - 1) * limit}
@@ -408,10 +407,9 @@ const StaffManager = () => {
                             {getInitials(staff.fullName)}
                           </div>
                           <div className="min-w-0">
-                            {/* ✅ Fix màu: gray-800 + hover violet thay vì violet-700 thường trực */}
                             <div
                               className="font-semibold text-gray-800
-                              group-hover:text-violet-700 transition-colors truncate"
+                              group-hover:text-primary transition-colors truncate"
                             >
                               {staff.fullName}
                             </div>
@@ -438,10 +436,10 @@ const StaffManager = () => {
                       <td className="px-5 py-4">
                         <div
                           className="inline-flex items-center gap-2 text-sm
-                          text-violet-700 bg-violet-50 px-2.5 py-1 rounded-lg
-                          font-medium border border-violet-100"
+                          text-primary bg-gray-50 px-2.5 py-1 rounded-lg
+                          font-medium border border-gray-200"
                         >
-                          <Briefcase size={13} className="text-violet-400 shrink-0" />
+                          <Briefcase size={13} className="text-gray-400 shrink-0" />
                           <span>{translateRole(roleName) || roleName}</span>
                         </div>
                       </td>
@@ -459,8 +457,8 @@ const StaffManager = () => {
                           <button
                             onClick={() => navigate(PATHS.HR_STAFFS_EDIT.replace(':id', staff._id!))}
                             title="Chỉnh sửa"
-                            className="p-2 text-violet-500 hover:bg-violet-50
-                              hover:text-violet-700 rounded-xl transition-all
+                            className="p-2 text-primary hover:bg-gray-50
+                              hover:text-primary rounded-xl transition-all
                               hover:scale-110 active:scale-95"
                           >
                             <Edit2 size={16} />

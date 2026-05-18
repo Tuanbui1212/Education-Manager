@@ -37,10 +37,10 @@ const menuConfig = [
     key: 'hr',
     label: 'Quản lý Nhân sự (HR)',
     icon: <Briefcase size={20} />,
-    permission: PERMISSIONS.USER.VIEW,
+    permission: [PERMISSIONS.USER.VIEW, PERMISSIONS.TEACHER.VIEW],
     subItems: [
-      { label: 'Đội ngũ giáo viên', path: PATHS.HR_TEACHERS, permission: PERMISSIONS.USER.VIEW },
-      { label: 'Nhân viên văn phòng', path: PATHS.HR_STAFFS, permission: PERMISSIONS.USER.VIEW },
+      { label: 'Đội ngũ giáo viên', path: PATHS.HR_TEACHERS, permission: PERMISSIONS.TEACHER.VIEW },
+      { label: 'Nhân viên văn phòng', path: PATHS.HR_STAFFS, permission: PERMISSIONS.STAFF.VIEW },
       // {
       //   label: 'Hợp đồng & Lương',
       //   path: PATHS.HR_CONTRACTS,

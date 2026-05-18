@@ -73,7 +73,7 @@ export class ScheduleService {
   }
 
   async getAllSchedules(query: GetSchedulesQuery) {
-    const { page = 1, limit = 10, classId, roomId, teacherId, date } = query;
+    const { page = 1, limit = 10, classId, roomId, teacherId, date, startDateTime, endDateTime } = query;
     const skip = (Number(page) - 1) * Number(limit);
 
     const filter: any = {};
@@ -88,6 +88,9 @@ export class ScheduleService {
       } else {
         filter.date = new Date(date);
       }
+    }
+    if (startDateTime && endDateTime) {
+      filter.date = { $gte: startDateTime, $lte: endDateTime };
     }
     const [total, schedules] = await Promise.all([
       ScheduleModel.countDocuments(filter),

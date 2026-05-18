@@ -150,14 +150,14 @@ export const PERMISSION_LIST_UI = [
       { code: PERMISSIONS.TRANSACTION.CREATE, name: 'Tạo Giao dịch tài chính' },
     ],
   },
-  {
-    module: 'Quản lý Tuyển sinh (CRM)',
-    permissions: [
-      { code: PERMISSIONS.CRM.VIEW, name: 'Xem Lịch sử tư vấn' },
-      { code: PERMISSIONS.CRM.CREATE, name: 'Tạo Lịch sử tư vấn mới' },
-      { code: PERMISSIONS.CRM.EDIT, name: 'Sửa thông tin tư vấn' },
-    ],
-  },
+  // {
+  //   module: 'Quản lý Tuyển sinh (CRM)',
+  //   permissions: [
+  //     { code: PERMISSIONS.CRM.VIEW, name: 'Xem Lịch sử tư vấn' },
+  //     { code: PERMISSIONS.CRM.CREATE, name: 'Tạo Lịch sử tư vấn mới' },
+  //     { code: PERMISSIONS.CRM.EDIT, name: 'Sửa thông tin tư vấn' },
+  //   ],
+  // },
   {
     module: 'Hệ thống & Thông báo',
     permissions: [

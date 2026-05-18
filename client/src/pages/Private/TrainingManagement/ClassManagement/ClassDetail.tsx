@@ -40,8 +40,12 @@ import type { IClass } from '../../../../types/class.type';
 import { formatDate } from '../../../../utils/format.util';
 
 const DAYS_WEEK = [
-  { label: 'Thứ 2', dow: 1 }, { label: 'Thứ 3', dow: 2 }, { label: 'Thứ 4', dow: 3 },
-  { label: 'Thứ 5', dow: 4 }, { label: 'Thứ 6', dow: 5 }, { label: 'Thứ 7', dow: 6 },
+  { label: 'Thứ 2', dow: 1 },
+  { label: 'Thứ 3', dow: 2 },
+  { label: 'Thứ 4', dow: 3 },
+  { label: 'Thứ 5', dow: 4 },
+  { label: 'Thứ 6', dow: 5 },
+  { label: 'Thứ 7', dow: 6 },
 ];
 
 const ClassDetail = () => {
@@ -96,7 +100,7 @@ const ClassDetail = () => {
     title: '',
     message: '',
     type: 'success' as 'success' | 'danger' | 'warning' | 'info',
-    onConfirm: () => { },
+    onConfirm: () => {},
   });
 
   const [confirmDeleteAll, setConfirmDeleteAll] = useState({
@@ -264,6 +268,12 @@ const ClassDetail = () => {
         return (
           <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-100 text-rose-700 text-sm font-bold uppercase tracking-wider shadow-sm border border-rose-200">
             <XCircle size={16} /> Đã hủy
+          </span>
+        );
+      case 'PENDING':
+        return (
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 text-sm font-bold uppercase tracking-wider shadow-sm border border-yellow-200">
+            <Clock size={16} /> Chờ duyệt
           </span>
         );
       default:
@@ -447,24 +457,30 @@ const ClassDetail = () => {
                     <thead>
                       <tr>
                         <th className="p-3 border-b border-r border-gray-100 bg-gray-50 w-20"></th>
-                        {DAYS_WEEK.map(d => (
-                          <th key={d.dow} className="p-3 border-b border-r border-gray-100 bg-gray-50 text-center font-semibold text-gray-700 text-xs">
+                        {DAYS_WEEK.map((d) => (
+                          <th
+                            key={d.dow}
+                            className="p-3 border-b border-r border-gray-100 bg-gray-50 text-center font-semibold text-gray-700 text-xs"
+                          >
                             {d.label}
                           </th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {sortedShifts.map(shift => (
+                      {sortedShifts.map((shift) => (
                         <tr key={shift._id}>
                           <td className="p-2 border-b border-r border-gray-100 bg-gray-50/80 text-center">
                             <div className="font-semibold text-gray-700 text-xs">{shift.name}</div>
-                            <div className="text-gray-400 text-[10px]">{shift.startTime}–{shift.endTime}</div>
+                            <div className="text-gray-400 text-[10px]">
+                              {shift.startTime}–{shift.endTime}
+                            </div>
                           </td>
-                          {DAYS_WEEK.map(d => {
+                          {DAYS_WEEK.map((d) => {
                             const isSelected = classSlots.has(`${shift._id?.toString()}-${d.dow}`);
 
-                            let cellClasses = 'p-1.5 border-b border-r border-gray-100 align-top transition-all duration-150 ';
+                            let cellClasses =
+                              'p-1.5 border-b border-r border-gray-100 align-top transition-all duration-150 ';
                             if (isSelected) {
                               cellClasses += 'bg-emerald-50 ring-2 ring-emerald-400 ring-inset ';
                             } else {
@@ -475,7 +491,9 @@ const ClassDetail = () => {
                               <td key={d.dow} className={cellClasses} style={{ minHeight: 70 }}>
                                 {isSelected && (
                                   <div className="flex flex-col items-center justify-center h-full min-h-16 border-emerald-200 bg-emerald-100 shadow-sm rounded-md animate-in zoom-in-95">
-                                    <div className="font-semibold text-xs text-emerald-800 truncate text-center max-w-[80px]">Lớp: {classData.name}</div>
+                                    <div className="font-semibold text-xs text-emerald-800 truncate text-center max-w-[80px]">
+                                      Lớp: {classData.name}
+                                    </div>
                                     <span className="text-[10px] text-emerald-600 font-medium">{shift.name}</span>
                                   </div>
                                 )}
@@ -523,7 +541,10 @@ const ClassDetail = () => {
               <div className="flex flex-col items-center justify-center py-8 text-gray-400 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
                 <Calendar size={44} className="mb-3 opacity-20" />
                 <p className="text-sm font-medium text-gray-500 mb-3">Lớp học này chưa có thời khóa biểu</p>
-                <Button variant="primary" onClick={() => navigate(PATHS.TRAINING_CLASSES_CREATE_SCHEDULE.replace(':id', id as string))}>
+                <Button
+                  variant="primary"
+                  onClick={() => navigate(PATHS.TRAINING_CLASSES_CREATE_SCHEDULE.replace(':id', id as string))}
+                >
                   Tạo lịch học ngay
                 </Button>
               </div>
@@ -549,7 +570,7 @@ const ClassDetail = () => {
                     placeholder="Tìm tên, SĐT học viên..."
                     value={searchInput}
                     setSearchInput={setSearchInput}
-                    setPage={() => { }}
+                    setPage={() => {}}
                   />
                 </div>
                 <Button
