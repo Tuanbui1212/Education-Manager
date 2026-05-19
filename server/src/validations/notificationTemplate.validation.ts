@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { NotificationType } from '../types/notificationTemplate.type';
 
 export const CreateNotificationTemplateSchema = z.object({
-  code: z.string({ message: 'Mã sự kiện là bắt buộc' }).min(1, 'Mã sự kiện không được để trống'), // Bổ sung validate
+  code: z.string({ message: 'Mã sự kiện là bắt buộc' }).min(1, 'Mã sự kiện không được để trống'),
   title: z
     .string({ message: 'Tiêu đề là bắt buộc' })
     .min(1, 'Tiêu đề không được để trống')

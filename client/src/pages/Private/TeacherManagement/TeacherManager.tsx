@@ -35,6 +35,8 @@ import { userService } from '../../../services/user.service';
 import { formatCurrency } from '../../../utils/format.util';
 import { TEACHER_STATUS_OPTIONS, PATHS } from '../../../utils/constants';
 import { STATUS_DOTS, getColor, getInitials } from '../../../utils/user.util';
+import RequirePermission from '../../../components/RequirePermission';
+import { PERMISSIONS } from '../../../utils/permission.constant';
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
 const getTeacherStatusBadge = (status: string) => {
@@ -325,9 +327,11 @@ const TeacherManager = () => {
           </div>
         </div>
 
-        <Button variant="primary" icon={<Plus size={18} />} onClick={() => navigate(PATHS.HR_TEACHERS_CREATE)}>
-          Thêm Giáo viên
-        </Button>
+        <RequirePermission required={PERMISSIONS.TEACHER.CREATE}>
+          <Button variant="primary" icon={<Plus size={18} />} onClick={() => navigate(PATHS.HR_TEACHERS_CREATE)}>
+            Thêm Giáo viên
+          </Button>
+        </RequirePermission>
       </div>
 
       {/* ══ Table Card ═════════════════════════════════════════════════════ */}
@@ -362,13 +366,15 @@ const TeacherManager = () => {
           <table className="w-full text-left border-collapse min-w-[900px]">
             <thead className="sticky top-0 z-20">
               <tr className="bg-primary text-white text-sm">
-                <th className="px-5 py-3.5 font-semibold w-12 text-center">No.</th>
+                <th className="px-5 py-3.5 font-semibold w-12 text-center">STT</th>
                 <th className="px-5 py-3.5 font-semibold">Giáo viên</th>
                 <th className="px-5 py-3.5 font-semibold">Liên hệ</th>
                 <th className="px-5 py-3.5 font-semibold w-56">Hồ sơ & Bằng cấp</th>
                 <th className="px-5 py-3.5 font-semibold">Lương (Giờ)</th>
                 <th className="px-5 py-3.5 font-semibold min-w-[160px]">Trạng thái</th>
-                <th className="px-5 py-3.5 font-semibold text-center">Hành động</th>
+                <RequirePermission required={[PERMISSIONS.TEACHER.EDIT, PERMISSIONS.TEACHER.DELETE]}>
+                  <th className="px-5 py-3.5 font-semibold text-center">Hành động</th>
+                </RequirePermission>
               </tr>
             </thead>
 
@@ -380,7 +386,7 @@ const TeacherManager = () => {
                   const color = getColor(teacher.fullName);
                   return (
                     <tr key={teacher._id} className="group hover:bg-indigo-50/30 transition-colors">
-                      {/* No. */}
+                      {/* STT */}
                       <td className="px-5 py-4 text-gray-400 text-sm text-center font-medium">
                         {index + 1 + (page - 1) * limit}
                       </td>
@@ -464,85 +470,90 @@ const TeacherManager = () => {
                       <td className="px-5 py-4">{getTeacherStatusBadge(teacher.status)}</td>
 
                       {/* Action menu (giữ nguyên MoreVertical) */}
-                      <td className="px-5 py-4 text-center">
-                        <div
-                          className="relative flex justify-center"
-                          ref={(el) => {
-                            menuRefs.current[teacher._id] = el;
-                          }}
-                        >
-                          <button
-                            className="p-2 text-gray-400 hover:text-indigo-600
-                              hover:bg-indigo-50 rounded-xl transition-colors focus:outline-none"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setOpenActionMenuId(openActionMenuId === teacher._id ? null : teacher._id);
+                      <RequirePermission required={[PERMISSIONS.TEACHER.EDIT, PERMISSIONS.TEACHER.DELETE]}>
+                        <td className="px-5 py-4 text-center">
+                          <div
+                            className="relative flex justify-center"
+                            ref={(el) => {
+                              menuRefs.current[teacher._id] = el;
                             }}
                           >
-                            <MoreVertical size={18} />
-                          </button>
+                            <button
+                              className="p-2 text-gray-400 hover:text-indigo-600
+                              hover:bg-indigo-50 rounded-xl transition-colors focus:outline-none"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenActionMenuId(openActionMenuId === teacher._id ? null : teacher._id);
+                              }}
+                            >
+                              <MoreVertical size={18} />
+                            </button>
 
-                          {openActionMenuId === teacher._id && (
-                            <div
-                              className="absolute right-0 top-[calc(100%+4px)] w-52 bg-white
+                            {openActionMenuId === teacher._id && (
+                              <div
+                                className="absolute right-0 top-[calc(100%+4px)] w-52 bg-white
                               border border-gray-200 rounded-2xl shadow-xl z-50 overflow-hidden
                               py-1.5 animate-in zoom-in-95 duration-100"
-                            >
-                              <button
+                              >
+                                {/* <button
                                 className="w-full px-4 py-2.5 text-left text-sm text-gray-700
                                   hover:bg-amber-50 hover:text-amber-700
                                   flex items-center gap-3 transition-colors"
                                 onClick={() => setOpenActionMenuId(null)}
                               >
                                 <CalendarIcon size={15} /> Xếp lịch dạy
-                              </button>
+                              </button> */}
 
-                              <button
+                                {/* <button
                                 className="w-full px-4 py-2.5 text-left text-sm text-gray-700
                                   hover:bg-emerald-50 hover:text-emerald-700
                                   flex items-center gap-3 transition-colors"
                                 onClick={() => setOpenActionMenuId(null)}
                               >
                                 <Calculator size={15} /> Tính lương tháng
-                              </button>
+                              </button> */}
 
-                              <div className="h-px bg-gray-100 my-1" />
+                                <div className="h-px bg-gray-100 my-1" />
 
-                              <button
-                                className="w-full px-4 py-2.5 text-left text-sm text-gray-700
+                                <RequirePermission required={PERMISSIONS.TEACHER.EDIT}>
+                                  <button
+                                    className="w-full px-4 py-2.5 text-left text-sm text-gray-700
                                   hover:bg-indigo-50 hover:text-indigo-700
                                   flex items-center gap-3 transition-colors"
-                                onClick={() => {
-                                  navigate(PATHS.HR_TEACHERS_EDIT.replace(':id', teacher._id));
-                                  setOpenActionMenuId(null);
-                                }}
-                              >
-                                <Edit2 size={15} /> Chỉnh sửa hồ sơ
-                              </button>
-
-                              <button
-                                className="w-full px-4 py-2.5 text-left text-sm text-red-500
+                                    onClick={() => {
+                                      navigate(PATHS.HR_TEACHERS_EDIT.replace(':id', teacher._id));
+                                      setOpenActionMenuId(null);
+                                    }}
+                                  >
+                                    <Edit2 size={15} /> Chỉnh sửa hồ sơ
+                                  </button>
+                                </RequirePermission>
+                                <RequirePermission required={PERMISSIONS.TEACHER.EDIT}>
+                                  <button
+                                    className="w-full px-4 py-2.5 text-left text-sm text-red-500
                                   hover:bg-red-50 hover:text-red-600
                                   flex items-center gap-3 transition-colors"
-                                onClick={() => {
-                                  setConfirmDelete({
-                                    isOpen: true,
-                                    title: 'Xác nhận xóa',
-                                    message: `Bạn có chắc chắn muốn xóa giáo viên "${teacher.fullName}"?`,
-                                    type: 'danger',
-                                    confirmText: 'Xóa',
-                                    cancelText: 'Hủy',
-                                    onConfirm: () => handleDeleteTeacher(teacher._id),
-                                  });
-                                  setOpenActionMenuId(null);
-                                }}
-                              >
-                                <Trash2 size={15} /> Xóa giáo viên
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </td>
+                                    onClick={() => {
+                                      setConfirmDelete({
+                                        isOpen: true,
+                                        title: 'Xác nhận xóa',
+                                        message: `Bạn có chắc chắn muốn xóa giáo viên "${teacher.fullName}"?`,
+                                        type: 'danger',
+                                        confirmText: 'Xóa',
+                                        cancelText: 'Hủy',
+                                        onConfirm: () => handleDeleteTeacher(teacher._id),
+                                      });
+                                      setOpenActionMenuId(null);
+                                    }}
+                                  >
+                                    <Trash2 size={15} /> Xóa giáo viên
+                                  </button>
+                                </RequirePermission>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </RequirePermission>
                     </tr>
                   );
                 })

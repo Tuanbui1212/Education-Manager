@@ -780,7 +780,7 @@ async function runSeeder() {
     // Student
     for (let i = 0; i < NUM_STUDENTS; i++) {
       usersData.push({
-        email: `student${i}_${faker.string.alphanumeric(4)}@gmail.com`,
+        email: `student${i}}@edu.vn`,
         phone: faker.phone.number(),
         password: defaultPassword,
         fullName: faker.person.fullName(),

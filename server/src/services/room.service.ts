@@ -19,7 +19,7 @@ export class RoomService {
     rooms: IRoom[];
     total: number;
   }> {
-    const { page = 1, limit = 10, search = "", status } = query;
+    const { page = 1, limit = 10, search = "", status, capacity = 0 } = query;
     const skip = (page - 1) * limit;
 
     const filter: any = {
@@ -28,10 +28,12 @@ export class RoomService {
     if (status) {
       filter.status = String(status).toUpperCase()
     }
-
+    if (capacity) {
+      filter.capacity = { $gte: Number(capacity) }
+    }
     const [total, rooms] = await Promise.all([
       RoomModel.countDocuments(filter),
-      RoomModel.find(filter).sort({ name: 1 }).skip(skip).limit(limit),
+      RoomModel.find(filter).sort({ name: 1 }).skip(skip).limit(limit)
     ]);
     return { rooms, total };
   }

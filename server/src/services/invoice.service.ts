@@ -3,6 +3,9 @@ import { InvoiceModel } from '../models/invoice.model';
 import { InvoiceStatus } from '../types/invoice.type';
 import type { IInvoice, CreateInvoiceType } from '../types/invoice.type';
 import { EmailService } from './email.service';
+import { TransactionModel } from '../models/transaction.model';
+import { PaymentMethod } from '../types/transaction.type';
+import mongoose from 'mongoose';
 
 export class InvoiceService {
   private emailService = new EmailService();
@@ -258,5 +261,82 @@ export class InvoiceService {
       invoice,
       emailSent: isEmailSent,
     };
+  }
+
+  //Hủy học phí
+  async cancelInvoice(invoiceId: string) {
+    const invoice = await InvoiceModel.findById(invoiceId);
+    if (!invoice) throw new Error('Không tìm thấy hóa đơn');
+
+    if (invoice.status === 'CANCELLED') {
+      throw new Error('Hóa đơn này đã được hủy trước đó');
+    }
+
+    const paid = (invoice.finalAmount || 0) - (invoice.debt || 0);
+    if (paid !== 0) {
+      throw new Error('Hóa đơn đã thanh toán (một phần hoặc toàn bộ). Vui lòng sử dụng tính năng Hoàn tiền.');
+    }
+
+    invoice.status = InvoiceStatus.CANCELLED;
+
+    await invoice.save();
+
+    return invoice;
+  }
+
+  //Hoàn học phí
+  async refundInvoice(invoiceId: string, currentUserId: string) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const invoice = await InvoiceModel.findById(invoiceId).session(session);
+      if (!invoice) throw new Error('Không tìm thấy hóa đơn');
+
+      if (invoice.status === 'REFUNDED') {
+        throw new Error('Hóa đơn này đã được hoàn tiền trước đó');
+      }
+
+      const paid = (invoice.finalAmount || 0) - (invoice.debt || 0);
+      if (paid <= 0) throw new Error('Hóa đơn chưa thanh toán hoặc số tiền đã trả bằng 0, không thể hoàn');
+
+      const year = new Date().getFullYear();
+      const lastTx = await TransactionModel.findOne({ code: new RegExp(`^PC-${year}-`) })
+        .sort({ createdAt: -1 })
+        .session(session);
+
+      let nextNumber = 1;
+      if (lastTx && lastTx.code) {
+        const parts = lastTx.code.split('-');
+        nextNumber = parseInt(parts[parts.length - 1], 10) + 1;
+      }
+      const code = `PC-${year}-${nextNumber.toString().padStart(4, '0')}`;
+
+      const data = {
+        code: code,
+        invoiceId: invoice.id,
+        studentId: invoice.studentId,
+        amount: paid,
+        paymentMethod: PaymentMethod.CASH,
+        note: 'Hoàn học phí',
+        processedBy: currentUserId,
+      };
+
+      const newTransaction = new TransactionModel(data);
+      await newTransaction.save({ session });
+
+      invoice.status = InvoiceStatus.REFUNDED;
+      invoice.debt = 0;
+      await invoice.save({ session });
+
+      await session.commitTransaction();
+      session.endSession();
+
+      return invoice;
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
+    }
   }
 }

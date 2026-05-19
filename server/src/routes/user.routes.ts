@@ -19,10 +19,27 @@ router.post(
 );
 
 router.get('/', verifyToken, requirePermission(PERMISSIONS.USER.VIEW), logIpMiddleware, userController.getAll);
-router.get('/teachers', verifyToken, userController.getAllTeachers);
-router.get('/students', verifyToken, userController.getAllStudents);
-router.get('/staff', verifyToken, userController.getStaff);
-router.get('/:id', verifyToken, requirePermission(PERMISSIONS.USER.VIEW), userController.getOne);
+router.get(
+  '/teachers',
+  verifyToken,
+  requirePermission(PERMISSIONS.TEACHER.VIEW, PERMISSIONS.CLASS.CREATE, PERMISSIONS.CLASS.VIEW),
+  userController.getAllTeachers,
+);
+router.get('/students', verifyToken, requirePermission(PERMISSIONS.STUDENT.VIEW), userController.getAllStudents);
+router.get('/staff', verifyToken, requirePermission(PERMISSIONS.STAFF.VIEW), userController.getStaff);
+router.get(
+  '/:id',
+  verifyToken,
+  requirePermission(
+    PERMISSIONS.USER.VIEW,
+    PERMISSIONS.TEACHER.VIEW,
+    PERMISSIONS.STAFF.VIEW,
+    PERMISSIONS.STUDENT.VIEW,
+    PERMISSIONS.USER.EDIT,
+    PERMISSIONS.USER.DELETE,
+  ),
+  userController.getOne,
+);
 router.put(
   '/:id',
   verifyToken,

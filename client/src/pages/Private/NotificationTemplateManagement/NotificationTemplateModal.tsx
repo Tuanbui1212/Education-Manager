@@ -9,17 +9,7 @@ import type {
   NotificationType,
   NotificationTemplateModalProps,
 } from '../../../types/notificationTemplate.type';
-
-export const SYSTEM_TEMPLATE_CODES: { value: string; label: string }[] = [
-  { value: 'REMIND_DEBT', label: 'Gửi thông báo nhắc nợ học phí' },
-  { value: 'ENROLL_SUCCESS', label: 'Chào mừng ghi danh thành công' },
-  { value: 'PAYMENT_SUCCESS', label: 'Xác nhận đã thanh toán' },
-  { value: 'CLASS_OPENING', label: 'Thông báo khai giảng lớp mới' },
-  { value: 'INSTALLMENT_CREATED', label: 'Thông báo tạo lịch trả góp' },
-  { value: 'REMIND_INSTALLMENT', label: 'Thông báo lịch trả góp' },
-  { value: 'FORGOT_PASSWORD', label: 'Xác nhận quên mật khẩu' },
-  { value: 'MONTHLY_PAYROLL_NOTICE', label: 'Thông báo bảng lương hàng tháng' },
-];
+import { SYSTEM_TEMPLATE_CODES } from '../../../utils/constants';
 
 const NotificationTemplateModal = ({ isOpen, onClose, onSubmit, initialData }: NotificationTemplateModalProps) => {
   const [formData, setFormData] = useState<Partial<INotificationTemplate>>({

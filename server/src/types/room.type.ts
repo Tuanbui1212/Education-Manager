@@ -19,4 +19,5 @@ export interface GetRoomsQuery {
   limit?: number;
   search?: string;
   status?: RoomType;
+  capacity?: number;
 }

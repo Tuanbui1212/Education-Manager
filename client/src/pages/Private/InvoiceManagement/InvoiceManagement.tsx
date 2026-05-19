@@ -1,17 +1,32 @@
-import React, { useState } from 'react';
-import { Search, Filter, MoreVertical, Calendar, Bell, BellRing, BellOff } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  Search,
+  Filter,
+  MoreVertical,
+  Calendar,
+  Bell,
+  BellRing,
+  BellOff,
+  Eye,
+  Printer,
+  RotateCcw,
+  XCircle,
+} from 'lucide-react';
+
+import { useNavigate } from 'react-router-dom';
 
 import { formatCurrency, formatDate } from '../../../utils/format.util';
-import type { IInvoice, InvoiceStatus, InvoiceConfig } from '../../../types/invoice.type';
+import { PATHS } from '../../../utils/constants';
 
 import useFetch from '../../../hooks/useFetch';
+import useDebounce from '../../../hooks/useDebounce';
 import { invoiceService } from '../../../services/invoice.service';
 
 import PaymentWizardModal from './PaymentWizardModal';
 import TablePagination from '../../../components/TablePagination';
-import useDebounce from '../../../hooks/useDebounce';
-import { useNavigate } from 'react-router-dom';
-import { PATHS } from '../../../utils/constants';
+import ConfirmModal from '../../../components/ConfirmModal';
+
+import type { IInvoice, InvoiceStatus, InvoiceConfig } from '../../../types/invoice.type';
 
 const TABS: { id: InvoiceStatus | 'ALL'; label: string }[] = [
   { id: 'ALL', label: 'Tất cả' },
@@ -38,6 +53,67 @@ const InvoiceManagement = () => {
   const [filterDueDateFrom, setFilterDueDateFrom] = useState('');
   const [filterDueDateTo, setFilterDueDateTo] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    type: 'refund' | 'cancel' | null;
+    invoice: IInvoice | null;
+  }>({ isOpen: false, type: null, invoice: null });
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+
+  const handleRefund = async () => {
+    if (!confirmModal.invoice) return;
+    setActionLoading(true);
+    setActionError(null);
+    try {
+      await invoiceService.refundInvoice(confirmModal.invoice._id as string);
+      setInvoices((prev) =>
+        prev.map((inv) =>
+          inv._id === confirmModal.invoice!._id ? { ...inv, status: 'REFUNDED' as InvoiceStatus } : inv,
+        ),
+      );
+      setActionSuccess(`Hoàn tiền hóa đơn ${confirmModal.invoice.code} thành công!`);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Hoàn tiền thất bại. Vui lòng thử lại.';
+      setActionError(msg);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!confirmModal.invoice) return;
+    setActionLoading(true);
+    setActionError(null);
+    try {
+      await invoiceService.cancelInvoice(confirmModal.invoice._id as string);
+      setInvoices((prev) =>
+        prev.map((inv) =>
+          inv._id === confirmModal.invoice!._id ? { ...inv, status: 'CANCELLED' as InvoiceStatus } : inv,
+        ),
+      );
+      setActionSuccess(`Hủy hóa đơn ${confirmModal.invoice.code} thành công!`); // ← thêm dòng này
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Hủy hóa đơn thất bại. Vui lòng thử lại.';
+      setActionError(msg);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenuId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const debouncedMinDebt = useDebounce(filterMinDebt, 500);
   const debouncedMaxDebt = useDebounce(filterMaxDebt, 500);
@@ -60,6 +136,7 @@ const InvoiceManagement = () => {
     data: response,
     loading,
     totalCount,
+    refetch,
   } = useFetch(invoiceService.getInvoices, queryParams, [
     activeTab,
     page,
@@ -203,12 +280,12 @@ const InvoiceManagement = () => {
   const isFiltering = filterMinDebt || filterMaxDebt || filterDueDateFrom || filterDueDateTo;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 xl:p-8 2xl:px-12">
+      <div className="max-w-7xl xl:max-w-[1400px] 2xl:max-w-[1700px] mx-auto space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Quản lý Công nợ</h1>
-            <p className="text-sm text-gray-500 mt-1">Hệ thống theo dõi dòng tiền kế toán</p>
+            <h1 className="text-2xl xl:text-3xl font-bold text-gray-900">Quản lý Công nợ</h1>
+            <p className="text-sm xl:text-base text-gray-500 mt-1">Hệ thống theo dõi dòng tiền kế toán</p>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
             <button
@@ -222,7 +299,7 @@ const InvoiceManagement = () => {
               {isFiltering &&
                 `(${[filterMinDebt, filterMaxDebt, filterDueDateFrom, filterDueDateTo].filter(Boolean).length})`}
             </button>
-            <div className="relative flex-1 sm:w-64">
+            <div className="relative flex-1 sm:w-64 xl:w-96">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
@@ -236,8 +313,8 @@ const InvoiceManagement = () => {
         </div>
 
         {showFilter && (
-          <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-            <div className="flex flex-wrap gap-4 items-end">
+          <div className="bg-white border border-gray-200 rounded-xl p-4 xl:p-5 shadow-sm">
+            <div className="flex flex-wrap xl:grid xl:grid-cols-5 gap-4 items-end">
               {/* Khoảng nợ */}
               <div className="flex flex-col gap-1 min-w-[140px]">
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Nợ tối thiểu</label>
@@ -332,16 +409,16 @@ const InvoiceManagement = () => {
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mt-6">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[900px]">
+            <table className="w-full text-left border-collapse min-w-[900px] xl:text-[13.5px] 2xl:text-sm">
               <thead>
-                <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider border-b border-gray-100">
-                  <th className="p-4 font-semibold">Hóa Đơn / Hạn Chót</th>
-                  <th className="p-4 font-semibold">Học Viên / Khóa</th>
-                  <th className="p-4 font-semibold text-right">Tổng Tiền</th>
-                  <th className="p-4 font-semibold text-right">Đã Thu</th>
-                  <th className="p-4 font-semibold text-right text-red-600">Còn Nợ</th>
-                  <th className="p-4 font-semibold text-center">Trạng Thái</th>
-                  <th className="p-4 font-semibold text-right">Hành Động</th>
+                <tr className="bg-gray-50 text-gray-500 text-xs xl:text-[11px] 2xl:text-xs uppercase tracking-wider border-b border-gray-100">
+                  <th className="p-4 xl:p-5 font-semibold">Hóa Đơn / Hạn Chót</th>
+                  <th className="p-4 xl:p-5 font-semibold">Học Viên / Khóa</th>
+                  <th className="p-4 xl:p-5 font-semibold text-right">Tổng Tiền</th>
+                  <th className="p-4 xl:p-5 font-semibold text-right">Đã Thu</th>
+                  <th className="p-4 xl:p-5 font-semibold text-right text-red-600">Còn Nợ</th>
+                  <th className="p-4 xl:p-5 font-semibold text-center">Trạng Thái</th>
+                  <th className="p-4 xl:p-5 font-semibold text-right">Hành Động</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -358,13 +435,13 @@ const InvoiceManagement = () => {
 
                     return (
                       <tr key={inv._id as string} className="hover:bg-gray-50/50 transition-colors">
-                        <td className="p-4">
+                        <td className="p-4 xl:p-5">
                           <p className="font-medium text-gray-900">{inv?.code || 'N/A'}</p>
                           <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
                             <Calendar size={12} /> {inv?.dueDate ? formatDate(inv.dueDate as string) : 'Chưa cập nhật'}
                           </p>
                         </td>
-                        <td className="p-4">
+                        <td className="p-4 xl:p-5">
                           <p
                             className="font-medium text-gray-900"
                             onClick={() =>
@@ -376,16 +453,18 @@ const InvoiceManagement = () => {
                           </p>
                           <p className="text-xs text-gray-500">{(inv?.classId as any)?.name || 'Chưa phân lớp'}</p>
                         </td>
-                        <td className="p-4 text-right font-medium text-gray-500">
+                        <td className="p-4 xl:p-5 text-right font-medium text-gray-500">
                           {formatCurrency(inv?.finalAmount || 0)}
                         </td>
-                        <td className="p-4 text-right font-medium text-emerald-600">{formatCurrency(paid)}</td>
-                        <td className="p-4 text-right font-bold text-red-600">{formatCurrency(inv?.debt || 0)}</td>
-                        <td className="p-4 text-center">
+                        <td className="p-4 xl:p-5 text-right font-medium text-emerald-600">{formatCurrency(paid)}</td>
+                        <td className="p-4 xl:p-5 text-right font-bold text-red-600">
+                          {formatCurrency(inv?.debt || 0)}
+                        </td>
+                        <td className="p-4 xl:p-5 text-center">
                           {renderStatus(inv?.status)}
                           {renderNotificationBadge(inv)}
                         </td>
-                        <td className="p-4 text-right">
+                        <td className="p-4 xl:p-5 text-right">
                           {inv?.debt > 0 && inv.status !== 'CANCELLED' && inv.status !== 'REFUNDED' ? (
                             <button
                               onClick={() => setSelectedInvoice(inv)}
@@ -393,11 +472,52 @@ const InvoiceManagement = () => {
                             >
                               Thu tiền
                             </button>
-                          ) : (
-                            <button className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg">
-                              <MoreVertical size={20} />
-                            </button>
-                          )}
+                          ) : inv?.status !== 'CANCELLED' && inv?.status !== 'REFUNDED' ? ( // ← bỏ {} thừa, dùng ternary tiếp
+                            <div
+                              className="relative inline-block"
+                              ref={openMenuId === (inv._id as string) ? menuRef : null}
+                            >
+                              <button
+                                onClick={() =>
+                                  setOpenMenuId(openMenuId === (inv._id as string) ? null : (inv._id as string))
+                                }
+                                className="p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700 rounded-lg transition-colors"
+                              >
+                                <MoreVertical size={20} />
+                              </button>
+
+                              {openMenuId === (inv._id as string) && (
+                                <div className="absolute right-0 z-50 mt-1 w-48 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                                  {inv.status === 'PAID' && (
+                                    <>
+                                      <div className="border-t border-gray-100" />
+                                      <button
+                                        onClick={() => {
+                                          setOpenMenuId(null);
+                                          setConfirmModal({ isOpen: true, type: 'refund', invoice: inv });
+                                        }}
+                                        className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-amber-600 hover:bg-amber-50 transition-colors"
+                                      >
+                                        <RotateCcw size={15} />
+                                        Hoàn tiền
+                                      </button>
+
+                                      <button
+                                        onClick={() => {
+                                          setOpenMenuId(null);
+                                          setConfirmModal({ isOpen: true, type: 'cancel', invoice: inv });
+                                        }}
+                                        className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
+                                      >
+                                        <XCircle size={15} />
+                                        Hủy hóa đơn
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          ) : null}{' '}
                         </td>
                       </tr>
                     );
@@ -423,6 +543,53 @@ const InvoiceManagement = () => {
             onSuccess={handlePaymentSuccess}
           />
         )}
+        <ConfirmModal
+          isOpen={confirmModal.isOpen}
+          onClose={() => {
+            if (!actionLoading) {
+              setConfirmModal({ isOpen: false, type: null, invoice: null });
+              setActionError(null);
+              setActionSuccess(null);
+            }
+          }}
+          onConfirm={
+            actionError || actionSuccess
+              ? () => {
+                  setConfirmModal({ isOpen: false, type: null, invoice: null });
+                  setActionError(null);
+                  setActionSuccess(null);
+                }
+              : confirmModal.type === 'refund'
+                ? handleRefund
+                : handleCancel
+          }
+          isLoading={actionLoading}
+          type={
+            actionSuccess ? 'success' : actionError ? 'danger' : confirmModal.type === 'refund' ? 'warning' : 'danger'
+          }
+          title={
+            actionSuccess
+              ? 'Thành công!'
+              : actionError
+                ? 'Không thể thực hiện'
+                : confirmModal.type === 'refund'
+                  ? 'Xác nhận hoàn tiền'
+                  : 'Xác nhận hủy hóa đơn'
+          }
+          message={
+            actionSuccess
+              ? actionSuccess
+              : actionError
+                ? actionError
+                : confirmModal.type === 'refund'
+                  ? `Bạn có chắc muốn hoàn tiền hóa đơn ${confirmModal.invoice?.code}?`
+                  : `Bạn có chắc muốn hủy hóa đơn ${confirmModal.invoice?.code}?`
+          }
+          confirmText={
+            actionSuccess || actionError ? 'Đã hiểu' : confirmModal.type === 'refund' ? 'Hoàn tiền' : 'Hủy hóa đơn'
+          }
+          cancelText={actionSuccess || actionError ? '' : 'Hủy'}
+        />
       </div>
     </div>
   );

@@ -9,9 +9,10 @@ import { Types } from 'mongoose';
 import { InvoiceService } from './invoice.service';
 import { InvoiceModel } from '../models/invoice.model';
 import { ScheduleModel } from '../models/schedule.model';
+import { ShiftModel } from '../models/shift.model';
 
 import mongoose from 'mongoose';
-import { fi } from 'zod/v4/locales';
+
 export class ClassService {
   private invoiceService: InvoiceService;
 
@@ -40,9 +41,11 @@ export class ClassService {
       }
     }
 
-    const existingRoom = await RoomModel.findById(classData.roomId);
-    if (!existingRoom) {
-      throw new Error('Phòng học không tồn tại');
+    if (classData.roomId) {
+      const existingRoom = await RoomModel.findById(classData.roomId);
+      if (!existingRoom) {
+        throw new Error('Phòng học không tồn tại');
+      }
     }
 
     if (classData.studentIds && classData.studentIds.length > 0) {
@@ -52,11 +55,28 @@ export class ClassService {
       }
     }
 
-    return await ClassModel.create(classData);
+    if (!classData.totalLessons || classData.totalLessons <= 0) {
+      if (existingCourse.totalLessons && existingCourse.totalLessons > 0) {
+        classData.totalLessons = existingCourse.totalLessons;
+      } else {
+        throw new Error('Số lượng bài học không hợp lệ');
+      }
+    }
+
+    return await ClassModel.create({ ...classData, schedule: false });
   }
 
   async getAllClasses(query: GetClassesQuery) {
-    const { page = 1, limit = 10, search = '', status = '', courseId = '', startDate = '', endDate = '' } = query;
+    const {
+      page = 1,
+      limit = 10,
+      search = '',
+      status = '',
+      courseId = '',
+      startDate = '',
+      endDate = '',
+      schedule = undefined,
+    } = query;
     const skip = (Number(page) - 1) * Number(limit);
     const filter: any = {
       name: { $regex: search, $options: 'i' },
@@ -73,11 +93,14 @@ export class ClassService {
     if (endDate) {
       filter.startDate = { $lte: new Date(endDate) };
     }
+    if (schedule !== undefined) {
+      filter.schedule = schedule;
+    }
 
     const [total, classes] = await Promise.all([
       ClassModel.countDocuments(filter),
       ClassModel.find(filter)
-        .sort({ name: 1 })
+        .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .populate('studentIds', 'fullName')
@@ -103,20 +126,34 @@ export class ClassService {
       throw new Error('Lớp học đã tồn tại');
     }
 
-    const existingCourse = await CourseModel.findById(classData.courseId);
-    if (!existingCourse) {
-      throw new Error('Khóa học không tồn tại');
+    if (classData.courseId) {
+      const existingCourse = await CourseModel.findById(classData.courseId);
+      if (!existingCourse) {
+        throw new Error('Khóa học không tồn tại');
+      }
+      if (!classData.totalLessons || classData.totalLessons <= 0) {
+        if (existingCourse?.totalLessons && existingCourse.totalLessons > 0) {
+          classData.totalLessons = existingCourse.totalLessons;
+        } else {
+          throw new Error('Số lượng bài học không hợp lệ');
+        }
+      }
     }
 
-    const existingTeacher = await UserModel.findById(classData.teacherId);
-    if (!existingTeacher) {
-      throw new Error('Giáo viên không tồn tại');
+    if (classData.teacherId) {
+      const existingTeacher = await UserModel.findById(classData.teacherId);
+      if (!existingTeacher) {
+        throw new Error('Giáo viên không tồn tại');
+      }
     }
 
-    const existingRoom = await RoomModel.findById(classData.roomId);
-    if (!existingRoom) {
-      throw new Error('Phòng học không tồn tại');
+    if (classData.roomId) {
+      const existingRoom = await RoomModel.findById(classData.roomId);
+      if (!existingRoom) {
+        throw new Error('Phòng học không tồn tại');
+      }
     }
+
 
     if (classData.studentIds && classData.studentIds.length > 0) {
       const existingStudents = await UserModel.find({ _id: { $in: classData.studentIds } });
@@ -337,6 +374,37 @@ export class ClassService {
 
         if (exists) {
           throw new Error('Học viên này đã có tên trong danh sách lớp');
+        }
+
+        const activeClasses = await ClassModel.find({
+          studentIds: data.studentId,
+          status: 'ACTIVE',
+        }).session(session);
+
+        if (activeClasses.length > 0) {
+          const activeClassIds = activeClasses.map((c) => c._id);
+
+          const [studentSchedules, targetClassSchedules] = await Promise.all([
+            ScheduleModel.find({ classId: { $in: activeClassIds } }).session(session),
+            ScheduleModel.find({ classId: data.classId }).session(session),
+          ]);
+
+          if (targetClassSchedules.length > 0 && studentSchedules.length > 0) {
+            for (const targetSchedule of targetClassSchedules) {
+              for (const studentSchedule of studentSchedules) {
+                const isSameDate =
+                  new Date(targetSchedule.date).toDateString() ===
+                  new Date(studentSchedule.date).toDateString();
+                const isSameShift =
+                  targetSchedule.shiftId.toString() === studentSchedule.shiftId.toString();
+
+                if (isSameDate && isSameShift) {
+                  const studentShift = await ShiftModel.findById(studentSchedule.shiftId).session(session);
+                  throw new Error(`Lịch học của lớp này bị trùng với ca học ${studentShift?.startTime} - ${studentShift?.endTime} của học viên`);
+                }
+              }
+            }
+          }
         }
 
         await ClassModel.findByIdAndUpdate(data.classId, { $push: { studentIds: data.studentId } }, { session });

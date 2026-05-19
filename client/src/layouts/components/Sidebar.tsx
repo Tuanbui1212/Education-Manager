@@ -21,7 +21,6 @@ import { PATHS } from '../../utils/constants';
 import { PERMISSIONS } from '../../utils/permission.constant';
 import { getDecodedToken } from '../../utils/auth';
 
-// TỐI ƯU 1: Đưa menuConfig ra ngoài để Component không bị tạo lại mảng mỗi lần click mở sub-menu
 const menuConfig = [
   {
     key: 'accounts',
@@ -31,22 +30,22 @@ const menuConfig = [
     subItems: [
       { label: 'Danh sách tài khoản', path: PATHS.USER, permission: PERMISSIONS.USER.VIEW },
       { label: 'Phân quyền (Roles)', path: PATHS.SETTINGS_ROLES, permission: PERMISSIONS.ROLE.VIEW },
-      { label: 'Lịch sử hoạt động', path: PATHS.ACCOUNT_LOGS, permission: PERMISSIONS.USER.VIEW },
+      //{ label: 'Lịch sử hoạt động', path: PATHS.ACCOUNT_LOGS, permission: PERMISSIONS.USER.VIEW },
     ],
   },
   {
     key: 'hr',
     label: 'Quản lý Nhân sự (HR)',
     icon: <Briefcase size={20} />,
-    permission: PERMISSIONS.USER.VIEW,
+    permission: [PERMISSIONS.USER.VIEW, PERMISSIONS.TEACHER.VIEW],
     subItems: [
-      { label: 'Đội ngũ giáo viên', path: PATHS.HR_TEACHERS, permission: PERMISSIONS.USER.VIEW },
-      { label: 'Nhân viên văn phòng', path: PATHS.HR_STAFFS, permission: PERMISSIONS.USER.VIEW },
-      {
-        label: 'Hợp đồng & Lương',
-        path: PATHS.HR_CONTRACTS,
-        permission: PERMISSIONS.SALARY?.VIEW || PERMISSIONS.USER.VIEW,
-      },
+      { label: 'Đội ngũ giáo viên', path: PATHS.HR_TEACHERS, permission: PERMISSIONS.TEACHER.VIEW },
+      { label: 'Nhân viên văn phòng', path: PATHS.HR_STAFFS, permission: PERMISSIONS.STAFF.VIEW },
+      // {
+      //   label: 'Hợp đồng & Lương',
+      //   path: PATHS.HR_CONTRACTS,
+      //   permission: PERMISSIONS.SALARY?.VIEW || PERMISSIONS.USER.VIEW,
+      // },
       {
         label: 'Bảng lương',
         path: PATHS.HR_PAYROLL,
@@ -68,10 +67,11 @@ const menuConfig = [
       },
       { label: 'Quản lý lớp học', path: PATHS.TRAINING_CLASSES, permission: PERMISSIONS.CLASS.VIEW },
       {
-        label: 'Xếp thời khóa biểu',
+        label: 'Quản lý thời khóa biểu',
         path: PATHS.TRAINING_SCHEDULES,
         permission: PERMISSIONS.SHIFT.VIEW || PERMISSIONS.CLASS.VIEW,
       },
+      { label: 'Xếp lịch tự động', path: PATHS.TRAINING_AUTO_SCHEDULES, permission: PERMISSIONS.CLASS.VIEW },
     ],
   },
   {
@@ -97,11 +97,11 @@ const menuConfig = [
     subItems: [
       { label: 'Ca học', path: PATHS.SETTINGS_SHIFTS, permission: PERMISSIONS.SHIFT?.VIEW || PERMISSIONS.ROOM.VIEW },
       { label: 'Phòng học', path: PATHS.SETTINGS_ROOMS, permission: PERMISSIONS.ROOM.VIEW },
-      {
-        label: 'Các loại chi phí cố định',
-        path: PATHS.SETTINGS_FIXED_COSTS,
-        permission: PERMISSIONS.FIXED_COST.VIEW,
-      },
+      // {
+      //   label: 'Các loại chi phí cố định',
+      //   path: PATHS.SETTINGS_FIXED_COSTS,
+      //   permission: PERMISSIONS.FIXED_COST.VIEW,
+      // },
       {
         label: 'Mẫu thông báo',
         path: PATHS.SETTINGS_NOTIFICATION_TEMPLATES,

@@ -303,7 +303,7 @@ const ActivityLog = () => {
           <table className="w-full text-left border-collapse min-w-[900px]">
             <thead className="sticky top-0 z-20">
               <tr className="bg-primary text-white text-sm">
-                <th className="px-4 py-3.5 font-semibold w-12 text-center">No.</th>
+                <th className="px-4 py-3.5 font-semibold w-12 text-center">STT</th>
                 <th className="px-4 py-3.5 font-semibold">Người thực hiện</th>
                 <th className="px-4 py-3.5 font-semibold">Hành động</th>
                 <th className="px-4 py-3.5 font-semibold">Đối tượng</th>
@@ -319,7 +319,7 @@ const ActivityLog = () => {
                   const color = getColor(log.actorId.fullName);
                   return (
                     <tr key={log._id} className="group hover:bg-blue-50/40 transition-colors">
-                      {/* No. */}
+                      {/* STT */}
                       <td className="px-4 py-3.5 text-gray-400 text-sm text-center font-medium">
                         {index + 1 + (page - 1) * limit}
                       </td>

@@ -7,6 +7,7 @@ import TablePagination from '../../../components/TablePagination';
 import SearchInput from '../../../components/SearchInput';
 import ConfirmModal from '../../../components/ConfirmModal';
 import TableSkeleton from '../../../components/TableSkeleton';
+import RequirePermission from '../../../components/RequirePermission';
 
 import RoomModal from './RoomModal';
 
@@ -19,6 +20,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { GetRoomsParams, IRoom, RoomStatus } from '../../../types/room.type';
 import { PATHS } from '../../../utils/constants';
+import { PERMISSIONS } from '../../../utils/permission.constant';
 
 const ListRoom = () => {
   const navigate = useNavigate();
@@ -39,7 +41,7 @@ const ListRoom = () => {
     title: '',
     message: '',
     type: 'success' as 'success' | 'danger' | 'warning' | 'info',
-    onConfirm: () => { },
+    onConfirm: () => {},
   });
 
   const queryParams: GetRoomsParams = {
@@ -217,21 +219,24 @@ const ListRoom = () => {
             )}
           </div>
         </div>
-
-        <Button variant="primary" icon={<Plus size={18} />} onClick={() => setShowModalAdd(true)}>
-          Thêm phòng
-        </Button>
+        <RequirePermission required={PERMISSIONS.ROOM.CREATE}>
+          <Button variant="primary" icon={<Plus size={18} />} onClick={() => setShowModalAdd(true)}>
+            Thêm phòng
+          </Button>
+        </RequirePermission>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 relative">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-primary text-white text-sm sticky top-0 z-10 ">
-              <th className="p-4 font-semibold w-16 text-center rounded-tl-xl">No.</th>
+              <th className="p-4 font-semibold w-16 text-center rounded-tl-xl">STT</th>
               <th className="p-4 font-semibold">Tên phòng</th>
               <th className="p-4 font-semibold">Sức chứa</th>
               <th className="p-4 font-semibold">Trạng thái</th>
-              <th className="p-4 font-semibold text-center rounded-tr-xl">hành động</th>
+              <RequirePermission required={[PERMISSIONS.ROOM.EDIT, PERMISSIONS.ROOM.DELETE]}>
+                <th className="p-4 font-semibold text-center rounded-tr-xl">hành động</th>
+              </RequirePermission>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -250,28 +255,39 @@ const ListRoom = () => {
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-bold shadow-sm ${getRoomStatusStyles(room.status)}`}
                     >
-                      {room.status}
+                      {room.status === 'ACTIVE'
+                        ? 'Hoạt động'
+                        : room.status === 'MAINTENANCE'
+                          ? 'Bảo trì'
+                          : 'Ngừng hoạt động'}
                     </span>
                   </td>
-                  <td className="p-4">
-                    <div className="flex items-center justify-center gap-3">
-                      <button
-                        onClick={() => openEditModal(room)}
-                        className="p-2 text-blue-600 hover:bg-blue-100 rounded-xl transition-all duration-300 hover:scale-110 hover:-translate-y-1 active:scale-95"
-                        title="Sửa"
-                      >
-                        <Edit2 size={18} />
-                      </button>
 
-                      <button
-                        onClick={() => room._id && handleDeleteRoom(room._id)}
-                        className="p-2 text-red-500 hover:bg-red-100 rounded-xl transition-all duration-300 hover:scale-110 hover:rotate-12 active:scale-95"
-                        title="Xóa"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </td>
+                  <RequirePermission required={[PERMISSIONS.ROOM.EDIT, PERMISSIONS.ROOM.DELETE]}>
+                    <td className="p-4">
+                      <div className="flex items-center justify-center gap-3">
+                        <RequirePermission required={PERMISSIONS.ROOM.EDIT}>
+                          <button
+                            onClick={() => openEditModal(room)}
+                            className="p-2 text-blue-600 hover:bg-blue-100 rounded-xl transition-all duration-300 hover:scale-110 hover:-translate-y-1 active:scale-95"
+                            title="Sửa"
+                          >
+                            <Edit2 size={18} />
+                          </button>
+                        </RequirePermission>
+
+                        <RequirePermission required={PERMISSIONS.ROOM.DELETE}>
+                          <button
+                            onClick={() => room._id && handleDeleteRoom(room._id)}
+                            className="p-2 text-red-500 hover:bg-red-100 rounded-xl transition-all duration-300 hover:scale-110 hover:rotate-12 active:scale-95"
+                            title="Xóa"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </RequirePermission>
+                      </div>
+                    </td>
+                  </RequirePermission>
                 </tr>
               ))
             ) : !loading ? (

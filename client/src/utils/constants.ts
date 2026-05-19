@@ -68,8 +68,10 @@ export const PATHS = {
 
   TRAINING_CLASSES: '/training/classes',
   TRAINING_CLASSES_ID: '/training/classes/:id',
-  
+  TRAINING_CLASSES_CREATE: '/training/classes/create',
+  TRAINING_CLASSES_CREATE_SCHEDULE: '/training/classes/create-schedule/:id',
   TRAINING_SCHEDULES: '/training/schedules',
+  TRAINING_AUTO_SCHEDULES: '/training/auto-schedules',
 
   //Finace
   FINANCE_INVOICES: '/finance/invoices',
@@ -90,6 +92,7 @@ export const PATHS = {
   TEACHER_PORTAL: '/teacher-portal',
   TEACHER_ATTENDANCE_SCHEDULES: '/teacher-attendance/:classId',
   TEACHER_ATTENDANCE_DETAILS: '/teacher-attendance/:classId/schedule/:scheduleId',
+  TEACHER_EXAM_MANAGER: '/teacher-exam/:classId',
 
   STUDENT_EXAM_TAKING: '/student-exam/:examId',
 };
@@ -159,3 +162,43 @@ export const PAYMENT_CONFIG: Record<string, { label: string; className: string }
     className: 'bg-yellow-100 text-yellow-700',
   },
 };
+
+export const SYSTEM_TEMPLATE_CODES: { value: string; label: string }[] = [
+  { value: 'REMIND_DEBT', label: 'Gửi thông báo nhắc nợ học phí' },
+  { value: 'ENROLL_SUCCESS', label: 'Chào mừng ghi danh thành công' },
+  { value: 'PAYMENT_SUCCESS', label: 'Xác nhận đã thanh toán' },
+  { value: 'CLASS_OPENING', label: 'Thông báo khai giảng lớp mới' },
+  { value: 'INSTALLMENT_CREATED', label: 'Thông báo tạo lịch trả góp' },
+  { value: 'REMIND_INSTALLMENT', label: 'Thông báo lịch trả góp' },
+  { value: 'FORGOT_PASSWORD', label: 'Xác nhận quên mật khẩu' },
+  { value: 'MONTHLY_PAYROLL_NOTICE', label: 'Thông báo bảng lương hàng tháng' },
+];
+
+export const CLASS_COLORS = [
+  { bg: '#EEF0FE', tc: '#3730A3', dot: '#4F46E5' },
+  { bg: '#FEF3C7', tc: '#92400E', dot: '#D97706' },
+  { bg: '#DCFCE7', tc: '#14532D', dot: '#16A34A' },
+  { bg: '#FEE2E2', tc: '#991B1B', dot: '#DC2626' },
+  { bg: '#F3E8FF', tc: '#6B21A8', dot: '#9333EA' },
+  { bg: '#FFEDD5', tc: '#9A3412', dot: '#EA580C' },
+];
+
+export const DAYS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+export const DAYS_FULL = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
+export const SLOTS = ['7h30', '9h00', '10h30', '13h30', '15h00'];
+export const MORNING_SLOTS = new Set();
+
+export const SESSIONS = [
+  { value: 'morning', label: 'Ca sáng' },
+  { value: 'afternoon', label: 'Ca chiều' },
+  { value: 'evening', label: 'Ca tối' },
+];
+
+export const SCHEDULE_OPTS = [
+  { key: 'preferEarlyWeek', label: 'Ưu tiên đầu tuần' },
+  { key: 'noSameDay', label: 'Không dạy 2 buổi cùng ngày' },
+  { key: 'noConsec', label: 'Không dạy ngày liền – dãn đều' },
+];
+
+export const PRIMARY = '#3C3489';
+export const GREEN = '#1D7A4A';

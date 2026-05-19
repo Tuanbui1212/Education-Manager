@@ -18,4 +18,11 @@ export const CreateShiftSchema = z.object({
     .trim(),
   status: z.enum(Object.values(ShiftStatus)).optional(),
 });
+
+export const GetShiftIdSchema = z.object({
+  page: z.number({ message: 'page phải là một số và không được để trống' }).optional(),
+  limit: z.number({ message: 'limit phải là một số và không được để trống' }).optional(),
+  search: z.string({ message: 'search phải là một chuỗi' }).trim().optional(),
+});
+
 export const UpdateShiftSchema = CreateShiftSchema.partial();

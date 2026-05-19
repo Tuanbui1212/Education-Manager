@@ -23,12 +23,7 @@ import { userService } from '../../../services/user.service';
 import Button from '../../../components/Button';
 import type { IRole } from '../../../types/user.type';
 import { PATHS, STATUS_OPTIONS } from '../../../utils/constants';
-
-// ─── Helper: format tiền VNĐ ─────────────────────────────────────────────────
-const formatCurrency = (amount?: number) => {
-  if (!amount || amount === 0) return 'Chưa cập nhật';
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
-};
+import { formatCurrency } from '../../../utils/format.util';
 
 const StaffDetail = () => {
   const { id } = useParams();
@@ -52,7 +47,7 @@ const StaffDetail = () => {
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
           <button
-            className="p-2 bg-white border border-gray-200 rounded-xl hover:bg-violet-50 hover:text-violet-600 transition-colors shadow-sm"
+            className="p-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-100 transition-colors shadow-sm"
             onClick={() => navigate(-1)}
             title="Quay lại"
           >
@@ -65,7 +60,7 @@ const StaffDetail = () => {
         </div>
         <Button
           variant="primary"
-          className="bg-violet-600 hover:bg-violet-700 border-violet-600"
+          className="bg-primary hover:bg-primary-btn border-primary"
           icon={<Edit size={18} />}
           onClick={() => navigate(PATHS.HR_STAFFS_EDIT.replace(':id', id || ''))}
         >
@@ -79,11 +74,11 @@ const StaffDetail = () => {
           {/* Card Profile */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             {/* Banner */}
-            <div className="h-20 bg-gradient-to-br from-violet-500 to-fuchsia-600" />
+            <div className="h-20 bg-gradient-to-br bg-primary" />
 
             <div className="px-6 pb-6 -mt-10">
               {/* Avatar */}
-              <div className="w-20 h-20 rounded-2xl bg-white border-4 border-white shadow-md flex items-center justify-center text-3xl font-bold text-violet-600 mb-3">
+              <div className="w-20 h-20 rounded-2xl bg-white border-4 border-white shadow-md flex items-center justify-center text-3xl font-bold text-primary mb-3">
                 {staff.fullName.charAt(0).toUpperCase()}
               </div>
 
@@ -107,16 +102,16 @@ const StaffDetail = () => {
 
               {/* Thông tin liên hệ */}
               <div className="space-y-3">
-                <InfoRow icon={<Phone size={15} className="text-violet-500" />} value={staff.phone} />
-                <InfoRow icon={<Mail size={15} className="text-violet-500" />} value={staff.email} />
+                <InfoRow icon={<Phone size={15} className="text-gray-400" />} value={staff.phone} />
+                <InfoRow icon={<Mail size={15} className="text-gray-400" />} value={staff.email} />
                 <InfoRow
-                  icon={<CalendarIcon size={15} className="text-violet-500" />}
+                  icon={<CalendarIcon size={15} className="text-gray-400" />}
                   label="Ngày sinh"
                   value={formatDate(staff.date as string)}
                 />
-                <InfoRow icon={<User size={15} className="text-violet-500" />} label="Giới tính" value={genderLabel} />
+                <InfoRow icon={<User size={15} className="text-gray-400" />} label="Giới tính" value={genderLabel} />
                 <InfoRow
-                  icon={<CalendarIcon size={15} className="text-violet-500" />}
+                  icon={<CalendarIcon size={15} className="text-gray-400" />}
                   label="Ngày tạo TK"
                   value={formatDate(staff.createdAt as string)}
                 />
@@ -128,7 +123,7 @@ const StaffDetail = () => {
           {(hasDegrees || hasCertificates) && (
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2 border-b pb-3 mb-4">
-                <GraduationCap size={16} className="text-violet-500" /> Bằng cấp & Chứng chỉ
+                <GraduationCap size={16} className="text-gray-400" /> Bằng cấp & Chứng chỉ
               </h3>
               {hasDegrees && (
                 <div className="mb-4">
@@ -137,7 +132,7 @@ const StaffDetail = () => {
                     {staff.degrees!.map((d, i) => (
                       <span
                         key={i}
-                        className="text-xs bg-violet-50 text-violet-700 border border-violet-100 px-2.5 py-1 rounded-lg font-medium"
+                        className="text-xs bg-info-bg text-info border border-blue-100 px-2.5 py-1 rounded-lg font-medium"
                       >
                         {d}
                       </span>
@@ -154,7 +149,7 @@ const StaffDetail = () => {
                     {staff.certificates!.map((c, i) => (
                       <span
                         key={i}
-                        className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-100 px-2.5 py-1 rounded-lg font-medium"
+                        className="text-xs bg-success-bg text-success border border-green-100 px-2.5 py-1 rounded-lg font-medium"
                       >
                         {c}
                       </span>
@@ -171,20 +166,20 @@ const StaffDetail = () => {
           {/* Card Thông tin công tác */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <h3 className="text-base font-bold text-gray-800 flex items-center gap-2 border-b pb-3 mb-5">
-              <Briefcase size={18} className="text-violet-600" /> Thông tin công tác
+              <Briefcase size={18} className="text-gray-500" /> Thông tin công tác
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <StatCard
                 label="Phòng ban"
                 value={staffRole?.name || 'N/A'}
-                icon={<Building size={18} className="text-violet-500" />}
-                bg="bg-violet-50"
+                icon={<Building size={18} className="text-gray-400" />}
+                bg="bg-gray-50"
               />
               <StatCard
                 label="Mức lương"
-                value={formatCurrency(staff.baseSalary)}
-                icon={<Banknote size={18} className="text-emerald-500" />}
-                bg="bg-emerald-50"
+                value={formatCurrency(staff.baseSalary as number)}
+                icon={<Banknote size={18} className="text-success" />}
+                bg="bg-success-bg"
               />
               <StatCard
                 label="Số quyền hạn"
@@ -198,7 +193,7 @@ const StaffDetail = () => {
           {/* Card Thông tin Ngân hàng */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <h3 className="text-base font-bold text-gray-800 flex items-center gap-2 border-b pb-3 mb-5">
-              <CreditCard size={18} className="text-violet-600" /> Thông tin Thanh toán
+              <CreditCard size={18} className="text-gray-500" /> Thông tin Thanh toán
             </h3>
             {hasBankInfo ? (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -212,7 +207,7 @@ const StaffDetail = () => {
                 <p className="text-sm">Chưa có thông tin ngân hàng.</p>
                 <button
                   onClick={() => navigate(PATHS.HR_STAFFS_EDIT.replace(':id', id || ''))}
-                  className="text-xs text-violet-600 hover:underline mt-1"
+                  className="text-xs text-gray-500 hover:underline mt-1"
                 >
                   Thêm thông tin ngân hàng →
                 </button>
@@ -224,9 +219,9 @@ const StaffDetail = () => {
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <div className="flex items-center justify-between border-b pb-3 mb-5">
               <h3 className="text-base font-bold text-gray-800 flex items-center gap-2">
-                <ShieldCheck size={18} className="text-violet-600" /> Quyền hạn hệ thống
+                <ShieldCheck size={18} className="text-gray-500" /> Quyền hạn hệ thống
               </h3>
-              <span className="text-xs font-semibold bg-violet-100 text-violet-700 px-3 py-1 rounded-full">
+              <span className="text-xs font-semibold bg-info-bg text-info px-3 py-1 rounded-full">
                 {staffRole?.permissions?.length || 0} quyền
               </span>
             </div>
@@ -240,9 +235,9 @@ const StaffDetail = () => {
                   {staffRole.permissions.map((perm, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-100 rounded-xl hover:bg-violet-50 hover:border-violet-100 transition-colors"
+                      className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-100 rounded-xl hover:bg-gray-50 hover:border-gray-200 transition-colors"
                     >
-                      <CheckCircle2 size={15} className="text-violet-400 shrink-0" />
+                      <CheckCircle2 size={15} className="text-gray-400 shrink-0" />
                       <span className="text-sm font-medium text-slate-700 break-all">{perm}</span>
                     </div>
                   ))}
@@ -265,7 +260,7 @@ const StaffDetail = () => {
 
 const InfoRow = ({ icon, label, value }: { icon: React.ReactNode; label?: string; value?: string }) => (
   <div className="flex items-center gap-3 text-gray-600">
-    <div className="p-1.5 bg-violet-50 rounded-lg shrink-0">{icon}</div>
+    <div className="p-1.5 bg-gray-50 rounded-lg shrink-0">{icon}</div>
     <span className="text-sm">
       {label && <span className="text-gray-400">{label}: </span>}
       <span className="font-medium">{value || '—'}</span>

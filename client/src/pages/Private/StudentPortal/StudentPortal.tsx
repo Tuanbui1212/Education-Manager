@@ -20,6 +20,7 @@ import {
   ClipboardList,
   FileText,
   AlertCircle,
+  Award,
 } from 'lucide-react';
 import { startOfWeek, addDays, subWeeks, addWeeks, format, isSameDay } from 'date-fns';
 
@@ -39,6 +40,7 @@ import { shiftService } from '../../../services/shift.service';
 import { invoiceService } from '../../../services/invoice.service';
 import { paymentService } from '../../../services/payment.service';
 import { examService } from '../../../services/exam.service';
+import { attendanceService } from '../../../services/attendance.service';
 import type { IExam, IExamSubmission } from '../../../types/exam.type';
 
 const MOCK_INVOICES = [
@@ -49,6 +51,137 @@ const MOCK_INVOICES = [
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 
+const StudentGradesList = ({ classes, studentId, allExams }: { classes: any[], studentId: string, allExams: any[] }) => {
+  const [gradesData, setGradesData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!classes || classes.length === 0) return;
+    const fetchGrades = async () => {
+      setLoading(true);
+      try {
+        const data = await Promise.all(
+          classes.map(async (cls) => {
+            let avgAttendanceMark = null;
+            try {
+              const attRes = await attendanceService.getStudentAttendancesByClass(cls._id);
+              const records = attRes.data || [];
+              const markedRecords = records.filter((r: any) => typeof r.mark === 'number');
+              if (markedRecords.length > 0) {
+                const totalMark = markedRecords.reduce((sum: number, r: any) => sum + r.mark, 0);
+                avgAttendanceMark = totalMark / markedRecords.length;
+              }
+            } catch (e) { console.error(e); }
+
+            const classExams = allExams.filter(e => typeof e.classId === 'object' ? e.classId._id === cls._id : e.classId === cls._id);
+            const examsWithMarks = await Promise.all(
+              classExams.map(async (exam) => {
+                let score = null;
+                let status = 'Chưa làm';
+                try {
+                  const subRes = await examService.getSubmission(exam._id, studentId);
+                  if (subRes.data) {
+                    if (subRes.data.status === 'SUBMITTED') {
+                      score = subRes.data.score;
+                      status = 'Đã hoàn thành';
+                    } else if (subRes.data.status === 'IN_PROGRESS') {
+                      status = 'Đang làm';
+                    }
+                  }
+                } catch (e) { console.error(e); }
+                return {
+                  examId: exam._id,
+                  title: exam.title,
+                  score,
+                  status
+                };
+              })
+            );
+
+            return {
+              classId: cls._id,
+              className: cls.name,
+              courseName: typeof cls.courseId === 'object' && cls.courseId !== null ? cls.courseId?.title : '',
+              avgAttendanceMark,
+              exams: examsWithMarks
+            };
+          })
+        );
+        setGradesData(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchGrades();
+  }, [classes, studentId, allExams]);
+
+  if (loading) {
+    return <div className="p-10 flex justify-center text-blue-600"><div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" /></div>;
+  }
+
+  if (gradesData.length === 0) {
+    return <div className="p-10 text-center text-gray-500 bg-gray-50 rounded-2xl border border-dashed border-gray-200">Chưa có dữ liệu bảng điểm.</div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      {gradesData.map((clsGrade) => (
+        <div key={clsGrade.classId} className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all">
+          <div className="bg-blue-50/50 border-b border-blue-100/50 p-4">
+            <h4 className="font-bold text-lg text-blue-900">{clsGrade.className}</h4>
+            <p className="text-sm text-blue-700/70">{clsGrade.courseName}</p>
+          </div>
+          <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white rounded-xl p-4 border border-gray-100 flex items-center justify-between shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                  <ClipboardList size={20} />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-700">Điểm danh trung bình</p>
+                  <p className="text-xs text-gray-500">Dựa trên các buổi đã học</p>
+                </div>
+              </div>
+              <div className="text-2xl font-black text-emerald-600">
+                {clsGrade.avgAttendanceMark !== null ? Number(clsGrade.avgAttendanceMark).toFixed(1) : '-'}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h5 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                <FileText size={16} className="text-blue-500" /> Điểm các bài kiểm tra
+              </h5>
+              {clsGrade.exams.length > 0 ? (
+                <div className="space-y-2">
+                  {clsGrade.exams.map((exam: any) => (
+                    <div key={exam.examId} className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl hover:border-blue-200 transition-colors shadow-sm">
+                      <div className="truncate pr-4">
+                        <p className="text-sm font-semibold text-gray-800 truncate">{exam.title}</p>
+                        <p className={`text-xs mt-0.5 font-medium ${exam.status === 'Đã hoàn thành' ? 'text-emerald-500' : 'text-amber-500'}`}>{exam.status}</p>
+                      </div>
+                      <div className="shrink-0">
+                        {exam.score !== null ? (
+                          <span className="text-lg font-bold text-gray-800">{exam.score}</span>
+                        ) : (
+                          <span className="text-xs font-semibold text-gray-400 bg-gray-50 px-2 py-1 rounded-md border border-gray-200">Chưa có điểm</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400 italic bg-gray-50 p-3 rounded-xl border border-dashed border-gray-200 text-center">Chưa có bài kiểm tra nào</p>
+              )}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 // --- COMPONENT CHÍNH ---
 const StudentPortal = () => {
   const navigate = useNavigate();
@@ -58,10 +191,14 @@ const StudentPortal = () => {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentWeekStart, setCurrentWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
-  const [activeTab, setActiveTab] = useState<'classes' | 'timetable' | 'invoices' | 'exams'>('classes');
+  const [activeTab, setActiveTab] = useState<'classes' | 'timetable' | 'invoices' | 'exams' | 'grades'>('classes');
 
   const [searchInput, setSearchInput] = useState('');
   const debouncedSearch = useDebounce(searchInput, 400);
+
+  // Highlight state
+  const [highlightedScheduleId, setHighlightedScheduleId] = useState<string | null>(null);
+  const [highlightedExamId, setHighlightedExamId] = useState<string | null>(null);
 
   // Exam tab state
   const [examSearch, setExamSearch] = useState('');
@@ -69,6 +206,9 @@ const StudentPortal = () => {
   const [examsLoading, setExamsLoading] = useState(false);
   const [selectedExamToStart, setSelectedExamToStart] = useState<IExam | null>(null);
   const [isStartingExam, setIsStartingExam] = useState(false);
+
+  // Attendance stats per class
+  const [attendanceStats, setAttendanceStats] = useState<Record<string, { present: number; total: number }>>({});
 
   const handleClassClick = (cls: any) => {
     navigate(PATHS.STUDENT_ATTENDANCE.replace(':id', cls._id));
@@ -119,6 +259,47 @@ const StudentPortal = () => {
       .catch(() => { })
       .finally(() => setExamsLoading(false));
   }, [classesRaw]);
+
+  // Fetch attendance stats for hero section
+  useEffect(() => {
+    if (!classesRaw || classesRaw.length === 0) return;
+    const fetchStats = async () => {
+      const stats: Record<string, { present: number; total: number }> = {};
+      await Promise.all(
+        (classesRaw as any[]).map(async (cls: any) => {
+          try {
+            const res = await attendanceService.getStudentAttendancesByClass(cls._id);
+            const records = res.data || [];
+            const total = records.length;
+            const present = records.filter((r: any) => r.status === 'PRESENT' || r.status === 'LATE').length;
+            stats[cls._id] = { present, total };
+          } catch { stats[cls._id] = { present: 0, total: 0 }; }
+        })
+      );
+      setAttendanceStats(stats);
+    };
+    fetchStats();
+  }, [classesRaw]);
+
+  // Auto-scroll to highlighted exam
+  useEffect(() => {
+    if (!highlightedExamId || activeTab !== 'exams') return;
+    const timer = setTimeout(() => {
+      const el = document.getElementById(`exam-${highlightedExamId}`);
+      if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [highlightedExamId, activeTab]);
+
+  // Auto-scroll to highlighted schedule
+  useEffect(() => {
+    if (!highlightedScheduleId || activeTab !== 'timetable') return;
+    const timer = setTimeout(() => {
+      const el = document.getElementById(`schedule-${highlightedScheduleId}`);
+      if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [highlightedScheduleId, activeTab]);
 
   const filteredExams = useMemo(() => {
     const now = new Date();
@@ -272,39 +453,118 @@ const StudentPortal = () => {
   return (
     <>
       <>
-        <section className="bg-linear-to-r from-blue-600 to-indigo-700 rounded-3xl p-8 text-white shadow-lg relative overflow-hidden">
-          <div className="absolute top-0 right-0 opacity-10 transform translate-x-1/4 -translate-y-1/4">
-            <ShieldCheck size={250} />
+        {/* Hero Section - Smart Dashboard */}
+        <section className="mb-2">
+          {/* Greeting banner */}
+          <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-7 text-white shadow-lg relative overflow-hidden mb-5">
+            <div className="absolute top-0 right-0 opacity-10 transform translate-x-1/4 -translate-y-1/4"><ShieldCheck size={200} /></div>
+            <div className="relative z-10">
+              <h2 className="text-2xl font-bold mb-1">Xin chào, {currentUser?.name}! 👋</h2>
+              <p className="text-blue-100 text-base">Đây là tổng quan học tập hôm nay của bạn.</p>
+            </div>
           </div>
 
-          <div className="relative z-10">
-            <h2 className="text-3xl font-bold mb-2">Xin chào! 👋</h2>
-            <p className="text-blue-100 mb-8 max-w-2xl text-lg">
-              Chào mừng bạn đến với cổng thông tin. Dưới đây là tình hình học tập và các khoản phí cần lưu ý.
-            </p>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Widget 1: Lớp học sắp diễn ra */}
+            {(() => {
+              const now = new Date();
+              const upcoming = scheduleData
+                .filter((s: any) => new Date(s.date) >= now)
+                .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+              return (
+                <div
+                  onClick={() => {
+                    if (upcoming) {
+                      setActiveTab('timetable');
+                      setHighlightedScheduleId(upcoming._id);
+                    }
+                  }}
+                  className={`bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-all ${upcoming ? 'cursor-pointer hover:border-blue-200' : ''}`}
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center"><CalendarIcon size={16} className="text-blue-600" /></div>
+                    <p className="text-sm font-bold text-gray-700">Buổi học sắp diễn ra</p>
+                  </div>
+                  {upcoming ? (
+                    <>
+                      <h4 className="font-black text-gray-800 text-base mb-1">{typeof upcoming.classId === 'object' ? upcoming.classId?.name : 'N/A'}</h4>
+                      <p className="text-xs text-gray-500 flex items-center gap-1.5 mb-1">
+                        <Clock size={11} /> {upcoming.shiftId?.name || upcoming.shiftName || ''}
+                      </p>
+                      <p className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg inline-block mt-1">
+                        {format(new Date(upcoming.date), 'EEEE, dd/MM/yyyy', { locale: vi })}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-sm text-gray-400 italic">Không có buổi học sắp tới</p>
+                  )}
+                </div>
+              );
+            })()}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
-              <div className="bg-white/10 backdrop-blur-md border border-white/20 p-5 rounded-2xl flex items-center gap-4">
-                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                  <BookOpen size={24} className="text-white" />
-                </div>
-                <div>
-                  <p className="text-blue-100 text-sm font-medium">Đang theo học</p>
-                  <p className="text-2xl font-bold">{totalCount} Lớp</p>
-                </div>
+            {/* Widget 2: Tiến độ điểm danh */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-all">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center"><ClipboardList size={16} className="text-emerald-600" /></div>
+                <p className="text-sm font-bold text-gray-700">Tiến độ điểm danh</p>
               </div>
-              <div className="bg-white/10 backdrop-blur-md border border-white/20 p-5 rounded-2xl flex items-center gap-4">
-                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                  <CreditCard size={24} className="text-white" />
+              {classesRaw && (classesRaw as any[]).length > 0 ? (
+                <div className="space-y-2.5 max-h-36 overflow-y-auto custom-scrollbar pr-1">
+                  {(classesRaw as any[]).slice(0, 4).map((cls: any) => {
+                    const stat = attendanceStats[cls._id] || { present: 0, total: 0 };
+                    const pct = stat.total > 0 ? Math.round((stat.present / stat.total) * 100) : 0;
+                    return (
+                      <div key={cls._id} className="cursor-pointer group" onClick={() => navigate(PATHS.STUDENT_ATTENDANCE.replace(':id', cls._id))}>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="font-semibold text-gray-700 group-hover:text-blue-600 transition-colors truncate max-w-[150px]">{cls.name}</span>
+                          <span className={`font-bold ${pct >= 80 ? 'text-emerald-600' : pct >= 60 ? 'text-amber-500' : 'text-red-500'}`}>{pct}%</span>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-1.5">
+                          <div className={`h-1.5 rounded-full transition-all ${pct >= 80 ? 'bg-emerald-500' : pct >= 60 ? 'bg-amber-400' : 'bg-red-400'}`} style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div>
-                  <p className="text-blue-100 text-sm font-medium">Tổng cần thanh toán</p>
-                  <p className="text-2xl font-bold">
-                    {formatCurrency(MOCK_INVOICES.reduce((acc, curr) => acc + curr.amount, 0))}
-                  </p>
-                </div>
-              </div>
+              ) : (
+                <p className="text-sm text-gray-400 italic">Chưa có dữ liệu</p>
+              )}
             </div>
+
+            {/* Widget 3: Bài kiểm tra cần làm */}
+            {(() => {
+              const now = new Date();
+              const pending = allExams
+                .filter(e => new Date(e.endDate) > now && e.submissions?.status !== 'SUBMITTED')
+                .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
+                .slice(0, 3);
+              return (
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-all">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center"><FileText size={16} className="text-amber-600" /></div>
+                    <p className="text-sm font-bold text-gray-700">Bài kiểm tra cần làm</p>
+                    {pending.length > 0 && <span className="ml-auto text-[10px] font-bold bg-red-500 text-white px-2 py-0.5 rounded-full">{pending.length}</span>}
+                  </div>
+                  {pending.length > 0 ? (
+                    <div className="space-y-2">
+                      {pending.map(exam => (
+                        <div key={exam._id}
+                          onClick={() => { setActiveTab('exams'); setHighlightedExamId(exam._id); }}
+                          className="cursor-pointer flex items-start gap-2 p-2 rounded-xl hover:bg-amber-50 transition-colors group">
+                          <AlertCircle size={14} className="text-amber-500 shrink-0 mt-0.5" />
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-gray-800 group-hover:text-amber-700 truncate">{exam.title}</p>
+                            <p className="text-[10px] text-gray-400">Hết hạn: {new Date(exam.endDate).toLocaleDateString('vi-VN')}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-400 italic flex items-center gap-1.5"><CheckCircle2 size={14} className="text-emerald-500" /> Không có bài kiểm tra nào</p>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </section>
 
@@ -354,6 +614,17 @@ const StudentPortal = () => {
               <FileText size={18} />
               Bài kiểm tra
             </button>
+
+            <button
+              onClick={() => setActiveTab('grades')}
+              className={`px-6 py-2.5 cursor-pointer rounded-xl justify-center min-w-[140px] text-sm font-bold transition-all duration-300 flex items-center gap-2 ${activeTab === 'grades'
+                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
+                : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600 active:scale-95'
+                }`}
+            >
+              <Award size={18} />
+              Bảng điểm
+            </button>
           </div>
         </div>
 
@@ -378,59 +649,66 @@ const StudentPortal = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {classesData?.map((cls: any) => {
-                  const statusCfg = CLASS_STATUS_CONFIG[cls.status] ?? CLASS_STATUS_CONFIG[ClassStatus.ACTIVE];
-                  return (
-                    <div
-                      key={cls._id}
-                      onClick={() => handleClassClick(cls)}
-                      className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all group cursor-pointer"
-                    >
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <BookOpen size={24} />
-                        </div>
-                        <span className={`text-xs font-bold px-3 py-1 rounded-full ${statusCfg.bg} ${statusCfg.text}`}>
-                          {statusCfg.label}
-                        </span>
-                      </div>
-
-                      <h4 className="font-bold text-lg text-gray-800 mb-1 line-clamp-1 group-hover:text-blue-600 transition-colors">
-                        {cls.name}
-                      </h4>
-                      <p className="text-sm text-gray-400 font-medium mb-4">
-                        {typeof cls.courseId === 'object' && cls.courseId !== null ? (cls.courseId as any).title : '—'}
-                      </p>
-
-                      <div className="space-y-2 border-t border-gray-50 pt-4">
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                          <User size={14} className="text-gray-400 shrink-0" />
-                          <span className="truncate">
-                            {typeof cls.teacherId === 'object' && cls.teacherId !== null
-                              ? (cls.teacherId as any).fullName
-                              : 'Chưa phân công'}
+              {classesData?.length !== 0 ?
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {classesData?.map((cls: any) => {
+                    const statusCfg = CLASS_STATUS_CONFIG[cls.status] ?? CLASS_STATUS_CONFIG[ClassStatus.ACTIVE];
+                    return (
+                      <div
+                        key={cls._id}
+                        onClick={() => handleClassClick(cls)}
+                        className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all group cursor-pointer"
+                      >
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <BookOpen size={24} />
+                          </div>
+                          <span className={`text-xs font-bold px-3 py-1 rounded-full ${statusCfg.bg} ${statusCfg.text}`}>
+                            {statusCfg.label}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                          <MapPin size={14} className="text-gray-400 shrink-0" />
-                          <span className="truncate">
-                            {typeof cls.roomId === 'object' && cls.roomId !== null
-                              ? (cls.roomId as any).name
-                              : 'Chưa xếp phòng'}
-                          </span>
+
+                        <h4 className="font-bold text-lg text-gray-800 mb-1 line-clamp-1 group-hover:text-blue-600 transition-colors">
+                          {cls.name}
+                        </h4>
+                        <p className="text-sm text-gray-400 font-medium mb-4">
+                          {typeof cls.courseId === 'object' && cls.courseId !== null ? (cls.courseId as any).title : '—'}
+                        </p>
+
+                        <div className="space-y-2 border-t border-gray-50 pt-4">
+                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <User size={14} className="text-gray-400 shrink-0" />
+                            <span className="truncate">
+                              {typeof cls.teacherId === 'object' && cls.teacherId !== null
+                                ? (cls.teacherId as any).fullName
+                                : 'Chưa phân công'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <MapPin size={14} className="text-gray-400 shrink-0" />
+                            <span className="truncate">
+                              {typeof cls.roomId === 'object' && cls.roomId !== null
+                                ? (cls.roomId as any).name
+                                : 'Chưa xếp phòng'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 flex items-center justify-end gap-1 text-blue-500 text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
+                          <ClipboardList size={15} />
+                          <span>Xem lịch điểm danh</span>
+                          <ChevronRight size={15} />
                         </div>
                       </div>
-
-                      <div className="mt-4 flex items-center justify-end gap-1 text-blue-500 text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
-                        <ClipboardList size={15} />
-                        <span>Xem lịch điểm danh</span>
-                        <ChevronRight size={15} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })
+                  }
+                </div> :
+                <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                  <div className="p-10 text-center text-gray-500 flex flex-col items-center">
+                    <p>Hiện tại bạn đang không tham gia lớp nào.</p>
+                  </div>
+                </div>}
             </>
           </section>
         )}
@@ -529,7 +807,13 @@ const StudentPortal = () => {
                                 className="p-2 border-b border-r border-gray-100 bg-white align-top relative"
                               >
                                 {cellSchedule ? (
-                                  <div className="h-full bg-violet-50 border border-violet-200 rounded-xl p-3 cursor-pointer hover:bg-violet-100 hover:shadow-md transition-all group/card flex flex-col gap-2">
+                                  <div
+                                    id={`schedule-${cellSchedule._id}`}
+                                    className={`h-full border rounded-xl p-3 cursor-pointer hover:shadow-md transition-all group/card flex flex-col gap-2 ${highlightedScheduleId === cellSchedule._id
+                                      ? 'bg-blue-100 border-blue-400 ring-2 ring-blue-400 ring-offset-1'
+                                      : 'bg-violet-50 border-violet-200 hover:bg-violet-100'
+                                      }`}
+                                  >
                                     <div className="flex items-start justify-between gap-1">
                                       <h4 className="font-bold text-sm text-violet-800 line-clamp-2 group-hover/card:text-violet-900">
                                         {cellSchedule.classId?.name || 'N/A'}
@@ -738,7 +1022,11 @@ const StudentPortal = () => {
                   return (
                     <div
                       key={exam._id}
-                      className={`bg-white rounded-2xl border shadow-sm hover:shadow-md transition-all p-5 flex flex-col gap-3 ${isOverdue ? 'border-red-100 opacity-80' : 'border-gray-100 hover:border-blue-200'}`}
+                      id={`exam-${exam._id}`}
+                      className={`bg-white rounded-2xl border shadow-sm hover:shadow-md transition-all p-5 flex flex-col gap-3 ${highlightedExamId === exam._id
+                        ? 'border-amber-400 ring-2 ring-amber-400 ring-offset-1'
+                        : isOverdue ? 'border-red-100 opacity-80' : 'border-gray-100 hover:border-blue-200'
+                        }`}
                     >
                       <div className="flex justify-between items-start">
                         {isOverdue ? (
@@ -751,7 +1039,7 @@ const StudentPortal = () => {
                           </span>
                         )}
                         <span className="text-[10px] text-gray-400 font-medium bg-gray-50 px-2 py-0.5 rounded-full">
-                          {examClassName}
+                          Lớp {examClassName}
                         </span>
                       </div>
 
@@ -793,8 +1081,20 @@ const StudentPortal = () => {
             )}
           </section>
         )}
-      </>
 
+        {/* GRADES TAB */}
+        {activeTab === 'grades' && (
+          <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <Award className="text-emerald-600" />
+                Bảng điểm cá nhân
+              </h3>
+            </div>
+            <StudentGradesList classes={classesRaw as any[]} studentId={currentUser?.id!} allExams={allExams} />
+          </section>
+        )}
+      </>
       {/* CONFIRM START EXAM MODAL */}
       {selectedExamToStart && (
         <div className="fixed inset-0 z-100 flex items-center justify-center">
@@ -809,7 +1109,7 @@ const StudentPortal = () => {
             </div>
             <h3 className="text-xl font-bold text-gray-800 mb-2">Bắt đầu làm bài?</h3>
             <p className="text-sm text-gray-500 mb-6">
-              Bạn có chắc chắn muốn bắt đầu bài kiểm tra{' '}
+              Bạn có chắc chắn muốn bắt đầu bài kiểm tra
               <span className="font-semibold text-gray-800">"{selectedExamToStart.title}"</span>?<br />
               <br />
               Thời gian đếm ngược <span className="font-bold text-red-500">{selectedExamToStart.duration} phút</span> sẽ

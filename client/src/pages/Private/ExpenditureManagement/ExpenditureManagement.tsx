@@ -56,7 +56,7 @@ const ExpenditureManagement = () => {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-primary text-white text-sm">
-              <th className="p-4 font-semibold w-16 text-center">No.</th>
+              <th className="p-4 font-semibold w-16 text-center">STT</th>
               <th className="p-4 font-semibold">Tên Chi Phí</th>
               <th className="p-4 font-semibold">Hạng Mục</th>
               <th className="p-4 font-semibold text-right">Số tiền dự kiến</th>

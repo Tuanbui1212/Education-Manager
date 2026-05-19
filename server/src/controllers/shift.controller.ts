@@ -47,8 +47,8 @@ export class ShiftController {
 
       if (!shift) return res.status(404).json({ success: false, message: 'Không tìm thấy ca học để sửa' });
       res.status(200).json({ success: true, message: 'Cập nhật thành công', data: shift });
-    } catch (error) {
-      res.status(500).json({ success: false, message: 'Lỗi server' });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message || 'Lỗi server' });
     }
   };
 

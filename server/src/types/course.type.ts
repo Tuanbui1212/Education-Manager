@@ -3,6 +3,7 @@ export interface ICourse extends Document {
     title: string,
     basePrice: number,
     syllabus: string,
+    totalLessons: number,
 }
 
 export interface GetCoursesQuery {

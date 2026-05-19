@@ -7,7 +7,7 @@ import TablePagination from '../../../components/TablePagination';
 import SearchInput from '../../../components/SearchInput';
 import ConfirmModal from '../../../components/ConfirmModal';
 
-import NotificationTemplateModal, { SYSTEM_TEMPLATE_CODES } from './NotificationTemplateModal';
+import NotificationTemplateModal from './NotificationTemplateModal';
 
 import useFetch from '../../../hooks/useFetch';
 import useDebounce from '../../../hooks/useDebounce';
@@ -16,6 +16,7 @@ import { notificationTemplateService } from '../../../services/notificationTempl
 
 import { useState } from 'react';
 import type { INotificationTemplate, NotificationType } from '../../../types/notificationTemplate.type';
+import { SYSTEM_TEMPLATE_CODES } from '../../../utils/constants';
 
 const ListNotificationTemplate = () => {
   const [page, setPage] = useState(1);
@@ -34,7 +35,7 @@ const ListNotificationTemplate = () => {
     title: '',
     message: '',
     type: 'success' as 'success' | 'danger' | 'warning' | 'info',
-    onConfirm: () => { },
+    onConfirm: () => {},
   });
 
   const queryParams = {
@@ -128,7 +129,7 @@ const ListNotificationTemplate = () => {
           setConfirmConfig({
             isOpen: true,
             title: 'Lỗi',
-            message: error.response?.data?.message || 'Lỗi xóa!',
+            message: error.response?.data?.message || 'Có lỗi xảy ra khi xóa!',
             type: 'danger',
             onConfirm: () => setConfirmConfig({ ...confirmConfig, isOpen: false }),
           });
@@ -205,18 +206,18 @@ const ListNotificationTemplate = () => {
             )}
           </div>
         </div>
-        <Button variant="primary" icon={<Plus size={18} />} onClick={() => setShowModalAdd(true)}>
+        {/* <Button variant="primary" icon={<Plus size={18} />} onClick={() => setShowModalAdd(true)}>
           Thêm mẫu
-        </Button>
+        </Button> */}
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 relative">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-primary text-white text-sm sticky top-0 z-10 ">
-              <th className="p-4 font-semibold w-16 text-center rounded-tl-xl">No.</th>
+              <th className="p-4 font-semibold w-16 text-center rounded-tl-xl">STT</th>
               <th className="p-4 font-semibold">Sự kiện áp dụng</th>
-              <th className="p-4 font-semibold">Tiêu đề mẫu</th>
+              <th className="p-4 font-semibold">Tiêu đề</th>
               <th className="p-4 font-semibold">Loại</th>
               <th className="p-4 font-semibold text-center rounded-tr-xl">Thao tác</th>
             </tr>
@@ -244,13 +245,13 @@ const ListNotificationTemplate = () => {
                       >
                         <Edit2 size={18} />
                       </button>
-                      <button
+                      {/* <button
                         onClick={() => template._id && handleDeleteTemplate(template._id)}
                         className="p-2 text-red-500 hover:bg-red-100 rounded-xl transition-all duration-300 hover:scale-110 active:scale-95"
                         title="Xóa"
                       >
                         <Trash2 size={18} />
-                      </button>
+                      </button> */}
                     </div>
                   </td>
                 </tr>

@@ -12,11 +12,16 @@ export interface IClass {
   name: string;
   courseId: Types.ObjectId;
   teacherId: Types.ObjectId;
-  roomId: Types.ObjectId;
+  roomId?: Types.ObjectId;
   documents: Array<string>;
   studentIds: Array<Types.ObjectId>;
   startDate?: Date;
   status: ClassStatus;
+  totalLessons: number;
+  maxNumberOfStudents: number;
+  lessonsPerWeek: number;
+  optionalRequirements?: string[];
+  schedule: boolean;
 }
 
 export interface GetClassesQuery {
@@ -27,6 +32,7 @@ export interface GetClassesQuery {
   courseId?: string;
   startDate?: Date;
   endDate?: Date;
+  schedule?: boolean;
 }
 
 export interface GetStudentsByClassQuery {

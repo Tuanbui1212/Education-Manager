@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { X, BookOpen, UserCheck, DoorOpen, Activity } from 'lucide-react';
+import { X, BookOpen, UserCheck, DoorOpen, Activity, FileText, Calendar, Users } from 'lucide-react';
 
 import Button from '../../../../components/Button';
 import InputField from '../../../../components/InputField';
@@ -27,6 +27,10 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, onSubmit, init
     teacherId: '',
     roomId: '',
     status: 'PENDING',
+    totalLessons: 0,
+    lessonsPerWeek: 0,
+    maxNumberOfStudents: 0,
+    startDate: '',
   });
 
   console.log('Form Data:', formData);
@@ -56,6 +60,10 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, onSubmit, init
         teacherId: getSafeId(initialData.teacherId),
         roomId: getSafeId(initialData.roomId),
         status: initialData.status || 'UPCOMING',
+        totalLessons: initialData.totalLessons || 0,
+        lessonsPerWeek: initialData.lessonsPerWeek || 0,
+        maxNumberOfStudents: initialData.maxNumberOfStudents || 0,
+        startDate: initialData.startDate ? new Date(initialData.startDate).toISOString().split('T')[0] : '',
       });
     } else {
       setFormData({
@@ -64,6 +72,10 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, onSubmit, init
         teacherId: '',
         roomId: '',
         status: 'PENDING',
+        totalLessons: 0,
+        lessonsPerWeek: 0,
+        maxNumberOfStudents: 0,
+        startDate: '',
       });
     }
 
@@ -78,6 +90,18 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, onSubmit, init
     if (!formData.courseId) newErrors.courseId = 'Vui lòng chọn khóa học';
     if (!formData.teacherId) newErrors.teacherId = 'Vui lòng chọn giáo viên';
     if (!formData.roomId) newErrors.roomId = 'Vui lòng chọn phòng học';
+    if (!formData.totalLessons || formData.totalLessons <= 0 || !Number.isInteger(formData.totalLessons)) {
+      newErrors.totalLessons = 'Tổng số bài học phải là số nguyên > 0';
+    }
+    if (!formData.lessonsPerWeek || formData.lessonsPerWeek <= 0 || !Number.isInteger(formData.lessonsPerWeek)) {
+      newErrors.lessonsPerWeek = 'Số buổi/tuần phải là số nguyên > 0';
+    }
+    if (!formData.maxNumberOfStudents || formData.maxNumberOfStudents <= 0 || !Number.isInteger(formData.maxNumberOfStudents)) {
+      newErrors.maxNumberOfStudents = 'Sĩ số tối đa phải là số nguyên > 0';
+    }
+    if (!formData.startDate) {
+      newErrors.startDate = 'Vui lòng chọn ngày bắt đầu';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -109,7 +133,7 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, onSubmit, init
   };
 
   const handleRoomSearch = async (query: string) => {
-    const response = await roomService.getRooms({ search: query, limit: 10 });
+    const response = await roomService.getRooms({ search: query, limit: 10, capacity: formData.maxNumberOfStudents });
     return response.data || [];
   };
 
@@ -132,7 +156,7 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, onSubmit, init
           </button>
         </div>
 
-        <form className="p-6 space-y-5" onSubmit={handleSubmit}>
+        <form className="p-6 space-y-5 max-h-[80vh] overflow-y-auto" onSubmit={handleSubmit}>
           <InputField
             label="Tên lớp học"
             icon={<BookOpen size={16} />}
@@ -186,6 +210,51 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, onSubmit, init
               initialData?.roomId && (initialData.roomId as any).name ? (initialData.roomId as any).name : ''
             }
           />
+
+          <div className="grid grid-cols-2 gap-4">
+            <InputField
+              label="Số buổi học/tuần"
+              icon={<Calendar size={16} />}
+              type="number"
+              value={formData.lessonsPerWeek || ''}
+              onChange={(e) => setFormData({ ...formData, lessonsPerWeek: Number(e.target.value) })}
+              onFocus={() => clearError('lessonsPerWeek')}
+              error={errors.lessonsPerWeek}
+              placeholder="Vd: 2"
+            />
+            <InputField
+              label="Tổng số buổi học"
+              icon={<FileText size={16} />}
+              type="number"
+              value={formData.totalLessons || ''}
+              onChange={(e) => setFormData({ ...formData, totalLessons: Number(e.target.value) })}
+              onFocus={() => clearError('totalLessons')}
+              error={errors.totalLessons}
+              placeholder="Vd: 24"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <InputField
+              label="Sĩ số tối đa"
+              icon={<Users size={16} />}
+              type="number"
+              value={formData.maxNumberOfStudents || ''}
+              onChange={(e) => setFormData({ ...formData, maxNumberOfStudents: Number(e.target.value) })}
+              onFocus={() => clearError('maxNumberOfStudents')}
+              error={errors.maxNumberOfStudents}
+              placeholder="Vd: 30"
+            />
+            <InputField
+              label="Ngày bắt đầu"
+              icon={<Calendar size={16} />}
+              type="date"
+              value={formData.startDate as string || ''}
+              onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+              onFocus={() => clearError('startDate')}
+              error={errors.startDate}
+            />
+          </div>
 
           {initialData && (
             <SelectField

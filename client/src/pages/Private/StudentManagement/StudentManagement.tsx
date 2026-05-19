@@ -26,6 +26,7 @@ import StatCard from '../../../components/StatCard';
 import SkeletonRow from '../../../components/SkeletonRow';
 import EmptyState from '../../../components/EmptyState';
 import ErrorState from '../../../components/ErrorState';
+import RequirePermission from '../../../components/RequirePermission';
 
 import useFetch from '../../../hooks/useFetch';
 import useDebounce from '../../../hooks/useDebounce';
@@ -38,6 +39,7 @@ import type { IUser } from '../../../types/user.type';
 import { formatDate, getStatusUserStyles } from '../../../utils/format.util';
 import { STATUS_OPTIONS, PATHS } from '../../../utils/constants';
 import { getColor, getInitials, STATUS_DOTS } from '../../../utils/user.util';
+import { PERMISSIONS } from '../../../utils/permission.constant';
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 const StudentManager = () => {
@@ -288,9 +290,11 @@ const StudentManager = () => {
           </div>
         </div>
 
-        <Button variant="primary" icon={<Plus size={18} />} onClick={() => navigate(PATHS.TRAINING_STUDENT_CREATE)}>
-          Thêm Học viên
-        </Button>
+        <RequirePermission required={PERMISSIONS.STUDENT.CREATE}>
+          <Button variant="primary" icon={<Plus size={18} />} onClick={() => navigate(PATHS.TRAINING_STUDENT_CREATE)}>
+            Thêm Học viên
+          </Button>
+        </RequirePermission>
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
@@ -327,12 +331,14 @@ const StudentManager = () => {
           <table className="w-full text-left border-collapse min-w-[700px]">
             <thead>
               <tr className="bg-primary text-white text-sm">
-                <th className="px-5 py-3.5 font-semibold w-12 text-center">No.</th>
+                <th className="px-5 py-3.5 font-semibold w-12 text-center">STT</th>
                 <th className="px-5 py-3.5 font-semibold">Học viên</th>
                 <th className="px-5 py-3.5 font-semibold">Liên hệ & Chăm sóc</th>
                 <th className="px-5 py-3.5 font-semibold">Ngày sinh</th>
                 <th className="px-5 py-3.5 font-semibold">Trạng thái</th>
-                <th className="px-5 py-3.5 font-semibold text-center">Hành động</th>
+                <RequirePermission required={[PERMISSIONS.STUDENT.EDIT, PERMISSIONS.STUDENT.DELETE]}>
+                  <th className="px-5 py-3.5 font-semibold text-center">Hành động</th>
+                </RequirePermission>
               </tr>
             </thead>
 
@@ -346,7 +352,7 @@ const StudentManager = () => {
 
                   return (
                     <tr key={student._id} className="group hover:bg-slate-50/80 transition-colors">
-                      {/* No. */}
+                      {/* STT */}
                       <td className="px-5 py-4 text-gray-400 text-sm text-center font-medium">
                         {index + 1 + (page - 1) * limit}
                       </td>
@@ -418,38 +424,45 @@ const StudentManager = () => {
                       </td>
 
                       {/* Actions */}
-                      <td className="px-5 py-4">
-                        <div className="flex items-center justify-center gap-1.5">
-                          <button
-                            onClick={() => navigate(PATHS.TRAINING_STUDENT_EDIT.replace(':id', student._id || ''))}
-                            title="Chỉnh sửa"
-                            className="p-2 rounded-xl text-blue-500
+                      <RequirePermission required={[PERMISSIONS.STUDENT.EDIT, PERMISSIONS.STUDENT.DELETE]}>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <RequirePermission required={PERMISSIONS.STUDENT.EDIT}>
+                              <button
+                                onClick={() => navigate(PATHS.TRAINING_STUDENT_EDIT.replace(':id', student._id || ''))}
+                                title="Chỉnh sửa"
+                                className="p-2 rounded-xl text-blue-500
                               hover:bg-blue-50 hover:text-blue-700
                               transition-all hover:scale-110 active:scale-95"
-                          >
-                            <Edit2 size={16} />
-                          </button>
-                          <button
-                            onClick={() =>
-                              setConfirmDelete({
-                                isOpen: true,
-                                title: 'Xác nhận xóa',
-                                message: `Bạn có chắc muốn xóa học viên "${student.fullName}"?`,
-                                type: 'danger',
-                                confirmText: 'Xóa',
-                                cancelText: 'Hủy',
-                                onConfirm: () => handleDeleteStudent(student._id),
-                              })
-                            }
-                            title="Xóa"
-                            className="p-2 rounded-xl text-red-400
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                            </RequirePermission>
+
+                            <RequirePermission required={PERMISSIONS.STUDENT.DELETE}>
+                              <button
+                                onClick={() =>
+                                  setConfirmDelete({
+                                    isOpen: true,
+                                    title: 'Xác nhận xóa',
+                                    message: `Bạn có chắc muốn xóa học viên "${student.fullName}"?`,
+                                    type: 'danger',
+                                    confirmText: 'Xóa',
+                                    cancelText: 'Hủy',
+                                    onConfirm: () => handleDeleteStudent(student._id),
+                                  })
+                                }
+                                title="Xóa"
+                                className="p-2 rounded-xl text-red-400
                               hover:bg-red-50 hover:text-red-600
                               transition-all hover:scale-110 active:scale-95"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </RequirePermission>
+                          </div>
+                        </td>
+                      </RequirePermission>
                     </tr>
                   );
                 })

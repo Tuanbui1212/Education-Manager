@@ -100,8 +100,17 @@ const Header = () => {
         }
     };
 
+    const handleGoToPortal = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (currentUser?.role?.name.toUpperCase() == 'TEACHER') {
+            navigate(PATHS.TEACHER_PORTAL);
+        } else if (currentUser?.role?.name.toUpperCase() == 'STUDENT') {
+            navigate(PATHS.STUDENT_PORTAL);
+        } else return;
+    };
+
     const handleLogout = () => {
-        localStorage.removeItem('token');
+        localStorage.removeItem('accessToken');
         navigate(PATHS.LOGIN);
     };
     return (
@@ -109,19 +118,26 @@ const Header = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-20">
                     {/* Logo */}
-                    <div className="flex items-center gap-3 cursor-pointer">
+                    <div className="flex items-center gap-3 cursor-pointer" onClick={(e) => handleGoToPortal(e)}>
                         <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-blue-600/20">
                             <GraduationCap size={24} />
                         </div>
                         <div>
                             <h1 className="text-xl font-bold text-gray-800 tracking-tight">EduCenter</h1>
-                            <p className="text-[10px] uppercase tracking-widest text-blue-600 font-bold">Parent Portal</p>
+                            <p className="text-[10px] uppercase tracking-widest text-blue-600 font-bold">{currentUser?.role?.name} Portal</p>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-6">
                         {/* User Profile */}
-                        <div className="relative flex items-center gap-2 cursor-pointer hover:bg-blue-50 p-3 rounded-full transition-colors">
+                        <div
+                            className="relative flex items-center gap-2 cursor-pointer hover:bg-blue-50 p-3 rounded-full transition-colors"
+                            onClick={() => {
+                                const role = currentUser?.role?.name?.toUpperCase();
+                                if (role === 'TEACHER') navigate(PATHS.PROFILE_TEACHER);
+                                else if (role === 'STUDENT') navigate(PATHS.PROFILE_STUDENT);
+                            }}
+                        >
                             <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
                                 {currentUser?.name?.charAt(0).toUpperCase() ?? 'N/A'}
                             </div>

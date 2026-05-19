@@ -22,10 +22,32 @@ export interface GetSchedulesQuery {
   classId?: string;
   roomId?: string;
   teacherId?: string;
+  date?: string;
+  startDateTime?: Date;
+  endDateTime?: Date;
 }
 
 export interface ScheduleStatus {
   ongoing: string;
   upcoming: string;
   done: string;
+}
+
+export interface IGAClassInput {
+  classId: string;
+  optionalRequirements: string[];
+}
+
+export interface IGAGene {
+  classId: string;
+  teacherId: string;
+  dayOfWeek: number;
+  shiftId: string;
+  roomId: string;
+}
+
+export interface IGAChromosome {
+  genes: IGAGene[];
+  fitness: number;
+  conflicts: number;
 }
