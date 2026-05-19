@@ -2,6 +2,7 @@ import { ArrowLeft, Edit2, Trash2, Copy, Lock, ShieldAlert } from 'lucide-react'
 import { useNavigate } from 'react-router-dom';
 import Button from '../../../components/Button';
 import type { IRole } from '../../../types/role.type';
+import { NAME_ROLES } from '../../../utils/constants';
 
 interface RoleDetailHeaderProps {
   role: IRole;
@@ -32,7 +33,9 @@ const RoleDetailHeader = ({ role, onEdit, onDelete, onClone }: RoleDetailHeaderP
           </p>
           <div className="flex items-center gap-2">
             {isSuperAdmin && <ShieldAlert size={18} className="text-orange-500" />}
-            <h1 className="text-2xl font-bold text-gray-800">{role.name}</h1>
+            <h1 className="text-2xl font-bold text-gray-800">
+              {NAME_ROLES.find((r) => r.value.toUpperCase() === role.name.toUpperCase())?.label || role.name}
+            </h1>
             {isSuperAdmin && (
               <span className="px-2 py-0.5 bg-orange-100 text-orange-600 text-xs font-semibold rounded-full border border-orange-200">
                 Bất khả xâm phạm

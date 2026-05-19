@@ -8,6 +8,7 @@ import TablePagination from '../../../../components/TablePagination';
 import SearchInput from '../../../../components/SearchInput';
 import ConfirmModal from '../../../../components/ConfirmModal';
 import TableSkeleton from '../../../../components/TableSkeleton';
+import RequirePermission from '../../../../components/RequirePermission';
 
 import ClassModal from './ClassModal';
 import StudentListModal from './StudentListModal';
@@ -17,9 +18,11 @@ import useDebounce from '../../../../hooks/useDebounce';
 
 import { classService } from '../../../../services/class.service';
 import type { IClass } from '../../../../types/class.type';
-import { PATHS } from '../../../../utils/constants';
 
+import { PATHS } from '../../../../utils/constants';
 import { formatDate } from '../../../../utils/format.util';
+import { PERMISSIONS } from '../../../../utils/permission.constant';
+
 import { scheduleService } from '../../../../services/schedule.service';
 
 const ClassManagement = () => {
@@ -44,7 +47,7 @@ const ClassManagement = () => {
     title: '',
     message: '',
     type: 'success' as 'success' | 'danger' | 'warning' | 'info',
-    onConfirm: () => { },
+    onConfirm: () => {},
   });
 
   const queryParams = {
@@ -290,15 +293,16 @@ const ClassManagement = () => {
             )}
           </div>
         </div>
-
-        <Button
-          variant="primary"
-          icon={<Plus size={20} />}
-          onClick={() => navigate(PATHS.TRAINING_CLASSES_CREATE)}
-          className="rounded-xl shadow-lg shadow-primary/20"
-        >
-          Tạo lớp học mới
-        </Button>
+        <RequirePermission required={PERMISSIONS.CLASS.CREATE}>
+          <Button
+            variant="primary"
+            icon={<Plus size={20} />}
+            onClick={() => navigate(PATHS.TRAINING_CLASSES_CREATE)}
+            className="rounded-xl shadow-lg shadow-primary/20"
+          >
+            Tạo lớp học mới
+          </Button>
+        </RequirePermission>
       </div>
 
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden relative transition-all hover:shadow-xl hover:shadow-gray-200/50">
@@ -312,7 +316,9 @@ const ClassManagement = () => {
                 <th className="p-4 font-semibold text-center">Sĩ số</th>
                 <th className="p-4 font-semibold">Ngày khai giảng</th>
                 <th className="p-4 font-semibold text-center">Trạng thái</th>
-                <th className="p-4 font-semibold text-center w-28">Thao tác</th>
+                <RequirePermission required={[PERMISSIONS.CLASS.EDIT, PERMISSIONS.CLASS.DELETE]}>
+                  <th className="p-4 font-semibold text-center w-28">Thao tác</th>
+                </RequirePermission>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 bg-white">
@@ -404,29 +410,35 @@ const ClassManagement = () => {
                         )}
                       </td>
 
-                      <td className="p-4">
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            onClick={(e) => {
-                              openEditModal(e, item);
-                            }}
-                            className="p-2 text-blue-600 hover:bg-blue-100 rounded-xl transition-all hover:scale-110"
-                            title="Sửa lớp"
-                          >
-                            <Edit2 size={18} />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteClass(item._id);
-                            }}
-                            className="p-2 text-red-500 hover:bg-red-100 rounded-xl transition-all hover:scale-110"
-                            title="Xóa lớp"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      </td>
+                      <RequirePermission required={[PERMISSIONS.CLASS.EDIT, PERMISSIONS.CLASS.DELETE]}>
+                        <td className="p-4">
+                          <div className="flex items-center justify-center gap-2">
+                            <RequirePermission required={PERMISSIONS.CLASS.EDIT}>
+                              <button
+                                onClick={(e) => {
+                                  openEditModal(e, item);
+                                }}
+                                className="p-2 text-blue-600 hover:bg-blue-100 rounded-xl transition-all hover:scale-110"
+                                title="Sửa lớp"
+                              >
+                                <Edit2 size={18} />
+                              </button>
+                            </RequirePermission>
+                            <RequirePermission required={PERMISSIONS.CLASS.DELETE}>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteClass(item._id);
+                                }}
+                                className="p-2 text-red-500 hover:bg-red-100 rounded-xl transition-all hover:scale-110"
+                                title="Xóa lớp"
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            </RequirePermission>
+                          </div>
+                        </td>
+                      </RequirePermission>
                     </tr>
                   );
                 })

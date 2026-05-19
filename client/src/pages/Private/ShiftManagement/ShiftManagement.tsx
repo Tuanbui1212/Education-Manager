@@ -6,6 +6,7 @@ import PageHeader from '../../../components/PageHeader';
 import TablePagination from '../../../components/TablePagination';
 import SearchInput from '../../../components/SearchInput';
 import ConfirmModal from '../../../components/ConfirmModal';
+import RequirePermission from '../../../components/RequirePermission';
 
 import ShiftModal from './ShiftModal';
 
@@ -15,6 +16,8 @@ import useDebounce from '../../../hooks/useDebounce';
 import { shiftService } from '../../../services/shift.service';
 
 import type { IShift } from '../../../types/shift.type';
+
+import { PERMISSIONS } from '../../../utils/permission.constant';
 
 const ShiftManagement = () => {
   const [page, setPage] = useState(1);
@@ -219,9 +222,11 @@ const ShiftManagement = () => {
           />
         </div>
 
-        <Button variant="primary" icon={<Plus size={18} />} onClick={() => setIsModalOpen(true)}>
-          Thêm Ca Học
-        </Button>
+        <RequirePermission required={PERMISSIONS.SHIFT.CREATE}>
+          <Button variant="primary" icon={<Plus size={18} />} onClick={() => setIsModalOpen(true)}>
+            Thêm Ca Học
+          </Button>
+        </RequirePermission>
       </div>
 
       {/* Bảng dữ liệu */}
@@ -234,7 +239,9 @@ const ShiftManagement = () => {
               <th className="p-4 font-semibold text-center">Thời gian bắt đầu</th>
               <th className="p-4 font-semibold text-center">Thời gian kết thúc</th>
               <th className="p-4 font-semibold">Trạng thái</th>
-              <th className="p-4 font-semibold text-center w-32">Hành động</th>
+              <RequirePermission required={[PERMISSIONS.SHIFT.EDIT, PERMISSIONS.USER.DELETE]}>
+                <th className="p-4 font-semibold text-center w-32">Hành động</th>
+              </RequirePermission>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -267,24 +274,31 @@ const ShiftManagement = () => {
                       </span>
                     </div>
                   </td>
-                  <td className="p-4">
-                    <div className="flex items-center justify-center gap-2">
-                      <button
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-300 hover:scale-110 hover:-translate-y-1 active:scale-95"
-                        title="Sửa"
-                        onClick={() => openEditModal(shift._id as string)}
-                      >
-                        <Edit2 size={18} />
-                      </button>
-                      <button
-                        className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-all duration-300 hover:scale-110 hover:rotate-12 active:scale-95"
-                        title="Xóa"
-                        onClick={() => openDeleteModal(shift._id as string)}
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </td>
+                  <RequirePermission required={[PERMISSIONS.SHIFT.EDIT, PERMISSIONS.SHIFT.DELETE]}>
+                    <td className="p-4">
+                      <div className="flex items-center justify-center gap-2">
+                        <RequirePermission required={PERMISSIONS.SHIFT.EDIT}>
+                          <button
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-300 hover:scale-110 hover:-translate-y-1 active:scale-95"
+                            title="Sửa"
+                            onClick={() => openEditModal(shift._id as string)}
+                          >
+                            <Edit2 size={18} />
+                          </button>
+                        </RequirePermission>
+
+                        <RequirePermission required={PERMISSIONS.SHIFT.DELETE}>
+                          <button
+                            className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-all duration-300 hover:scale-110 hover:rotate-12 active:scale-95"
+                            title="Xóa"
+                            onClick={() => openDeleteModal(shift._id as string)}
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </RequirePermission>
+                      </div>
+                    </td>
+                  </RequirePermission>
                 </tr>
               ))
             ) : (

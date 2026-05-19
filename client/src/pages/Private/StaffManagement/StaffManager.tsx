@@ -12,6 +12,9 @@ import SkeletonRow from '../../../components/SkeletonRow';
 import EmptyState from '../../../components/EmptyState';
 import FilterBtn from '../../../components/FilterBtn';
 import ErrorState from '../../../components/ErrorState';
+import RequirePermission from '../../../components/RequirePermission';
+
+import { PERMISSIONS } from '../../../utils/permission.constant';
 
 import useFetch from '../../../hooks/useFetch';
 import useDebounce from '../../../hooks/useDebounce';
@@ -317,9 +320,11 @@ const StaffManager = () => {
           </FilterBtn>
         </div>
 
-        <Button variant="primary" icon={<Plus size={18} />} onClick={() => navigate(PATHS.HR_STAFFS_CREATE)}>
-          Thêm Nhân sự
-        </Button>
+        <RequirePermission required={PERMISSIONS.STAFF.CREATE}>
+          <Button variant="primary" icon={<Plus size={18} />} onClick={() => navigate(PATHS.HR_STAFFS_CREATE)}>
+            Thêm Nhân sự
+          </Button>
+        </RequirePermission>
       </div>
 
       {/* ══ Table Card ═════════════════════════════════════════════════════ */}
@@ -375,7 +380,9 @@ const StaffManager = () => {
                 <th className="px-5 py-3.5 font-semibold">Liên hệ</th>
                 <th className="px-5 py-3.5 font-semibold">Phòng ban / Chức vụ</th>
                 <th className="px-5 py-3.5 font-semibold">Trạng thái</th>
-                <th className="px-5 py-3.5 font-semibold text-center">Hành động</th>
+                <RequirePermission required={[PERMISSIONS.STAFF.EDIT, PERMISSIONS.STAFF.DELETE]}>
+                  <th className="px-5 py-3.5 font-semibold text-center">Hành động</th>
+                </RequirePermission>
               </tr>
             </thead>
 
@@ -452,41 +459,48 @@ const StaffManager = () => {
                       </td>
 
                       {/* Actions */}
-                      <td className="px-5 py-4">
-                        <div className="flex items-center justify-center gap-1.5">
-                          <button
-                            onClick={() => navigate(PATHS.HR_STAFFS_EDIT.replace(':id', staff._id!))}
-                            title="Chỉnh sửa"
-                            className="p-2 text-primary hover:bg-gray-50
+                      <RequirePermission required={[PERMISSIONS.STAFF.EDIT, PERMISSIONS.STAFF.DELETE]}>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <RequirePermission required={PERMISSIONS.STAFF.EDIT}>
+                              <button
+                                onClick={() => navigate(PATHS.HR_STAFFS_EDIT.replace(':id', staff._id!))}
+                                title="Chỉnh sửa"
+                                className="p-2 text-primary hover:bg-gray-50
                               hover:text-primary rounded-xl transition-all
                               hover:scale-110 active:scale-95"
-                          >
-                            <Edit2 size={16} />
-                          </button>
-                          <button
-                            title="Xóa"
-                            onClick={() =>
-                              setConfirmDelete({
-                                isOpen: true,
-                                title: 'Xác nhận xóa',
-                                message: `Bạn có chắc muốn xóa hồ sơ của "${staff.fullName}"?`,
-                                type: 'danger',
-                                confirmText: 'Xóa',
-                                cancelText: 'Hủy',
-                                onConfirm: () => {
-                                  setConfirmDelete((p) => ({ ...p, isOpen: false }));
-                                  handleDeleteStaff(staff._id);
-                                },
-                              })
-                            }
-                            className="p-2 text-red-400 hover:bg-red-50
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                            </RequirePermission>
+
+                            <RequirePermission required={PERMISSIONS.STAFF.DELETE}>
+                              <button
+                                title="Xóa"
+                                onClick={() =>
+                                  setConfirmDelete({
+                                    isOpen: true,
+                                    title: 'Xác nhận xóa',
+                                    message: `Bạn có chắc muốn xóa hồ sơ của "${staff.fullName}"?`,
+                                    type: 'danger',
+                                    confirmText: 'Xóa',
+                                    cancelText: 'Hủy',
+                                    onConfirm: () => {
+                                      setConfirmDelete((p) => ({ ...p, isOpen: false }));
+                                      handleDeleteStaff(staff._id);
+                                    },
+                                  })
+                                }
+                                className="p-2 text-red-400 hover:bg-red-50
                               hover:text-red-600 rounded-xl transition-all
                               hover:scale-110 active:scale-95"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </RequirePermission>
+                          </div>
+                        </td>
+                      </RequirePermission>
                     </tr>
                   );
                 })

@@ -12,11 +12,11 @@ export const PERMISSIONS = {
   STUDENT: { VIEW: 'student.view', CREATE: 'student.create', EDIT: 'student.edit', DELETE: 'student.delete' },
   COURSE: { VIEW: 'course.view', CREATE: 'course.create', EDIT: 'course.edit', DELETE: 'course.delete' },
   CLASS: { VIEW: 'class.view', CREATE: 'class.create', EDIT: 'class.edit', DELETE: 'class.delete' },
+  SCHEDULE: { VIEW: 'schedule.view', CREATE: 'schedule.create', EDIT: 'schedule.edit', DELETE: 'schedule.delete' },
 
   // Cơ sở vật chất & Lịch
   ROOM: { VIEW: 'room.view', CREATE: 'room.create', EDIT: 'room.edit', DELETE: 'room.delete' },
   SHIFT: { VIEW: 'shift.view', CREATE: 'shift.create', EDIT: 'shift.edit', DELETE: 'shift.delete' },
-  SCHEDULE: { VIEW: 'schedule.view', CREATE: 'schedule.create', EDIT: 'schedule.edit', DELETE: 'schedule.delete' },
 
   // Tài chính
   EXPENDITURE: {

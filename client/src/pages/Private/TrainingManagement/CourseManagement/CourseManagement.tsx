@@ -8,6 +8,7 @@ import TablePagination from '../../../../components/TablePagination';
 import SearchInput from '../../../../components/SearchInput';
 import ConfirmModal from '../../../../components/ConfirmModal';
 import TableSkeleton from '../../../../components/TableSkeleton';
+import RequirePermission from '../../../../components/RequirePermission';
 
 import CourseModal from './CourseModal';
 
@@ -18,6 +19,7 @@ import { courseService } from '../../../../services/course.service';
 
 import type { ICourse } from '../../../../types/course.type';
 import { PATHS } from '../../../../utils/constants';
+import { PERMISSIONS } from '../../../../utils/permission.constant';
 
 const CourseManagement = () => {
   const navigate = useNavigate();
@@ -35,7 +37,7 @@ const CourseManagement = () => {
     title: '',
     message: '',
     type: 'success' as 'success' | 'danger' | 'warning' | 'info',
-    onConfirm: () => { },
+    onConfirm: () => {},
   });
 
   const queryParams = {
@@ -189,9 +191,11 @@ const CourseManagement = () => {
           />
         </div>
 
-        <Button variant="primary" icon={<Plus size={18} />} onClick={() => setShowModalAdd(true)}>
-          Thêm khóa học
-        </Button>
+        <RequirePermission required={PERMISSIONS.COURSE.CREATE}>
+          <Button variant="primary" icon={<Plus size={18} />} onClick={() => setShowModalAdd(true)}>
+            Thêm khóa học
+          </Button>
+        </RequirePermission>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 relative">
@@ -202,7 +206,9 @@ const CourseManagement = () => {
               <th className="p-4 font-semibold">Tiêu đề khóa học</th>
               <th className="p-4 font-semibold text-right">Giá cơ bản</th>
               <th className="p-4 font-semibold">Nội dung rút gọn</th>
-              <th className="p-4 font-semibold text-center rounded-tr-xl">Thao tác</th>
+              <RequirePermission required={[PERMISSIONS.COURSE.EDIT, PERMISSIONS.COURSE.DELETE]}>
+                <th className="p-4 font-semibold text-center rounded-tr-xl">Thao tác</th>
+              </RequirePermission>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -220,25 +226,30 @@ const CourseManagement = () => {
                     {formatCurrency(course.basePrice)}
                   </td>
                   <td className="p-4 text-text-main max-w-xs truncate">{course.syllabus}</td>
-                  <td className="p-4">
-                    <div className="flex items-center justify-center gap-3">
-                      <button
-                        onClick={() => openEditModal(course)}
-                        className="p-2 text-blue-600 hover:bg-blue-100 rounded-xl transition-all duration-300 hover:scale-110 hover:-translate-y-1 active:scale-95"
-                        title="Sửa"
-                      >
-                        <Edit2 size={18} />
-                      </button>
-
-                      <button
-                        onClick={() => course._id && handleDeleteCourse(course._id)}
-                        className="p-2 text-red-500 hover:bg-red-100 rounded-xl transition-all duration-300 hover:scale-110 hover:rotate-12 active:scale-95"
-                        title="Xóa"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </td>
+                  <RequirePermission required={[PERMISSIONS.COURSE.EDIT, PERMISSIONS.COURSE.DELETE]}>
+                    <td className="p-4">
+                      <div className="flex items-center justify-center gap-3">
+                        <RequirePermission required={PERMISSIONS.COURSE.EDIT}>
+                          <button
+                            onClick={() => openEditModal(course)}
+                            className="p-2 text-blue-600 hover:bg-blue-100 rounded-xl transition-all duration-300 hover:scale-110 hover:-translate-y-1 active:scale-95"
+                            title="Sửa"
+                          >
+                            <Edit2 size={18} />
+                          </button>
+                        </RequirePermission>
+                        <RequirePermission required={PERMISSIONS.COURSE.DELETE}>
+                          <button
+                            onClick={() => course._id && handleDeleteCourse(course._id)}
+                            className="p-2 text-red-500 hover:bg-red-100 rounded-xl transition-all duration-300 hover:scale-110 hover:rotate-12 active:scale-95"
+                            title="Xóa"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </RequirePermission>
+                      </div>
+                    </td>
+                  </RequirePermission>
                 </tr>
               ))
             ) : !loading ? (

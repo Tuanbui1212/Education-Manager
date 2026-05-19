@@ -35,7 +35,7 @@ const ListNotificationTemplate = () => {
     title: '',
     message: '',
     type: 'success' as 'success' | 'danger' | 'warning' | 'info',
-    onConfirm: () => { },
+    onConfirm: () => {},
   });
 
   const queryParams = {
@@ -206,9 +206,9 @@ const ListNotificationTemplate = () => {
             )}
           </div>
         </div>
-        <Button variant="primary" icon={<Plus size={18} />} onClick={() => setShowModalAdd(true)}>
+        {/* <Button variant="primary" icon={<Plus size={18} />} onClick={() => setShowModalAdd(true)}>
           Thêm mẫu
-        </Button>
+        </Button> */}
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 relative">
@@ -245,13 +245,13 @@ const ListNotificationTemplate = () => {
                       >
                         <Edit2 size={18} />
                       </button>
-                      <button
+                      {/* <button
                         onClick={() => template._id && handleDeleteTemplate(template._id)}
                         className="p-2 text-red-500 hover:bg-red-100 rounded-xl transition-all duration-300 hover:scale-110 active:scale-95"
                         title="Xóa"
                       >
                         <Trash2 size={18} />
-                      </button>
+                      </button> */}
                     </div>
                   </td>
                 </tr>

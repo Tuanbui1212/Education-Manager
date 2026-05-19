@@ -97,11 +97,11 @@ const menuConfig = [
     subItems: [
       { label: 'Ca học', path: PATHS.SETTINGS_SHIFTS, permission: PERMISSIONS.SHIFT?.VIEW || PERMISSIONS.ROOM.VIEW },
       { label: 'Phòng học', path: PATHS.SETTINGS_ROOMS, permission: PERMISSIONS.ROOM.VIEW },
-      {
-        label: 'Các loại chi phí cố định',
-        path: PATHS.SETTINGS_FIXED_COSTS,
-        permission: PERMISSIONS.FIXED_COST.VIEW,
-      },
+      // {
+      //   label: 'Các loại chi phí cố định',
+      //   path: PATHS.SETTINGS_FIXED_COSTS,
+      //   permission: PERMISSIONS.FIXED_COST.VIEW,
+      // },
       {
         label: 'Mẫu thông báo',
         path: PATHS.SETTINGS_NOTIFICATION_TEMPLATES,

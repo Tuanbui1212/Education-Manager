@@ -9,6 +9,7 @@ import TablePagination from '../../../../components/TablePagination';
 import ConfirmModal from '../../../../components/ConfirmModal';
 import Combobox from '../../../../components/Combobox';
 import InputField from '../../../../components/InputField';
+import RequirePermission from '../../../../components/RequirePermission';
 
 import ScheduleModal from './ScheduleModal';
 
@@ -19,6 +20,8 @@ import { classService } from '../../../../services/class.service';
 import { roomService } from '../../../../services/room.service';
 
 import type { ISchedule } from '../../../../types/schedule.type';
+
+import { PERMISSIONS } from '../../../../utils/permission.constant';
 
 const ScheduleManagement = () => {
   const [page, setPage] = useState(1);
@@ -47,7 +50,7 @@ const ScheduleManagement = () => {
     type: 'danger' as 'success' | 'danger' | 'warning' | 'info',
     confirmText: '',
     cancelText: '',
-    onConfirm: () => { },
+    onConfirm: () => {},
   });
 
   const queryParams: any = {
@@ -141,7 +144,7 @@ const ScheduleManagement = () => {
         type: 'danger',
         confirmText: '',
         cancelText: '',
-        onConfirm: () => { },
+        onConfirm: () => {},
       });
     }
   };
@@ -291,7 +294,10 @@ const ScheduleManagement = () => {
               <th className="p-4 font-semibold">Ngày & Ca học</th>
               <th className="p-4 font-semibold">Giảng viên</th>
               <th className="p-4 font-semibold">Phòng học</th>
-              <th className="p-4 font-semibold text-center">Hành động</th>
+
+              <RequirePermission required={[PERMISSIONS.SCHEDULE.EDIT, PERMISSIONS.SCHEDULE.DELETE]}>
+                <th className="p-4 font-semibold text-center">Hành động</th>
+              </RequirePermission>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -339,37 +345,43 @@ const ScheduleManagement = () => {
                         {roomData.name || 'Online'}
                       </div>
                     </td>
-                    <td className="p-4">
-                      <div className="flex items-center justify-center gap-3">
-                        <button
-                          onClick={() => {
-                            setSelectedSchedule(schedule);
-                            setShowModal(true);
-                          }}
-                          className="p-2.5 text-primary hover:bg-violet-100 rounded-xl transition-all duration-300 hover:scale-110"
-                          title="Chỉnh sửa / Đổi giáo viên dạy thay"
-                        >
-                          <Edit2 size={20} />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setConfirmDelete({
-                              isOpen: true,
-                              title: 'Xác nhận xóa',
-                              message: `Bạn có chắc chắn muốn xóa buổi học ngày ${format(new Date(schedule.date), 'dd/MM/yyyy')} của lớp ${classData.name}?`,
-                              type: 'danger',
-                              confirmText: 'Xác nhận xóa',
-                              cancelText: 'Hủy',
-                              onConfirm: () => handleDeleteSchedule(schedule._id),
-                            });
-                          }}
-                          className="p-2.5 text-red-500 hover:bg-red-100 rounded-xl transition-all duration-300 hover:scale-110"
-                          title="Xóa buổi học"
-                        >
-                          <Trash2 size={20} />
-                        </button>
-                      </div>
-                    </td>
+                    <RequirePermission required={[PERMISSIONS.SCHEDULE.EDIT, PERMISSIONS.SCHEDULE.DELETE]}>
+                      <td className="p-4">
+                        <div className="flex items-center justify-center gap-3">
+                          <RequirePermission required={PERMISSIONS.SCHEDULE.EDIT}>
+                            <button
+                              onClick={() => {
+                                setSelectedSchedule(schedule);
+                                setShowModal(true);
+                              }}
+                              className="p-2.5 text-primary hover:bg-violet-100 rounded-xl transition-all duration-300 hover:scale-110"
+                              title="Chỉnh sửa / Đổi giáo viên dạy thay"
+                            >
+                              <Edit2 size={20} />
+                            </button>
+                          </RequirePermission>
+                          <RequirePermission required={PERMISSIONS.SCHEDULE.DELETE}>
+                            <button
+                              onClick={() => {
+                                setConfirmDelete({
+                                  isOpen: true,
+                                  title: 'Xác nhận xóa',
+                                  message: `Bạn có chắc chắn muốn xóa buổi học ngày ${format(new Date(schedule.date), 'dd/MM/yyyy')} của lớp ${classData.name}?`,
+                                  type: 'danger',
+                                  confirmText: 'Xác nhận xóa',
+                                  cancelText: 'Hủy',
+                                  onConfirm: () => handleDeleteSchedule(schedule._id),
+                                });
+                              }}
+                              className="p-2.5 text-red-500 hover:bg-red-100 rounded-xl transition-all duration-300 hover:scale-110"
+                              title="Xóa buổi học"
+                            >
+                              <Trash2 size={20} />
+                            </button>
+                          </RequirePermission>
+                        </div>
+                      </td>
+                    </RequirePermission>
                   </tr>
                 );
               })

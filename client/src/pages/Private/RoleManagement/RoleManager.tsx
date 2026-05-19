@@ -8,6 +8,9 @@ import PageHeader from '../../../components/PageHeader';
 import TablePagination from '../../../components/TablePagination';
 import SearchInput from '../../../components/SearchInput';
 import ConfirmModal from '../../../components/ConfirmModal';
+import RequirePermission from '../../../components/RequirePermission';
+
+import { PERMISSIONS } from '../../../utils/permission.constant';
 
 import RoleModal from './RoleModal';
 
@@ -34,7 +37,7 @@ const RoleManager = () => {
     title: '',
     message: '',
     type: 'success' as 'success' | 'danger' | 'warning' | 'info',
-    action: () => { },
+    action: () => {},
   });
 
   const queryParams = {
@@ -210,16 +213,18 @@ const RoleManager = () => {
           />
         </div>
 
-        <Button
-          variant="primary"
-          icon={<Plus size={18} />}
-          onClick={() => {
-            setSelectedRole(null);
-            setShowModalAdd(true);
-          }}
-        >
-          Thêm Vai trò
-        </Button>
+        <RequirePermission required={PERMISSIONS.ROLE.CREATE}>
+          <Button
+            variant="primary"
+            icon={<Plus size={18} />}
+            onClick={() => {
+              setSelectedRole(null);
+              setShowModalAdd(true);
+            }}
+          >
+            Thêm Vai trò
+          </Button>
+        </RequirePermission>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 relative">
@@ -231,7 +236,9 @@ const RoleManager = () => {
               <th className="p-4 font-semibold">Mô tả</th>
               <th className="p-4 font-semibold text-center">Số lượng Quyền</th>
               <th className="p-4 font-semibold">Ngày tạo</th>
-              <th className="p-4 font-semibold text-center rounded-tr-xl">Hành động</th>
+              <RequirePermission required={[PERMISSIONS.ROLE.EDIT, PERMISSIONS.ROLE.DELETE]}>
+                <th className="p-4 font-semibold text-center rounded-tr-xl">Hành động</th>
+              </RequirePermission>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -271,36 +278,42 @@ const RoleManager = () => {
                     <td className="p-4 text-text-main text-sm">
                       {role.createdAt ? formatDate(role.createdAt) : 'N/A'}
                     </td>
-                    <td className="p-4">
-                      <div className="flex items-center justify-center gap-3">
-                        <button
-                          onClick={() => openEditModal(role)}
-                          className="p-2 text-blue-600 hover:bg-blue-100 rounded-xl transition-all duration-300 hover:scale-110 active:scale-95"
-                          title="Sửa"
-                        >
-                          <Edit2 size={18} />
-                        </button>
+                    <RequirePermission required={[PERMISSIONS.ROLE.EDIT, PERMISSIONS.ROLE.DELETE]}>
+                      <td className="p-4">
+                        <div className="flex items-center justify-center gap-3">
+                          <RequirePermission required={PERMISSIONS.ROLE.EDIT}>
+                            <button
+                              onClick={() => openEditModal(role)}
+                              className="p-2 text-blue-600 hover:bg-blue-100 rounded-xl transition-all duration-300 hover:scale-110 active:scale-95"
+                              title="Sửa"
+                            >
+                              <Edit2 size={18} />
+                            </button>
+                          </RequirePermission>
 
-                        {/* KIỂM TRA SUPER ADMIN ĐỂ HIỂN THỊ NÚT XÓA HOẶC KHÓA */}
-                        {isSuperAdmin ? (
-                          <button
-                            disabled
-                            className="p-2 text-gray-300 cursor-not-allowed rounded-xl"
-                            title="Vai trò này không thể xóa"
-                          >
-                            <Lock size={18} />
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => openDeleteConfirm(role)}
-                            className="p-2 text-red-500 hover:bg-red-100 rounded-xl transition-all duration-300 hover:scale-110 hover:rotate-12 active:scale-95"
-                            title="Xóa"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        )}
-                      </div>
-                    </td>
+                          {/* KIỂM TRA SUPER ADMIN ĐỂ HIỂN THỊ NÚT XÓA HOẶC KHÓA */}
+                          <RequirePermission required={PERMISSIONS.ROLE.DELETE}>
+                            {isSuperAdmin ? (
+                              <button
+                                disabled
+                                className="p-2 text-gray-300 cursor-not-allowed rounded-xl"
+                                title="Vai trò này không thể xóa"
+                              >
+                                <Lock size={18} />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => openDeleteConfirm(role)}
+                                className="p-2 text-red-500 hover:bg-red-100 rounded-xl transition-all duration-300 hover:scale-110 hover:rotate-12 active:scale-95"
+                                title="Xóa"
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            )}
+                          </RequirePermission>
+                        </div>
+                      </td>
+                    </RequirePermission>
                   </tr>
                 );
               })

@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { getRoleStyles, formatDate, translateRole } from '../../../utils/format.util';
 import { getColor, getInitials, genderLabel } from '../../../utils/user.util';
 import { PATHS } from '../../../utils/constants';
+import { PERMISSIONS } from '../../../utils/permission.constant';
 
 import Button from '../../../components/Button';
 import PageHeader from '../../../components/PageHeader';
@@ -22,6 +23,7 @@ import { userService } from '../../../services/user.service';
 import { roleService } from '../../../services/role.service';
 
 import type { IUser } from '../../../types/user.type';
+import RequirePermission from '../../../components/RequirePermission';
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 const UserList = () => {
@@ -50,7 +52,7 @@ const UserList = () => {
     type: 'danger' as 'success' | 'danger' | 'warning' | 'info',
     confirmText: '',
     cancelText: '',
-    onConfirm: () => { },
+    onConfirm: () => {},
   });
 
   // ── Click-outside dropdown ────────────────────────────────────────────────
@@ -237,9 +239,10 @@ const UserList = () => {
               className={`
                 flex items-center gap-2 pl-3.5 pr-3 py-2 rounded-xl border text-sm font-medium
                 transition-all whitespace-nowrap
-                ${role
-                  ? 'bg-primary text-white border-transparent shadow-md shadow-primary/30'
-                  : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
+                ${
+                  role
+                    ? 'bg-primary text-white border-transparent shadow-md shadow-primary/30'
+                    : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
                 }
               `}
             >
@@ -288,7 +291,8 @@ const UserList = () => {
                       setOpen(false);
                     }}
                     className={`px-4 py-2.5 cursor-pointer text-sm transition-colors flex items-center gap-3
-                      ${role === item._id ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-gray-700 hover:bg-gray-50'
+                      ${
+                        role === item._id ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-gray-700 hover:bg-gray-50'
                       }`}
                   >
                     <span
@@ -302,10 +306,11 @@ const UserList = () => {
             )}
           </div>
         </div>
-
-        <Button variant="primary" icon={<Plus size={18} />} onClick={() => navigate(PATHS.ACCOUNT_USERS_CREATE)}>
-          Thêm Người dùng
-        </Button>
+        <RequirePermission required={[PERMISSIONS.USER.CREATE]}>
+          <Button variant="primary" icon={<Plus size={18} />} onClick={() => navigate(PATHS.ACCOUNT_USERS_CREATE)}>
+            Thêm Người dùng
+          </Button>
+        </RequirePermission>
       </div>
 
       {/* ══ Table Card ═════════════════════════════════════════════════════ */}
@@ -353,7 +358,10 @@ const UserList = () => {
                 <th className="px-4 py-3.5 font-semibold">Ngày sinh</th>
                 <th className="px-4 py-3.5 font-semibold">Vai trò</th>
                 <th className="px-4 py-3.5 font-semibold">Trạng thái</th>
-                <th className="px-4 py-3.5 font-semibold text-center">Thao tác</th>
+
+                <RequirePermission required={[PERMISSIONS.USER.EDIT, PERMISSIONS.USER.DELETE]}>
+                  <th className="px-4 py-3.5 font-semibold text-center">Thao tác</th>
+                </RequirePermission>
               </tr>
             </thead>
 
@@ -430,39 +438,45 @@ const UserList = () => {
                       </td>
 
                       {/* Actions */}
-                      <td className="px-4 py-3.5">
-                        <div className="flex items-center justify-center gap-1">
-                          <button
-                            onClick={() => navigate(PATHS.ACCOUNT_USERS_EDIT.replace(':id', user._id))}
-                            title="Chỉnh sửa"
-                            className="p-2 text-blue-500 hover:bg-blue-50 hover:text-blue-700
+                      <RequirePermission required={[PERMISSIONS.USER.EDIT, PERMISSIONS.USER.DELETE]}>
+                        <td className="px-4 py-3.5">
+                          <div className="flex items-center justify-center gap-1">
+                            <RequirePermission required={PERMISSIONS.USER.EDIT}>
+                              <button
+                                onClick={() => navigate(PATHS.ACCOUNT_USERS_EDIT.replace(':id', user._id))}
+                                title="Chỉnh sửa"
+                                className="p-2 text-blue-500 hover:bg-blue-50 hover:text-blue-700
                               rounded-xl transition-all hover:scale-110 active:scale-95"
-                          >
-                            <Edit2 size={16} />
-                          </button>
-                          <button
-                            title="Xóa"
-                            onClick={() =>
-                              setConfirmDelete({
-                                isOpen: true,
-                                title: 'Xác nhận xóa tài khoản',
-                                message: `Bạn có chắc muốn xóa tài khoản "${user.fullName}"?`,
-                                type: 'danger',
-                                confirmText: 'Xóa',
-                                cancelText: 'Hủy',
-                                onConfirm: () => {
-                                  setConfirmDelete((p) => ({ ...p, isOpen: false }));
-                                  handleDeleteUser(user._id);
-                                },
-                              })
-                            }
-                            className="p-2 text-red-400 hover:bg-red-50 hover:text-red-600
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                            </RequirePermission>
+                            <RequirePermission required={PERMISSIONS.USER.DELETE}>
+                              <button
+                                title="Xóa"
+                                onClick={() =>
+                                  setConfirmDelete({
+                                    isOpen: true,
+                                    title: 'Xác nhận xóa tài khoản',
+                                    message: `Bạn có chắc muốn xóa tài khoản "${user.fullName}"?`,
+                                    type: 'danger',
+                                    confirmText: 'Xóa',
+                                    cancelText: 'Hủy',
+                                    onConfirm: () => {
+                                      setConfirmDelete((p) => ({ ...p, isOpen: false }));
+                                      handleDeleteUser(user._id);
+                                    },
+                                  })
+                                }
+                                className="p-2 text-red-400 hover:bg-red-50 hover:text-red-600
                               rounded-xl transition-all hover:scale-110 active:scale-95"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </RequirePermission>
+                          </div>
+                        </td>
+                      </RequirePermission>
                     </tr>
                   );
                 })
