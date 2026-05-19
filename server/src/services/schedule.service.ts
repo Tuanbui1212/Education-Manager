@@ -282,12 +282,17 @@ export class ScheduleService {
 
   async getTodaySchedules() {
     const now = new Date();
+    const VN_OFFSET = 7 * 60 * 60 * 1000; // UTC+7
 
-    const startOfDay = new Date(now);
-    startOfDay.setHours(0, 0, 0, 0);
+    const vnNow = new Date(now.getTime() + VN_OFFSET);
+    
+    const startOfDay = new Date(
+      Date.UTC(vnNow.getUTCFullYear(), vnNow.getUTCMonth(), vnNow.getUTCDate(), 0, 0, 0, 0) - VN_OFFSET,
+    );
 
-    const endOfDay = new Date(now);
-    endOfDay.setHours(23, 59, 59, 999);
+    const endOfDay = new Date(
+      Date.UTC(vnNow.getUTCFullYear(), vnNow.getUTCMonth(), vnNow.getUTCDate(), 23, 59, 59, 999) - VN_OFFSET,
+    );
 
     const query: any = {
       date: {
