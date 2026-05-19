@@ -160,7 +160,6 @@ const TeacherScheduleToday = ({ data, loading }: { data: ISchedule[]; loading: b
         {loading ? (
           Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)
         ) : data.length === 0 ? (
-          // Empty state khi không có lịch dạy hôm nay
           <div className="flex flex-col items-center justify-center py-12 text-center text-gray-400">
             <CalendarDays className="w-10 h-10 mb-3 text-gray-200" />
             <p className="text-sm font-medium text-gray-500">Không có lịch dạy hôm nay</p>
