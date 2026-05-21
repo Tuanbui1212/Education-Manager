@@ -13,6 +13,8 @@ import {
 import { examService } from '../../../services/exam.service';
 import type { IExam, IExamQuestion, IExamOption, IExamSubmission } from '../../../types/exam.type';
 import { getDecodedToken } from '../../../utils/auth';
+import ConfirmModal from '../../../components/ConfirmModal';
+import useDebounce from '../../../hooks/useDebounce';
 
 const STATUS_CFG: Record<string, { label: string; bg: string; text: string; icon: React.ReactNode }> = {
     DRAFT: { label: 'Nháp', bg: 'bg-gray-100', text: 'text-gray-600', icon: <FileText size={12} /> },
@@ -259,6 +261,7 @@ const CopyFromOtherClasses = ({
     const handleCopy = async (exam: IExam) => {
         try {
             const res = await examService.copyExam(exam._id, currentClassId);
+            toast.success(res?.message || 'Sao chép bài kiểm tra thành công');
             onCopied(res.data);
         } catch (err: any) {
             toast.error(err.response?.data?.message || 'Sao chép thất bại');
@@ -312,7 +315,7 @@ const CopyFromOtherClasses = ({
                                     onClick={() => handleCopy(exam)}
                                     className="mt-3 w-full py-1.5 bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 border border-blue-100 hover:border-blue-600 active:scale-95"
                                 >
-                                    <Copy size={12} /> Sao chép vào lớp này
+                                    <Copy size={12} /> Sao chép bài kiểm tra này
                                 </button>
                             </div>
                         );
@@ -343,6 +346,7 @@ export const ExamManager = ({ classId }: Props) => {
     const [view, setView] = useState<'list' | 'form' | 'copy' | 'submissions'>('list');
     const [editingExam, setEditingExam] = useState<IExam | null>(null);
     const [selectedExamForSubmissions, setSelectedExamForSubmissions] = useState<IExam | null>(null);
+    const [examToDelete, setExamToDelete] = useState<string | null>(null);
 
     const [exams, setExams] = useState<IExam[]>([]);
     const [total, setTotal] = useState(0);
@@ -350,29 +354,36 @@ export const ExamManager = ({ classId }: Props) => {
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
     const LIMIT = 6;
+    const debouncedSearch = useDebounce(search, 400);
 
     const fetchExams = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await examService.getExams({ classId, search, page, limit: LIMIT });
+            const res = await examService.getExams({ classId, search: debouncedSearch, page, limit: LIMIT });
             setExams(res.data);
             setTotal(res.total);
         } catch { } finally { setLoading(false); }
-    }, [classId, search, page]);
+    }, [classId, debouncedSearch, page]);
 
     useEffect(() => { fetchExams(); }, [fetchExams]);
-    useEffect(() => { setPage(1); }, [search]);
+    useEffect(() => { setPage(1); }, [debouncedSearch]);
 
     const totalPages = Math.ceil(total / LIMIT);
 
-    const handleDelete = async (id: string) => {
-        if (!window.confirm('Bạn có chắc muốn xóa bài kiểm tra này?')) return;
+    const handleDelete = (id: string) => {
+        setExamToDelete(id);
+    };
+
+    const confirmDelete = async () => {
+        if (!examToDelete) return;
         try {
-            await examService.deleteExam(id);
+            await examService.deleteExam(examToDelete);
             toast.success('Đã xóa bài kiểm tra');
             fetchExams();
         } catch (err: any) {
             toast.error(err.response?.data?.message || 'Xóa thất bại');
+        } finally {
+            setExamToDelete(null);
         }
     };
 
@@ -488,6 +499,15 @@ export const ExamManager = ({ classId }: Props) => {
                     </button>
                 </div>
             )}
+
+            <ConfirmModal
+                isOpen={!!examToDelete}
+                onClose={() => setExamToDelete(null)}
+                onConfirm={confirmDelete}
+                title="Xác nhận xóa"
+                message="Bạn có chắc chắn muốn xóa bài kiểm tra này? Thao tác này không thể hoàn tác."
+                type="warning"
+            />
         </div>
     );
 

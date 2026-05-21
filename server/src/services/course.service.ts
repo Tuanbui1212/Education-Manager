@@ -1,13 +1,15 @@
 import { CreateCourseType, UpdateCourseType } from "../validations/course.validation";
 import { CourseModel } from "../models/course.model";
 import { GetCoursesQuery, ICourse } from "../types/course.type";
+import { ClassModel } from "../models/class.model";
+import { Types } from "mongoose";
 
 export class CourseService {
     // 1. Tạo khóa học mới
     async createCourse(data: CreateCourseType): Promise<ICourse> {
         const existingCourse = await CourseModel.findOne({ title: data.title });
         if (existingCourse) {
-            throw new Error(`Khóa học ${data.title} đã tồn tại!`);
+            throw new Error(`Tiêu đề khóa học ${data.title} đã được sử dụng bởi khóa học khác!`);
         }
 
         const newCourse = new CourseModel(data);
@@ -56,6 +58,14 @@ export class CourseService {
 
     // 5. Xóa khóa học
     async deleteCourse(id: string): Promise<ICourse | null> {
+        const course = await CourseModel.findById(id);
+        if (!course) {
+            throw new Error(`Khóa học ${id} không tồn tại!`);
+        }
+        const classesCount = await ClassModel.countDocuments({ courseId: new Types.ObjectId(id) });
+        if (classesCount > 0) {
+            throw new Error(`Không thể xóa khóa học ${course?.title} vì có ${classesCount} lớp học đang thuộc khóa học này!`);
+        }
         return await CourseModel.findByIdAndDelete(id);
     }
 }

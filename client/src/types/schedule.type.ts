@@ -23,6 +23,8 @@ export interface GetSchedulesParams {
   teacherId?: string;
   search?: string;
   date?: string;
+  startDateTime?: string;
+  endDateTime?: string;
 }
 
 export interface ScheduleModalProps {

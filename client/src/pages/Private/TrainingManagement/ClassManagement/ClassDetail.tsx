@@ -100,7 +100,7 @@ const ClassDetail = () => {
     title: '',
     message: '',
     type: 'success' as 'success' | 'danger' | 'warning' | 'info',
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   const [confirmDeleteAll, setConfirmDeleteAll] = useState({
@@ -478,23 +478,30 @@ const ClassDetail = () => {
                           </td>
                           {DAYS_WEEK.map((d) => {
                             const isSelected = classSlots.has(`${shift._id?.toString()}-${d.dow}`);
-
-                            let cellClasses =
-                              'p-1.5 border-b border-r border-gray-100 align-top transition-all duration-150 ';
-                            if (isSelected) {
-                              cellClasses += 'bg-emerald-50 ring-2 ring-emerald-400 ring-inset ';
-                            } else {
-                              cellClasses += 'bg-gray-50/30 ';
-                            }
-
                             return (
-                              <td key={d.dow} className={cellClasses} style={{ minHeight: 70 }}>
+                              <td key={d.dow} style={{ minHeight: 70, padding: '5px' }}>
                                 {isSelected && (
-                                  <div className="flex flex-col items-center justify-center h-full min-h-16 border-emerald-200 bg-emerald-100 shadow-sm rounded-md animate-in zoom-in-95">
-                                    <div className="font-semibold text-xs text-emerald-800 truncate text-center max-w-[80px]">
-                                      Lớp: {classData.name}
+                                  <div
+                                    className="h-full bg-violet-50 border border-violet-200 rounded-xl p-3 cursor-pointer hover:bg-violet-100 hover:shadow-md transition-all group/card flex flex-col gap-2"
+                                  >
+                                    <div className="flex items-start justify-between gap-1">
+                                      <h4 className="font-bold text-sm text-violet-800 line-clamp-2 group-hover/card:text-violet-900">
+                                        {classData.name}
+                                      </h4>
                                     </div>
-                                    <span className="text-[10px] text-emerald-600 font-medium">{shift.name}</span>
+
+                                    <div className="mt-auto space-y-1.5 pt-2 border-t border-violet-200/60">
+                                      <div className="flex items-center gap-1.5 text-xs text-violet-700 font-medium">
+                                        <UserIcon size={12} className="text-violet-500" />
+                                        <span className="truncate">
+                                          {classData.teacherId?.fullName || 'Chưa phân công'}
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center gap-1.5 text-[10px] text-gray-500">
+                                        <BookOpen size={12} className="text-gray-400" />
+                                        <span className="truncate uppercase font-bold">{shift.name}</span>
+                                      </div>
+                                    </div>
                                   </div>
                                 )}
                               </td>
@@ -570,7 +577,7 @@ const ClassDetail = () => {
                     placeholder="Tìm tên, SĐT học viên..."
                     value={searchInput}
                     setSearchInput={setSearchInput}
-                    setPage={() => {}}
+                    setPage={() => { }}
                   />
                 </div>
                 <Button

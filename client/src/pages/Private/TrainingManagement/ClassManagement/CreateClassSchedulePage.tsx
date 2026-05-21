@@ -22,6 +22,13 @@ const DAYS_WEEK = [
     { label: 'Thứ 5', dow: 4 }, { label: 'Thứ 6', dow: 5 }, { label: 'Thứ 7', dow: 6 },
 ];
 
+function calculateClassEndDate(startDate: string | Date, totalLessons: number, lessonsPerWeek: number): string {
+    const weeks = Math.ceil(totalLessons / lessonsPerWeek);
+    const end = new Date(startDate);
+    end.setDate(end.getDate() + weeks * 7);
+    return end.toISOString();
+}
+
 const SESSION_OPTIONS = [
     { value: 'morning', label: 'Ca sáng' },
     { value: 'afternoon', label: 'Ca chiều' },
@@ -35,29 +42,32 @@ export default function CreateClassSchedulePage() {
     const [classData, setClassData] = useState<IClass | null>(null);
     const [shifts, setShifts] = useState<IShift[]>([]);
 
-    // Lịch cũ của giảng viên để phát hiện trùng lặp
     const [teacherSchedules, setTeacherSchedules] = useState<ISchedule[]>([]);
 
-    // Lịch của phòng để phát hiện trùng lặp
     const [roomSchedules, setRoomSchedules] = useState<ISchedule[]>([]);
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
-    // Form inputs cho các trường được phép sửa
     const [roomId, setRoomId] = useState<string>('');
     const [optionalRequirements, setOptionalRequirements] = useState<string[]>([]);
 
-    // Danh sách slot được chọn
     const [slots, setSlots] = useState<{ dow: number, shiftId: string }[]>([]);
 
     useEffect(() => {
         const fetchRoomSchedules = async () => {
-            if (roomId && classData?.startDate) {
+            if (roomId && classData?.startDate && classData?.totalLessons && classData?.lessonsPerWeek) {
                 try {
-                    const schedRes = await scheduleService.getSchedules({ 
-                        roomId, 
-                        limit: 2000 
+                    const endDateTime = calculateClassEndDate(
+                        classData.startDate,
+                        classData.totalLessons,
+                        classData.lessonsPerWeek
+                    );
+                    const schedRes = await scheduleService.getSchedules({
+                        roomId,
+                        startDateTime: new Date(classData.startDate).toISOString(),
+                        endDateTime,
+                        limit: 2000,
                     });
                     setRoomSchedules(schedRes.data || []);
                 } catch (error) {
@@ -68,7 +78,7 @@ export default function CreateClassSchedulePage() {
             }
         };
         fetchRoomSchedules();
-    }, [roomId, classData?.startDate]);
+    }, [roomId, classData?.startDate, classData?.totalLessons, classData?.lessonsPerWeek]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -80,7 +90,7 @@ export default function CreateClassSchedulePage() {
                     shiftService.getShifts({ limit: 100 })
                 ]);
 
-                const cls = classRes.data;
+                const cls = classRes.data!;
                 setClassData(cls as any);
                 setShifts((shiftRes.data || []).sort((a: any, b: any) => a.startTime.localeCompare(b.startTime)));
 
@@ -88,8 +98,18 @@ export default function CreateClassSchedulePage() {
                 setOptionalRequirements((cls as any).optionalRequirements || []);
 
                 const teacherId = typeof (cls as any).teacherId === 'string' ? (cls as any).teacherId : (cls as any).teacherId._id;
-                if (teacherId) {
-                    const schedRes = await scheduleService.getSchedules({ teacherId, limit: 2000 });
+                if (teacherId && cls.startDate && cls.totalLessons && cls.lessonsPerWeek) {
+                    const endDateTime = calculateClassEndDate(
+                        cls.startDate as string,
+                        cls.totalLessons as number,
+                        cls.lessonsPerWeek as number
+                    );
+                    const schedRes = await scheduleService.getSchedules({
+                        teacherId,
+                        startDateTime: new Date(cls.startDate as string).toISOString(),
+                        endDateTime,
+                        limit: 2000,
+                    });
                     setTeacherSchedules(schedRes.data || []);
                 }
             } catch (err) {

@@ -10,18 +10,33 @@ import mongoose from 'mongoose';
 
 export class ScheduleService {
   async createSchedule(schedule: CreateScheduleType) {
+    const [existingClass, existingShift, existingRoom] = await Promise.all([
+      ClassModel.findById(schedule.classId),
+      ShiftModel.findById(schedule.shiftId),
+      RoomModel.findById(schedule.roomId),
+    ]);
+
+    if (!existingClass) throw new Error('Lớp học không tồn tại');
+    if (!existingShift) throw new Error('Ca học không tồn tại');
+    if (!existingRoom) throw new Error('Phòng học không tồn tại');
+
+    const startOfDay = new Date(schedule.date!);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(schedule.date!);
+    endOfDay.setHours(23, 59, 59, 999);
+
     const roomConflict = await ScheduleModel.findOne({
-      date: schedule.date,
+      date: { $gte: startOfDay, $lte: endOfDay },
       shiftId: schedule.shiftId,
       roomId: schedule.roomId,
     });
     if (roomConflict) {
-      throw new Error(`Phòng học này đã có lớp ${roomConflict.classId} đăng ký trong khung giờ này`);
+      throw new Error(`Phòng học này đã có lớp khác đăng ký trong khung giờ này`);
     }
 
     if (schedule.teacherId) {
       const teacherConflict = await ScheduleModel.findOne({
-        date: schedule.date,
+        date: { $gte: startOfDay, $lte: endOfDay },
         shiftId: schedule.shiftId,
         teacherId: schedule.teacherId,
       });
@@ -31,7 +46,7 @@ export class ScheduleService {
     }
 
     const classConflict = await ScheduleModel.findOne({
-      date: schedule.date,
+      date: { $gte: startOfDay, $lte: endOfDay },
       shiftId: schedule.shiftId,
       classId: schedule.classId,
     });
@@ -43,7 +58,7 @@ export class ScheduleService {
       classId: schedule.classId,
       shiftId: schedule.shiftId,
       roomId: schedule.roomId,
-      date: schedule.date,
+      date: new Date(schedule.date!).setHours(0, 0, 0, 0),
     });
     if (existingSchedule) {
       throw new Error('Lịch học đã tồn tại');
@@ -59,15 +74,11 @@ export class ScheduleService {
       }
     }
 
-    const [existingClass, existingShift, existingRoom] = await Promise.all([
-      ClassModel.findById(schedule.classId),
-      ShiftModel.findById(schedule.shiftId),
-      RoomModel.findById(schedule.roomId),
-    ]);
-
-    if (!existingClass) throw new Error('Lớp học không tồn tại');
-    if (!existingShift) throw new Error('Ca học không tồn tại');
-    if (!existingRoom) throw new Error('Phòng học không tồn tại');
+    try {
+      await ClassModel.findByIdAndUpdate(schedule.classId, { schedule: true })
+    } catch (error) {
+      throw new Error('Không thể cập nhật trạng thái lớp học');
+    }
 
     return await ScheduleModel.create(schedule);
   }
@@ -117,35 +128,76 @@ export class ScheduleService {
   }
 
   async updateSchedule(id: string, schedule: UpdateScheduleType) {
-    const existingSchedule = await ScheduleModel.findById(id);
-    if (!existingSchedule) {
-      throw new Error('Lịch học không tồn tại');
+    const [existingClass, existingShift, existingRoom] = await Promise.all([
+      ClassModel.findById(schedule.classId),
+      ShiftModel.findById(schedule.shiftId),
+      RoomModel.findById(schedule.roomId),
+    ]);
+
+    if (!existingClass) throw new Error('Lớp học không tồn tại');
+    if (!existingShift) throw new Error('Ca học không tồn tại');
+    if (!existingRoom) throw new Error('Phòng học không tồn tại');
+
+    const startOfDay = new Date(schedule.date!);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(schedule.date!);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const roomConflict = await ScheduleModel.findOne({
+      _id: { $ne: id },
+      date: { $gte: startOfDay, $lte: endOfDay },
+      shiftId: schedule.shiftId,
+      roomId: schedule.roomId,
+    });
+    if (roomConflict) {
+      throw new Error(`Phòng học này đã có lớp khác đăng ký trong khung giờ này`);
     }
-    if (schedule.classId) {
-      const existingClass = await ClassModel.findById(schedule.classId);
-      if (!existingClass) {
-        throw new Error('Lớp học không tồn tại');
+
+    if (schedule.teacherId) {
+      const teacherConflict = await ScheduleModel.findOne({
+        _id: { $ne: id },
+        date: { $gte: startOfDay, $lte: endOfDay },
+        shiftId: schedule.shiftId,
+        teacherId: schedule.teacherId,
+      });
+      if (teacherConflict) {
+        throw new Error('Giáo viên này đã có lịch dạy lớp khác trong khung giờ này');
       }
     }
-    if (schedule.shiftId) {
-      const existingShift = await ShiftModel.findById(schedule.shiftId);
-      if (!existingShift) {
-        throw new Error('Ca học không tồn tại');
-      }
+
+    const classConflict = await ScheduleModel.findOne({
+      _id: { $ne: id },
+      date: { $gte: startOfDay, $lte: endOfDay },
+      shiftId: schedule.shiftId,
+      classId: schedule.classId,
+    });
+
+    if (classConflict) {
+      throw new Error('Lớp học này đã có lịch học trong khung giờ này rồi');
     }
-    if (schedule.roomId) {
-      const existingRoom = await RoomModel.findById(schedule.roomId);
-      if (!existingRoom) {
-        throw new Error('Phòng học không tồn tại');
-      }
+
+    const existingSchedule = await ScheduleModel.findOne({
+      _id: { $ne: id },
+      classId: schedule.classId,
+      shiftId: schedule.shiftId,
+      roomId: schedule.roomId,
+      date: { $gte: startOfDay, $lte: endOfDay },
+    });
+    if (existingSchedule) {
+      throw new Error('Lịch học đã tồn tại');
     }
+
     if (schedule.teacherId) {
       const existingUser = await UserModel.findById(schedule.teacherId);
       if (!existingUser) {
         throw new Error('Người dùng không tồn tại');
       }
+      if (existingUser.status !== 'ACTIVE') {
+        throw new Error('Giáo viên này hiện đang ngừng hoạt động, không thể gán lịch');
+      }
     }
-    return await ScheduleModel.findByIdAndUpdate(id, schedule, { new: true })
+
+    return await ScheduleModel.findByIdAndUpdate(id, { ...schedule, date: startOfDay }, { new: true })
       .populate('classId', 'name')
       .populate('shiftId', 'name')
       .populate('roomId', 'name')
@@ -154,7 +206,17 @@ export class ScheduleService {
   }
 
   async deleteSchedule(id: string) {
-    return await ScheduleModel.findByIdAndDelete(id);
+    const scheduleToDelete = await ScheduleModel.findById(id);
+    if (!scheduleToDelete) return null;
+
+    const result = await ScheduleModel.findByIdAndDelete(id);
+
+    const remainingCount = await ScheduleModel.countDocuments({ classId: scheduleToDelete.classId });
+    if (remainingCount === 0) {
+      await ClassModel.findByIdAndUpdate(scheduleToDelete.classId, { schedule: false });
+    }
+
+    return result;
   }
 
   async createSchedulesBulk(schedules: CreateScheduleType[], startClass: string) {
@@ -162,81 +224,103 @@ export class ScheduleService {
       throw new Error('Dữ liệu đầu vào không phải là một danh sách hợp lệ');
     }
 
-    // 1. Khởi tạo session cho Transaction
     const session = await mongoose.startSession();
     session.startTransaction();
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const firstSchedule = schedules[0];
-    const lastSchedule = schedules[schedules.length - 1];
-
     try {
-      if (firstSchedule && firstSchedule.classId) {
-        const startDate = new Date(firstSchedule.date);
-        startDate.setHours(0, 0, 0, 0);
+      const uniqueClassIds = [...new Set(schedules.map((s) => s.classId?.toString()).filter(Boolean))];
 
-        if (startDate <= today) {
-          await ClassModel.findByIdAndUpdate(
-            firstSchedule.classId,
-            { status: 'ACTIVE', startDate: startClass },
-            { session },
-          );
-        } else if (startDate > today) {
-          await ClassModel.findByIdAndUpdate(
-            firstSchedule.classId,
-            { status: 'UPCOMING', startDate: startClass },
-            { session },
-          );
+      for (const classId of uniqueClassIds) {
+        const classSchedules = schedules.filter((s) => s.classId?.toString() === classId);
+        classSchedules.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        const firstClsSchedule = classSchedules[0];
+        const lastClsSchedule = classSchedules[classSchedules.length - 1];
+
+        if (firstClsSchedule) {
+          const startDate = new Date(firstClsSchedule.date);
+          startDate.setHours(0, 0, 0, 0);
+
+          if (startDate <= today) {
+            await ClassModel.findByIdAndUpdate(
+              classId,
+              { status: 'ACTIVE', startDate: startClass, schedule: true },
+              { session },
+            );
+          } else if (startDate > today) {
+            await ClassModel.findByIdAndUpdate(
+              classId,
+              { status: 'UPCOMING', startDate: startClass, schedule: true },
+              { session },
+            );
+          }
         }
-      }
 
-      if (lastSchedule && lastSchedule.classId) {
-        const endDate = new Date(lastSchedule.date);
-        endDate.setHours(23, 59, 59, 999);
+        if (lastClsSchedule) {
+          const endDate = new Date(lastClsSchedule.date);
+          endDate.setHours(23, 59, 59, 999);
 
-        if (endDate <= today) {
-          await ClassModel.findByIdAndUpdate(lastSchedule.classId, { status: 'COMPLETED' }, { session });
+          if (endDate <= today) {
+            await ClassModel.findByIdAndUpdate(classId, { status: 'COMPLETED', schedule: true }, { session });
+          }
         }
       }
 
       const createdSchedules = [];
+      const batchRoomSlots = new Set<string>();
+      const batchTeacherSlots = new Set<string>();
 
       for (const schedule of schedules) {
-        // 2. Kiểm tra xung đột
+        const startOfDay = new Date(schedule.date);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(schedule.date);
+        endOfDay.setHours(23, 59, 59, 999);
+        const dateKey = startOfDay.toISOString().slice(0, 10);
+
         const roomConflict = await ScheduleModel.findOne({
-          date: schedule.date,
+          date: { $gte: startOfDay, $lte: endOfDay },
           shiftId: schedule.shiftId,
           roomId: schedule.roomId,
         }).session(session);
 
         if (roomConflict) {
-          throw new Error(`Ngày ${schedule.date}: Phòng này đã được sử dụng.`);
+          throw new Error(`Phòng này bị trùng lịch với lớp khác`);
         }
+
+        const roomBatchKey = `${dateKey}__${schedule.shiftId}__${schedule.roomId}`;
+        if (batchRoomSlots.has(roomBatchKey)) {
+          throw new Error(`Phòng này bị trùng lịch với lớp khác`);
+        }
+        batchRoomSlots.add(roomBatchKey);
 
         if (schedule.teacherId) {
           const teacherConflict = await ScheduleModel.findOne({
-            date: schedule.date,
+            date: { $gte: startOfDay, $lte: endOfDay },
             shiftId: schedule.shiftId,
             teacherId: schedule.teacherId,
           }).session(session);
 
           if (teacherConflict) {
-            throw new Error(`Ngày ${schedule.date}: Giáo viên đã có lịch dạy.`);
+            throw new Error(`Giáo viên đã có lịch dạy`);
           }
+
+          const teacherBatchKey = `${dateKey}__${schedule.shiftId}__${schedule.teacherId}`;
+          if (batchTeacherSlots.has(teacherBatchKey)) {
+            throw new Error(`Giáo viên bị trùng lịch với lớp khác`);
+          }
+          batchTeacherSlots.add(teacherBatchKey);
         }
 
-        // 3. Tạo bản ghi tạm trong session
-        const [newSchedule] = await ScheduleModel.create([schedule], { session });
+        const [newSchedule] = await ScheduleModel.create([{ ...schedule, date: startOfDay }], { session });
         createdSchedules.push(newSchedule);
       }
 
-      // 4. Nếu mọi thứ ổn -> Chốt dữ liệu
       await session.commitTransaction();
       return createdSchedules;
     } catch (error) {
-      // 5. Nếu có bất kỳ lỗi nào -> Hủy bỏ toàn bộ những gì đã làm ở bước 3
       await session.abortTransaction();
       throw error;
     } finally {
@@ -250,12 +334,12 @@ export class ScheduleService {
       throw new Error('Danh sách ID không hợp lệ');
     }
 
-    const scheduleData = await ScheduleModel.findById(ids[0]);
-    if (!scheduleData) {
+    const schedulesToDelete = await ScheduleModel.find({ _id: { $in: ids } });
+    if (schedulesToDelete.length === 0) {
       throw new Error('Không tìm thấy dữ liệu lịch học để xóa');
     }
 
-    const classId = scheduleData.classId;
+    const classIds = [...new Set(schedulesToDelete.map((s) => s.classId?.toString()).filter(Boolean))];
 
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -263,7 +347,12 @@ export class ScheduleService {
     try {
       const result = await ScheduleModel.deleteMany({ _id: { $in: ids } }, { session });
 
-      await ClassModel.findByIdAndUpdate(classId, { status: 'PENDING' }, { session });
+      for (const classId of classIds) {
+        const remainingCount = await ScheduleModel.countDocuments({ classId }).session(session);
+        if (remainingCount === 0) {
+          await ClassModel.findByIdAndUpdate(classId, { status: 'PENDING', schedule: false }, { session });
+        }
+      }
 
       await session.commitTransaction();
       return result;
@@ -285,7 +374,7 @@ export class ScheduleService {
     const VN_OFFSET = 7 * 60 * 60 * 1000; // UTC+7
 
     const vnNow = new Date(now.getTime() + VN_OFFSET);
-    
+
     const startOfDay = new Date(
       Date.UTC(vnNow.getUTCFullYear(), vnNow.getUTCMonth(), vnNow.getUTCDate(), 0, 0, 0, 0) - VN_OFFSET,
     );

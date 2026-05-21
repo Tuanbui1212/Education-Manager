@@ -33,8 +33,6 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, onSubmit, init
     startDate: '',
   });
 
-  console.log('Form Data:', formData);
-
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const { data: rolesData } = useFetch(roleService.getRoles, {}, []);
@@ -43,12 +41,6 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, onSubmit, init
   const teacherRoleId = useMemo(() => {
     return roles.find((r: any) => r.name?.toLowerCase() === 'teacher')?._id || '';
   }, [roles]);
-
-  const currentId = initialData?._id;
-  const [prevId, setPrevId] = useState<string | undefined>(currentId);
-  const [prevIsOpen, setPrevIsOpen] = useState<boolean>(isOpen);
-
-  console.log('isOpen:', isOpen, 'prevIsOpen:', prevIsOpen, 'currentId:', currentId, 'prevId:', prevId);
 
   useEffect(() => {
     if (!isOpen) return;
