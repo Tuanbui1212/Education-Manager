@@ -12,11 +12,12 @@ export const PERMISSIONS = {
   STUDENT: { VIEW: 'student.view', CREATE: 'student.create', EDIT: 'student.edit', DELETE: 'student.delete' },
   COURSE: { VIEW: 'course.view', CREATE: 'course.create', EDIT: 'course.edit', DELETE: 'course.delete' },
   CLASS: { VIEW: 'class.view', CREATE: 'class.create', EDIT: 'class.edit', DELETE: 'class.delete' },
-  SCHEDULE: { VIEW: 'schedule.view', CREATE: 'schedule.create', EDIT: 'schedule.edit', DELETE: 'schedule.delete' },
 
   // Cơ sở vật chất & Lịch
   ROOM: { VIEW: 'room.view', CREATE: 'room.create', EDIT: 'room.edit', DELETE: 'room.delete' },
   SHIFT: { VIEW: 'shift.view', CREATE: 'shift.create', EDIT: 'shift.edit', DELETE: 'shift.delete' },
+  // [THÊM MỚI] Lịch học cần phân quyền riêng vì có bulk create/delete nhạy cảm
+  SCHEDULE: { VIEW: 'schedule.view', CREATE: 'schedule.create', EDIT: 'schedule.edit', DELETE: 'schedule.delete' },
 
   // Tài chính
   EXPENDITURE: {
@@ -31,7 +32,9 @@ export const PERMISSIONS = {
     EDIT: 'fixed_cost.edit',
     DELETE: 'fixed_cost.delete',
   },
+  // [THÊM MỚI] Sổ quỹ chỉ cần xem, không chỉnh sửa trực tiếp (dữ liệu tổng hợp)
   CASHBOOK: { VIEW: 'cashbook.view' },
+  // [THÊM MỚI] Giao dịch tài chính cần kiểm soát xem & tạo
   TRANSACTION: { VIEW: 'transaction.view', CREATE: 'transaction.create' },
 
   // Hệ thống
@@ -42,9 +45,10 @@ export const PERMISSIONS = {
     DELETE: 'notification_template.delete',
   },
 
+  // (Dự phòng cho tương lai)
   ATTENDANCE: { VIEW: 'attendance.view', EDIT: 'attendance.edit' },
   SCORE: { VIEW: 'score.view', EDIT: 'score.edit' },
-  INVOICE: { VIEW: 'invoice.view', CREATE: 'invoice.create', EDIT: 'invoice.edit' },
+  INVOICE: { VIEW: 'invoice.view', CREATE: 'invoice.create', EDIT: 'invoice.edit', MY_VIEW: 'invoice.my_view' },
   SALARY: { VIEW: 'salary.view', CALCULATE: 'salary.calculate' },
   CRM: { VIEW: 'crm.view', CREATE: 'crm.create', EDIT: 'crm.edit' },
 };
@@ -131,6 +135,7 @@ export const PERMISSION_LIST_UI = [
     module: 'Quản lý Tài chính & Kế toán',
     permissions: [
       { code: PERMISSIONS.INVOICE.VIEW, name: 'Xem danh sách Hóa đơn/Học phí' },
+      { code: PERMISSIONS.INVOICE.MY_VIEW, name: 'Xem danh sách hóa đơn của cá nhân' },
       { code: PERMISSIONS.INVOICE.CREATE, name: 'Tạo Hóa đơn thu học phí' },
       { code: PERMISSIONS.INVOICE.EDIT, name: 'Chỉnh sửa Hóa đơn' },
 
@@ -150,14 +155,7 @@ export const PERMISSION_LIST_UI = [
       { code: PERMISSIONS.TRANSACTION.CREATE, name: 'Tạo Giao dịch tài chính' },
     ],
   },
-  // {
-  //   module: 'Quản lý Tuyển sinh (CRM)',
-  //   permissions: [
-  //     { code: PERMISSIONS.CRM.VIEW, name: 'Xem Lịch sử tư vấn' },
-  //     { code: PERMISSIONS.CRM.CREATE, name: 'Tạo Lịch sử tư vấn mới' },
-  //     { code: PERMISSIONS.CRM.EDIT, name: 'Sửa thông tin tư vấn' },
-  //   ],
-  // },
+
   {
     module: 'Hệ thống & Thông báo',
     permissions: [
