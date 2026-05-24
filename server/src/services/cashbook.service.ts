@@ -20,16 +20,19 @@ export class CashBookService {
     const end = start + limit;
 
     const filter: any = {};
+    const expenditureFilter: any = {};
 
     if (month) {
       const [year, monthNum] = month.split('-').map(Number);
       const startDate = new Date(year, monthNum - 1, 1);
       const endDate = new Date(year, monthNum, 0, 23, 59, 59);
       filter.createdAt = { $gte: startDate, $lte: endDate };
+      expenditureFilter.date = { $gte: startDate, $lte: endDate };
     }
 
     if (startDate && endDate) {
       filter.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
+      expenditureFilter.date = { $gte: new Date(startDate), $lte: new Date(endDate) };
     }
 
     if (search) {
@@ -38,6 +41,13 @@ export class CashBookService {
       const invoiceIds = matchingInvoices.map((inv) => inv._id);
 
       filter.$or = [
+        { code: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { note: { $regex: search, $options: 'i' } },
+        { invoiceId: { $in: invoiceIds } },
+      ];
+
+      expenditureFilter.$or = [
         { code: { $regex: search, $options: 'i' } },
         { description: { $regex: search, $options: 'i' } },
         { note: { $regex: search, $options: 'i' } },
@@ -77,7 +87,9 @@ export class CashBookService {
     }
 
     if (!type || type === 'OUT' || type === 'ALL') {
-      const expenditures = await ExpenditureModel.find(filter).populate('paidBy', 'fullName').sort({ date: -1 });
+      const expenditures = await ExpenditureModel.find(expenditureFilter)
+        .populate('paidBy', 'fullName')
+        .sort({ date: -1 });
       for (const item of expenditures) {
         const obj = {
           ...item.toObject(),
@@ -129,13 +141,14 @@ export class CashBookService {
     if (!type || type === 'ALL') cashBookData.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
     balance = totalIn - totalOut - totalRefund;
 
+    const cashBookTotal = cashBookData.length;
     if (limit && page) {
       cashBookData = cashBookData.slice(start, end);
     }
 
     return {
       data: cashBookData,
-      total: cashBookData.length,
+      total: cashBookTotal,
       summary: {
         top5Amounts,
         totalIn,

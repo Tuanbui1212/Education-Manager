@@ -13,6 +13,7 @@ import EmptyState from '../../../components/EmptyState';
 import FilterBtn from '../../../components/FilterBtn';
 import ErrorState from '../../../components/ErrorState';
 import RequirePermission from '../../../components/RequirePermission';
+import StatusBadge from '../../../components/StatusBadge';
 
 import { PERMISSIONS } from '../../../utils/permission.constant';
 
@@ -190,8 +191,8 @@ const StaffManager = () => {
           icon={<UserCheck size={20} />}
           label="Đang làm việc"
           value={countActive ?? '—'}
-          gradient="bg-gradient-to-br bg-primary"
-          textColor="text-primary"
+          gradient="bg-gradient-to-br from-emerald-500 to-teal-600"
+          textColor="text-emerald-600"
           active={statusFilter === 'ACTIVE'}
           onClick={() => {
             setStatusFilter('ACTIVE');
@@ -394,7 +395,7 @@ const StaffManager = () => {
                   const color = getColor(staff.fullName);
                   const roleName = (staff.roleId as any)?.name || 'N/A';
                   return (
-                    <tr key={staff._id} className="group hover:bg-gray-50/40 transition-colors">
+                    <tr key={staff._id} className="group hover:bg-blue-50/30 transition-colors">
                       {/* STT */}
                       <td className="px-5 py-4 text-gray-400 text-sm text-center font-medium">
                         {index + 1 + (page - 1) * limit}
@@ -453,9 +454,10 @@ const StaffManager = () => {
 
                       {/* Trạng thái */}
                       <td className="px-5 py-4">
-                        <span className={getStatusUserStyles(staff.status as string)}>
-                          {STATUS_USER_OPTIONS.find((opt: any) => opt.value === staff.status)?.label}
-                        </span>
+                        <StatusBadge
+                          status={staff.status as string}
+                          label={STATUS_USER_OPTIONS.find((opt: any) => opt.value === staff.status)?.label}
+                        />
                       </td>
 
                       {/* Actions */}
@@ -466,9 +468,7 @@ const StaffManager = () => {
                               <button
                                 onClick={() => navigate(PATHS.HR_STAFFS_EDIT.replace(':id', staff._id!))}
                                 title="Chỉnh sửa"
-                                className="p-2 text-primary hover:bg-gray-50
-                              hover:text-primary rounded-xl transition-all
-                              hover:scale-110 active:scale-95"
+                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-all hover:scale-110 active:scale-95"
                               >
                                 <Edit2 size={16} />
                               </button>

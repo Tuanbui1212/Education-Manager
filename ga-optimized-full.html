@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>geneticAlgorithm.service.ts — Phiên bản đã tối ưu</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0d1117;
+      color: #e6edf3;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 32px 24px;
+    }
+    h1 { font-size: 20px; font-weight: 700; color: #f0f6fc; margin-bottom: 4px; }
+    .subtitle { font-size: 13px; color: #8b949e; margin-bottom: 28px; }
+
+    .legend {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+      padding: 14px 18px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 7px; }
+    .dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+    .dot-perf  { background: #1f6feb; }
+    .dot-bug   { background: #da3633; }
+    .dot-keep  { background: #238636; }
+
+    .code-wrap {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .code-header {
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      padding: 10px 18px;
+      font-size: 13px;
+      color: #8b949e;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .code-header span { color: #58a6ff; }
+
+    pre {
+      padding: 0;
+      overflow-x: auto;
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      counter-reset: line;
+    }
+
+    .ln {
+      display: flex;
+      position: relative;
+    }
+    .ln:hover { background: rgba(255,255,255,0.03); }
+
+    .ln-num {
+      min-width: 48px;
+      text-align: right;
+      padding: 0 16px 0 0;
+      color: #3d444d;
+      user-select: none;
+      flex-shrink: 0;
+      padding-left: 16px;
+    }
+    .ln-code {
+      flex: 1;
+      padding-right: 20px;
+      white-space: pre;
+    }
+
+    /* highlight types */
+    .ln.perf  { background: rgba(31, 111, 235, 0.08); border-left: 3px solid #1f6feb; }
+    .ln.perf .ln-num { color: #388bfd; }
+    .ln.bug   { background: rgba(218, 54, 51, 0.08);  border-left: 3px solid #da3633; }
+    .ln.bug .ln-num  { color: #f85149; }
+    .ln.keep  { background: rgba(35, 134, 54, 0.08);  border-left: 3px solid #238636; }
+    .ln.keep .ln-num { color: #3fb950; }
+    .ln.normal { border-left: 3px solid transparent; }
+
+    /* tag badges inline */
+    .tag {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 10px;
+      margin-left: 10px;
+      vertical-align: middle;
+      letter-spacing: 0.3px;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .tag-perf { background: #1f6feb33; color: #58a6ff; border: 1px solid #1f6feb55; }
+    .tag-bug  { background: #da363333; color: #f85149; border: 1px solid #da363355; }
+
+    /* syntax */
+    .kw  { color: #ff7b72; }
+    .fn  { color: #d2a8ff; }
+    .str { color: #a5d6ff; }
+    .num { color: #f2cc60; }
+    .cm  { color: #8b949e; font-style: italic; }
+    .tp  { color: #ffa657; }
+    .va  { color: #e6edf3; }
+    .op  { color: #ff7b72; }
+  </style>
+</head>
+<body>
+
+<h1>geneticAlgorithm.service.ts — Phiên bản đã tối ưu</h1>
+<p class="subtitle">Áp dụng 5 performance fixes + 2 bug fixes · Tự copy vào file gốc</p>
+
+<div class="legend">
+  <div class="legend-item"><div class="dot dot-perf"></div> Dòng thay đổi vì <b>Performance</b></div>
+  <div class="legend-item"><div class="dot dot-bug"></div> Dòng thay đổi vì <b>Bug fix</b></div>
+  <div class="legend-item"><div class="dot dot-keep"></div> Dòng <b>giữ nguyên</b> quan trọng</div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-header">
+    <span>server/src/services/geneticAlgorithm.service.ts</span>
+    <span style="color:#3d444d">TypeScript</span>
+  </div>
+<pre id="code"></pre>
+</div>
+
+<script>
+const lines = [
+  { t: 'normal', c: `<span class="kw">import</span> { ClassRequestModel } <span class="kw">from</span> <span class="str">'../models/classRequest.model'</span>;` },
+  { t: 'normal', c: `<span class="kw">import</span> { RoomModel } <span class="kw">from</span> <span class="str">'../models/room.model'</span>;` },
+  { t: 'normal', c: `<span class="kw">import</span> { ShiftModel } <span class="kw">from</span> <span class="str">'../models/shift.model'</span>;` },
+  { t: 'normal', c: `<span class="kw">import</span> { ScheduleModel } <span class="kw">from</span> <span class="str">'../models/schedule.model'</span>;` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `<span class="cm">// ─────────────────────────────────────────────</span>` },
+  { t: 'normal', c: `<span class="cm">// HELPER: Phân loại ca theo startTime</span>` },
+  { t: 'normal', c: `<span class="cm">// ─────────────────────────────────────────────</span>` },
+  { t: 'normal', c: `<span class="kw">function</span> <span class="fn">getShiftSession</span>(startTime: <span class="tp">string</span>): <span class="str">'morning'</span> | <span class="str">'afternoon'</span> | <span class="str">'evening'</span> {` },
+  { t: 'normal', c: `  <span class="kw">const</span> hour = <span class="fn">parseInt</span>(startTime.<span class="fn">split</span>(<span class="str">':'</span>)[<span class="num">0</span>], <span class="num">10</span>);` },
+  { t: 'normal', c: `  <span class="kw">if</span> (hour &lt; <span class="num">12</span>) <span class="kw">return</span> <span class="str">'morning'</span>;` },
+  { t: 'normal', c: `  <span class="kw">if</span> (hour &lt; <span class="num">18</span>) <span class="kw">return</span> <span class="str">'afternoon'</span>;` },
+  { t: 'normal', c: `  <span class="kw">return</span> <span class="str">'evening'</span>;` },
+  { t: 'normal', c: `}` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `<span class="kw">function</span> <span class="fn">isEarlyWeek</span>(day: <span class="tp">number</span>): <span class="tp">boolean</span> {` },
+  { t: 'normal', c: `  <span class="kw">return</span> day &gt;= <span class="num">1</span> &amp;&amp; day &lt;= <span class="num">3</span>;` },
+  { t: 'normal', c: `}` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `<span class="kw">function</span> <span class="fn">generateClassDates</span>(` },
+  { t: 'normal', c: `  startDateStr: <span class="tp">string</span> | <span class="tp">number</span> | <span class="tp">Date</span>,` },
+  { t: 'normal', c: `  totalLessons: <span class="tp">number</span>,` },
+  { t: 'normal', c: `  lessonsPerWeek: <span class="tp">number</span>,` },
+  { t: 'normal', c: `  day: <span class="tp">number</span>,` },
+  { t: 'normal', c: `): <span class="tp">string</span>[] {` },
+  { t: 'normal', c: `  <span class="kw">const</span> dates: <span class="tp">string</span>[] = [];` },
+  { t: 'normal', c: `  <span class="kw">const</span> currentDate = <span class="kw">new</span> <span class="fn">Date</span>(startDateStr);` },
+  { t: 'normal', c: `  <span class="kw">const</span> jsDay = day === <span class="num">7</span> ? <span class="num">0</span> : day;` },
+  { t: 'normal', c: `  <span class="kw">while</span> (currentDate.<span class="fn">getDay</span>() !== jsDay) {` },
+  { t: 'normal', c: `    currentDate.<span class="fn">setDate</span>(currentDate.<span class="fn">getDate</span>() + <span class="num">1</span>);` },
+  { t: 'normal', c: `  }` },
+  { t: 'normal', c: `  <span class="kw">const</span> totalWeeks = Math.<span class="fn">ceil</span>(totalLessons / lessonsPerWeek);` },
+  { t: 'normal', c: `  <span class="kw">for</span> (<span class="kw">let</span> i = <span class="num">0</span>; i &lt; totalWeeks; i++) {` },
+  { t: 'normal', c: `    <span class="kw">const</span> year = currentDate.<span class="fn">getFullYear</span>();` },
+  { t: 'normal', c: `    <span class="kw">const</span> month = String(currentDate.<span class="fn">getMonth</span>() + <span class="num">1</span>).<span class="fn">padStart</span>(<span class="num">2</span>, <span class="str">'0'</span>);` },
+  { t: 'normal', c: `    <span class="kw">const</span> date = String(currentDate.<span class="fn">getDate</span>()).<span class="fn">padStart</span>(<span class="num">2</span>, <span class="str">'0'</span>);` },
+  { t: 'normal', c: `    dates.<span class="fn">push</span>(<span class="str">\`\${year}-\${month}-\${date}\`</span>);` },
+  { t: 'normal', c: `    currentDate.<span class="fn">setDate</span>(currentDate.<span class="fn">getDate</span>() + <span class="num">7</span>);` },
+  { t: 'normal', c: `  }` },
+  { t: 'normal', c: `  <span class="kw">return</span> dates;` },
+  { t: 'normal', c: `}` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `<span class="kw">export class</span> <span class="tp">GeneticAlgorithmService</span> {` },
+  { t: 'normal', c: `  <span class="kw">async</span> <span class="fn">saveResults</span>(enrichedChromosome: <span class="tp">any</span>[]) {` },
+  { t: 'normal', c: `    <span class="kw">const</span> scheduleMap = <span class="kw">new</span> Map&lt;<span class="tp">string</span>, { day: <span class="tp">number</span>; shiftId: <span class="tp">any</span>; roomId: <span class="tp">any</span>; slotScore: <span class="tp">number</span> }[]&gt;();` },
+  { t: 'normal', c: `    <span class="kw">for</span> (<span class="kw">const</span> gene <span class="kw">of</span> enrichedChromosome) {` },
+  { t: 'normal', c: `      <span class="kw">const</span> id = gene.classRequestId.<span class="fn">toString</span>();` },
+  { t: 'normal', c: `      <span class="kw">if</span> (!scheduleMap.<span class="fn">has</span>(id)) scheduleMap.<span class="fn">set</span>(id, []);` },
+  { t: 'normal', c: `      scheduleMap.<span class="fn">get</span>(id)!.<span class="fn">push</span>({ day: gene.day, shiftId: gene.shiftId, roomId: gene.roomId, slotScore: gene.slotScore });` },
+  { t: 'normal', c: `    }` },
+  { t: 'normal', c: `    <span class="kw">const</span> bulkOps = [...scheduleMap.<span class="fn">entries</span>()].<span class="fn">map</span>(([classRequestId, schedule]) => ({` },
+  { t: 'normal', c: `      updateOne: { filter: { _id: classRequestId }, update: { <span class="str">$set</span>: { schedule } } },` },
+  { t: 'normal', c: `    }));` },
+  { t: 'normal', c: `    <span class="kw">if</span> (bulkOps.length === <span class="num">0</span>) <span class="kw">return</span>;` },
+  { t: 'normal', c: `    <span class="kw">const</span> result = <span class="kw">await</span> ClassRequestModel.<span class="fn">bulkWrite</span>(bulkOps, { ordered: <span class="kw">false</span> });` },
+  { t: 'normal', c: `    console.<span class="fn">log</span>(<span class="str">\`[GA] Saved: \${result.modifiedCount}/\${bulkOps.length}\`</span>);` },
+  { t: 'normal', c: `    <span class="kw">return</span> result;` },
+  { t: 'normal', c: `  }` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `  <span class="cm">// ═══════════════════════════════════════════</span>` },
+  { t: 'normal', c: `  <span class="cm">// BƯỚC 1: Chuẩn bị dữ liệu</span>` },
+  { t: 'normal', c: `  <span class="cm">// ═══════════════════════════════════════════</span>` },
+  { t: 'normal', c: `  <span class="kw">async</span> <span class="fn">prepareData</span>(creatorId: <span class="tp">string</span>) {` },
+  { t: 'perf',   c: `    <span class="cm">// [PERF Fix 4] Tách 2 bước: lấy requests trước để tính earliestStart</span>` },
+  { t: 'perf',   c: `    <span class="kw">const</span> [requests, rooms, shifts] = <span class="kw">await</span> Promise.<span class="fn">all</span>([` },
+  { t: 'perf',   c: `      ClassRequestModel.<span class="fn">find</span>({ creatorId }),` },
+  { t: 'perf',   c: `      RoomModel.<span class="fn">find</span>({ status: <span class="str">'ACTIVE'</span> }),` },
+  { t: 'perf',   c: `      ShiftModel.<span class="fn">find</span>({ status: <span class="str">'ACTIVE'</span> }),` },
+  { t: 'perf',   c: `    ]);` },
+  { t: 'normal', c: `` },
+  { t: 'perf',   c: `    <span class="cm">// [PERF Fix 4] Chỉ lấy lịch từ ngày bắt đầu sớm nhất của batch</span>` },
+  { t: 'perf',   c: `    <span class="kw">const</span> earliestStart = requests.<span class="fn">reduce</span>((min, r) => {` },
+  { t: 'perf',   c: `      <span class="kw">const</span> t = r.startDate ? <span class="kw">new</span> <span class="fn">Date</span>(r.startDate).<span class="fn">getTime</span>() : Date.<span class="fn">now</span>();` },
+  { t: 'perf',   c: `      <span class="kw">return</span> t &lt; min ? t : min;` },
+  { t: 'perf',   c: `    }, Date.<span class="fn">now</span>());` },
+  { t: 'perf',   c: `    <span class="kw">const</span> schedules = <span class="kw">await</span> ScheduleModel.<span class="fn">find</span>({ date: { <span class="str">$gte</span>: <span class="kw">new</span> <span class="fn">Date</span>(earliestStart) } });` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `    <span class="kw">const</span> busySlots = <span class="kw">new</span> Set&lt;<span class="tp">string</span>&gt;();` },
+  { t: 'normal', c: `    schedules.<span class="fn">forEach</span>((s) => {` },
+  { t: 'normal', c: `      <span class="kw">const</span> d = <span class="kw">new</span> <span class="fn">Date</span>(s.date);` },
+  { t: 'normal', c: `      <span class="kw">const</span> year = d.<span class="fn">getFullYear</span>();` },
+  { t: 'normal', c: `      <span class="kw">const</span> month = String(d.<span class="fn">getMonth</span>() + <span class="num">1</span>).<span class="fn">padStart</span>(<span class="num">2</span>, <span class="str">'0'</span>);` },
+  { t: 'normal', c: `      <span class="kw">const</span> date = String(d.<span class="fn">getDate</span>()).<span class="fn">padStart</span>(<span class="num">2</span>, <span class="str">'0'</span>);` },
+  { t: 'normal', c: `      <span class="kw">const</span> dateString = <span class="str">\`\${year}-\${month}-\${date}\`</span>;` },
+  { t: 'normal', c: `      busySlots.<span class="fn">add</span>(<span class="str">\`ROOM_\${s.roomId}_DAY_\${dateString}_SHIFT_\${s.shiftId}\`</span>);` },
+  { t: 'normal', c: `      busySlots.<span class="fn">add</span>(<span class="str">\`TEACHER_\${s.teacherId}_DAY_\${dateString}_SHIFT_\${s.shiftId}\`</span>);` },
+  { t: 'normal', c: `    });` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `    <span class="kw">const</span> enrichedRequests = requests.<span class="fn">map</span>((req, idx) => {` },
+  { t: 'normal', c: `      <span class="kw">const</span> startDt = req.startDate ? <span class="kw">new</span> <span class="fn">Date</span>(req.startDate) : <span class="kw">new</span> <span class="fn">Date</span>();` },
+  { t: 'normal', c: `      <span class="kw">const</span> jsDay = startDt.<span class="fn">getDay</span>();` },
+  { t: 'normal', c: `      <span class="kw">return</span> { ...req.<span class="fn">toObject</span>(), classIdx: idx, startDayOfWeek: jsDay === <span class="num">0</span> ? <span class="num">1</span> : jsDay, absoluteStartTimestamp: startDt.<span class="fn">getTime</span>() };` },
+  { t: 'normal', c: `    });` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `    <span class="kw">const</span> enrichedShifts = shifts.<span class="fn">map</span>((s) => ({ ...s.<span class="fn">toObject</span>(), sessionType: <span class="fn">getShiftSession</span>(s.startTime) }));` },
+  { t: 'normal', c: `` },
+  { t: 'perf',   c: `    <span class="cm">// [PERF Fix 1] Pre-build maps 1 lần — dùng cho calculateFitness & mutate</span>` },
+  { t: 'perf',   c: `    <span class="kw">const</span> shiftMap = <span class="kw">new</span> Map&lt;<span class="tp">string</span>, <span class="tp">any</span>&gt;();` },
+  { t: 'perf',   c: `    enrichedShifts.<span class="fn">forEach</span>((s: <span class="tp">any</span>) => shiftMap.<span class="fn">set</span>(s._id.<span class="fn">toString</span>(), s));` },
+  { t: 'normal', c: `` },
+  { t: 'perf',   c: `    <span class="kw">const</span> reqMap = <span class="kw">new</span> Map&lt;<span class="tp">string</span>, <span class="tp">string</span>[]&gt;();` },
+  { t: 'perf',   c: `    enrichedRequests.<span class="fn">forEach</span>((r: <span class="tp">any</span>) => reqMap.<span class="fn">set</span>(r._id.<span class="fn">toString</span>(), r.optionalRequirements || []));` },
+  { t: 'normal', c: `` },
+  { t: 'perf',   c: `    <span class="kw">const</span> requestMap = <span class="kw">new</span> Map&lt;<span class="tp">string</span>, <span class="tp">any</span>&gt;(); <span class="cm">// dùng cho mutate (Fix 3)</span>` },
+  { t: 'perf',   c: `    enrichedRequests.<span class="fn">forEach</span>((r: <span class="tp">any</span>) => requestMap.<span class="fn">set</span>(r._id.<span class="fn">toString</span>(), r));` },
+  { t: 'normal', c: `` },
+  { t: 'perf',   c: `    <span class="cm">// [PERF Fix 2] Pre-compute date cache: mỗi lớp × 6 ngày trong tuần</span>` },
+  { t: 'perf',   c: `    <span class="kw">const</span> dateCache = <span class="kw">new</span> Map&lt;<span class="tp">string</span>, <span class="tp">string</span>[]&gt;();` },
+  { t: 'perf',   c: `    enrichedRequests.<span class="fn">forEach</span>((req: <span class="tp">any</span>) => {` },
+  { t: 'perf',   c: `      <span class="kw">for</span> (<span class="kw">let</span> day = <span class="num">1</span>; day &lt;= <span class="num">6</span>; day++) {` },
+  { t: 'perf',   c: `        dateCache.<span class="fn">set</span>(<span class="str">\`\${req._id}_\${day}\`</span>, <span class="fn">generateClassDates</span>(req.startDate, req.totalLessons, req.lessonsPerWeek, day));` },
+  { t: 'perf',   c: `      }` },
+  { t: 'perf',   c: `    });` },
+  { t: 'normal', c: `` },
+  { t: 'perf',   c: `    <span class="kw">return</span> { enrichedRequests, rooms, shifts: enrichedShifts, busySlots, shiftMap, reqMap, requestMap, dateCache };` },
+  { t: 'normal', c: `  }` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `  <span class="cm">// ═══════════════════════════════════════════</span>` },
+  { t: 'normal', c: `  <span class="cm">// BƯỚC 2: Sinh chromosome ngẫu nhiên</span>` },
+  { t: 'normal', c: `  <span class="cm">// ═══════════════════════════════════════════</span>` },
+  { t: 'normal', c: `  <span class="fn">generateRandomChromosome</span>(data: <span class="tp">any</span>) {` },
+  { t: 'normal', c: `    <span class="kw">const</span> chromosome: <span class="tp">any</span>[] = [];` },
+  { t: 'normal', c: `    <span class="kw">const</span> { enrichedRequests, rooms, shifts } = data;` },
+  { t: 'normal', c: `    enrichedRequests.<span class="fn">forEach</span>((req: <span class="tp">any</span>) => {` },
+  { t: 'normal', c: `      <span class="kw">const</span> reqs: <span class="tp">string</span>[] = req.optionalRequirements || [];` },
+  { t: 'normal', c: `      <span class="kw">let</span> possibleDays = [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>, <span class="num">6</span>];` },
+  { t: 'normal', c: `      <span class="kw">const</span> blockedDays = reqs.<span class="fn">filter</span>((r) => r.<span class="fn">startsWith</span>(<span class="str">'noDay.'</span>)).<span class="fn">map</span>((r) => <span class="fn">parseInt</span>(r.<span class="fn">split</span>(<span class="str">'.'</span>)[<span class="num">1</span>], <span class="num">10</span>));` },
+  { t: 'normal', c: `      possibleDays = possibleDays.<span class="fn">filter</span>((d) => !blockedDays.<span class="fn">includes</span>(d));` },
+  { t: 'normal', c: `      <span class="kw">if</span> (possibleDays.length === <span class="num">0</span>) possibleDays = [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>, <span class="num">6</span>];` },
+  { t: 'normal', c: `      <span class="kw">const</span> sessionPrefs = [<span class="str">'morning'</span>, <span class="str">'afternoon'</span>, <span class="str">'evening'</span>].<span class="fn">filter</span>((s) => reqs.<span class="fn">includes</span>(s));` },
+  { t: 'normal', c: `      <span class="kw">let</span> possibleShifts = shifts;` },
+  { t: 'normal', c: `      <span class="kw">if</span> (sessionPrefs.length &gt; <span class="num">0</span>) {` },
+  { t: 'normal', c: `        <span class="kw">const</span> filtered = shifts.<span class="fn">filter</span>((s: <span class="tp">any</span>) => sessionPrefs.<span class="fn">includes</span>(s.sessionType));` },
+  { t: 'normal', c: `        <span class="kw">if</span> (filtered.length &gt; <span class="num">0</span>) possibleShifts = filtered;` },
+  { t: 'normal', c: `      }` },
+  { t: 'normal', c: `      <span class="kw">const</span> validRooms = rooms.<span class="fn">filter</span>((r: <span class="tp">any</span>) => r.capacity &gt;= req.maxNumberOfStudents);` },
+  { t: 'normal', c: `      <span class="kw">const</span> safeRooms = validRooms.length &gt; <span class="num">0</span> ? validRooms : rooms.<span class="fn">sort</span>((a: <span class="tp">any</span>, b: <span class="tp">any</span>) => b.capacity - a.capacity);` },
+  { t: 'normal', c: `      <span class="kw">let</span> availableDaysForThisClass = [...possibleDays];` },
+  { t: 'normal', c: `      <span class="kw">for</span> (<span class="kw">let</span> i = <span class="num">0</span>; i &lt; req.lessonsPerWeek; i++) {` },
+  { t: 'normal', c: `        <span class="kw">let</span> day;` },
+  { t: 'normal', c: `        <span class="kw">if</span> (reqs.<span class="fn">includes</span>(<span class="str">'noSameDay'</span>) &amp;&amp; availableDaysForThisClass.length &gt; <span class="num">0</span>) {` },
+  { t: 'normal', c: `          <span class="kw">const</span> randomIdx = Math.<span class="fn">floor</span>(Math.<span class="fn">random</span>() * availableDaysForThisClass.length);` },
+  { t: 'normal', c: `          day = availableDaysForThisClass[randomIdx];` },
+  { t: 'normal', c: `          availableDaysForThisClass.<span class="fn">splice</span>(randomIdx, <span class="num">1</span>);` },
+  { t: 'normal', c: `        } <span class="kw">else</span> {` },
+  { t: 'normal', c: `          day = possibleDays[Math.<span class="fn">floor</span>(Math.<span class="fn">random</span>() * possibleDays.length)];` },
+  { t: 'normal', c: `        }` },
+  { t: 'normal', c: `        <span class="kw">const</span> shift = possibleShifts[Math.<span class="fn">floor</span>(Math.<span class="fn">random</span>() * possibleShifts.length)];` },
+  { t: 'normal', c: `        <span class="kw">const</span> room = safeRooms[Math.<span class="fn">floor</span>(Math.<span class="fn">random</span>() * safeRooms.length)];` },
+  { t: 'normal', c: `        chromosome.<span class="fn">push</span>({` },
+  { t: 'normal', c: `          classRequestId: req._id, classIdx: req.classIdx, teacherId: req.teacherId,` },
+  { t: 'normal', c: `          maxNumberOfStudents: req.maxNumberOfStudents, startDate: req.startDate,` },
+  { t: 'normal', c: `          totalLessons: req.totalLessons, lessonsPerWeek: req.lessonsPerWeek,` },
+  { t: 'normal', c: `          day, shiftId: shift._id, roomId: room._id, roomCapacity: room.capacity,` },
+  { t: 'normal', c: `        });` },
+  { t: 'normal', c: `      }` },
+  { t: 'normal', c: `    });` },
+  { t: 'normal', c: `    <span class="kw">return</span> chromosome;` },
+  { t: 'normal', c: `  }` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `  <span class="cm">// ═══════════════════════════════════════════</span>` },
+  { t: 'normal', c: `  <span class="cm">// BƯỚC 3: Hàm tính điểm Fitness</span>` },
+  { t: 'normal', c: `  <span class="cm">// ═══════════════════════════════════════════</span>` },
+  { t: 'normal', c: `  <span class="fn">calculateFitness</span>(chromosome: <span class="tp">any</span>[], data: <span class="tp">any</span>) {` },
+  { t: 'normal', c: `    <span class="kw">let</span> fitness = <span class="num">0</span>;` },
+  { t: 'perf',   c: `    <span class="cm">// [PERF Fix 1+2] Dùng shiftMap, reqMap, dateCache từ data — không build lại</span>` },
+  { t: 'perf',   c: `    <span class="kw">const</span> { busySlots, shiftMap, reqMap, dateCache } = data;` },
+  { t: 'normal', c: `    <span class="kw">const</span> usedRooms = <span class="kw">new</span> Set&lt;<span class="tp">string</span>&gt;();` },
+  { t: 'normal', c: `    <span class="kw">const</span> usedTeachers = <span class="kw">new</span> Set&lt;<span class="tp">string</span>&gt;();` },
+  { t: 'normal', c: `    <span class="kw">const</span> classDayMap = <span class="kw">new</span> Map&lt;<span class="tp">string</span>, <span class="tp">number</span>[]&gt;();` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `    chromosome.<span class="fn">forEach</span>((gene) => {` },
+  { t: 'normal', c: `      <span class="kw">const</span> { teacherId, day, shiftId, roomId, maxNumberOfStudents, roomCapacity, classRequestId } = gene;` },
+  { t: 'normal', c: `      <span class="kw">const</span> rid = classRequestId.<span class="fn">toString</span>();` },
+  { t: 'normal', c: `      <span class="kw">const</span> sid = shiftId.<span class="fn">toString</span>();` },
+  { t: 'normal', c: `` },
+  { t: 'perf',   c: `      <span class="cm">// [PERF Fix 2] Lookup cache thay vì gọi generateClassDates</span>` },
+  { t: 'perf',   c: `      <span class="kw">const</span> days = dateCache.<span class="fn">get</span>(<span class="str">\`\${classRequestId}_\${day}\`</span>) ?? [];` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `      days.<span class="fn">forEach</span>((date) => {` },
+  { t: 'normal', c: `        <span class="kw">const</span> timeKey = <span class="str">\`DAY_\${date}_SHIFT_\${sid}\`</span>;` },
+  { t: 'normal', c: `        <span class="kw">const</span> roomKey = <span class="str">\`ROOM_\${roomId}_\${timeKey}\`</span>;` },
+  { t: 'normal', c: `        <span class="kw">const</span> teacherKey = <span class="str">\`TEACHER_\${teacherId}_\${timeKey}\`</span>;` },
+  { t: 'normal', c: `        <span class="kw">if</span> (busySlots.<span class="fn">has</span>(roomKey)) fitness -= <span class="num">5000</span>;` },
+  { t: 'normal', c: `        <span class="kw">if</span> (busySlots.<span class="fn">has</span>(teacherKey)) fitness -= <span class="num">5000</span>;` },
+  { t: 'normal', c: `        <span class="kw">if</span> (usedRooms.<span class="fn">has</span>(roomKey)) fitness -= <span class="num">5000</span>; <span class="kw">else</span> usedRooms.<span class="fn">add</span>(roomKey);` },
+  { t: 'normal', c: `        <span class="kw">if</span> (usedTeachers.<span class="fn">has</span>(teacherKey)) fitness -= <span class="num">5000</span>; <span class="kw">else</span> usedTeachers.<span class="fn">add</span>(teacherKey);` },
+  { t: 'normal', c: `      });` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `      <span class="kw">if</span> (maxNumberOfStudents &gt; roomCapacity) fitness -= <span class="num">3000</span>;` },
+  { t: 'normal', c: `      <span class="kw">if</span> (roomCapacity &gt;= maxNumberOfStudents &amp;&amp; roomCapacity - maxNumberOfStudents &lt;= <span class="num">10</span>) fitness += <span class="num">200</span>;` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `      <span class="kw">if</span> (!classDayMap.<span class="fn">has</span>(rid)) classDayMap.<span class="fn">set</span>(rid, []);` },
+  { t: 'normal', c: `      classDayMap.<span class="fn">get</span>(rid)!.<span class="fn">push</span>(day);` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `      <span class="kw">const</span> reqs = reqMap.<span class="fn">get</span>(rid) || [];` },
+  { t: 'normal', c: `` },
+  { t: 'bug',    c: `      <span class="cm">// [BUG Fix 2] noDay check trước return — không phụ thuộc shift</span>` },
+  { t: 'bug',    c: `      <span class="kw">if</span> (reqs.<span class="fn">includes</span>(<span class="str">\`noDay.\${day}\`</span>)) fitness -= <span class="num">4000</span>;` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `      <span class="kw">const</span> shift = shiftMap.<span class="fn">get</span>(sid);` },
+  { t: 'normal', c: `      <span class="kw">if</span> (reqs.length === <span class="num">0</span> || !shift) <span class="kw">return</span>;` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `      <span class="kw">if</span> (reqs.<span class="fn">includes</span>(<span class="str">\`day.\${day}\`</span>)) fitness += <span class="num">300</span>;` },
+  { t: 'normal', c: `      <span class="kw">const</span> sessionType: <span class="tp">string</span> = shift.sessionType;` },
+  { t: 'normal', c: `      <span class="kw">if</span> (reqs.<span class="fn">includes</span>(sessionType)) fitness += <span class="num">300</span>;` },
+  { t: 'normal', c: `      <span class="kw">if</span> (reqs.<span class="fn">includes</span>(<span class="str">'preferEarlyWeek'</span>) &amp;&amp; <span class="fn">isEarlyWeek</span>(day)) fitness += <span class="num">200</span>;` },
+  { t: 'normal', c: `    });` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `    classDayMap.<span class="fn">forEach</span>((days, rid) => {` },
+  { t: 'normal', c: `      <span class="kw">const</span> reqs = reqMap.<span class="fn">get</span>(rid) || [];` },
+  { t: 'normal', c: `      <span class="kw">if</span> (reqs.<span class="fn">includes</span>(<span class="str">'noSameDay'</span>)) {` },
+  { t: 'normal', c: `        <span class="kw">const</span> unique = <span class="kw">new</span> Set(days);` },
+  { t: 'normal', c: `        fitness -= (days.length - unique.size) * <span class="num">3000</span>;` },
+  { t: 'normal', c: `      }` },
+  { t: 'normal', c: `      <span class="kw">if</span> (reqs.<span class="fn">includes</span>(<span class="str">'noConsec'</span>)) {` },
+  { t: 'normal', c: `        <span class="kw">const</span> sorted = [...days].<span class="fn">sort</span>((a, b) => a - b);` },
+  { t: 'normal', c: `        <span class="kw">for</span> (<span class="kw">let</span> i = <span class="num">1</span>; i &lt; sorted.length; i++) {` },
+  { t: 'normal', c: `          <span class="kw">if</span> (sorted[i] - sorted[i - <span class="num">1</span>] === <span class="num">1</span>) fitness -= <span class="num">2000</span>;` },
+  { t: 'normal', c: `        }` },
+  { t: 'normal', c: `      }` },
+  { t: 'normal', c: `    });` },
+  { t: 'normal', c: `    <span class="kw">return</span> fitness;` },
+  { t: 'normal', c: `  }` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `  <span class="cm">// ═══════════════════════════════════════════</span>` },
+  { t: 'normal', c: `  <span class="cm">// BƯỚC 4: Crossover</span>` },
+  { t: 'normal', c: `  <span class="cm">// ═══════════════════════════════════════════</span>` },
+  { t: 'normal', c: `  <span class="kw">private</span> <span class="fn">crossover</span>(parent1: <span class="tp">any</span>[], parent2: <span class="tp">any</span>[]) {` },
+  { t: 'normal', c: `    <span class="kw">const</span> midpoint = Math.<span class="fn">floor</span>(Math.<span class="fn">random</span>() * parent1.length);` },
+  { t: 'normal', c: `    <span class="kw">return</span> [...parent1.<span class="fn">slice</span>(<span class="num">0</span>, midpoint), ...parent2.<span class="fn">slice</span>(midpoint)];` },
+  { t: 'normal', c: `  }` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `  <span class="cm">// ═══════════════════════════════════════════</span>` },
+  { t: 'normal', c: `  <span class="cm">// BƯỚC 5: Mutation</span>` },
+  { t: 'normal', c: `  <span class="cm">// ═══════════════════════════════════════════</span>` },
+  { t: 'normal', c: `  <span class="kw">private</span> <span class="fn">mutate</span>(chromosome: <span class="tp">any</span>[], data: <span class="tp">any</span>) {` },
+  { t: 'normal', c: `    <span class="kw">const</span> mutationRate = <span class="num">0.08</span>;` },
+  { t: 'normal', c: `    <span class="kw">return</span> chromosome.<span class="fn">map</span>((gene) => {` },
+  { t: 'normal', c: `      <span class="kw">if</span> (Math.<span class="fn">random</span>() &gt;= mutationRate) <span class="kw">return</span> gene;` },
+  { t: 'normal', c: `` },
+  { t: 'perf',   c: `      <span class="cm">// [PERF Fix 3] Dùng requestMap O(1) thay vì Array.find() O(n)</span>` },
+  { t: 'perf',   c: `      <span class="kw">const</span> currentReq = data.requestMap.<span class="fn">get</span>(gene.classRequestId.<span class="fn">toString</span>());` },
+  { t: 'normal', c: `      <span class="kw">const</span> reqs: <span class="tp">string</span>[] = currentReq?.optionalRequirements || [];` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `      <span class="kw">const</span> blockedDays = reqs.<span class="fn">filter</span>((r) => r.<span class="fn">startsWith</span>(<span class="str">'noDay.'</span>)).<span class="fn">map</span>((r) => <span class="fn">parseInt</span>(r.<span class="fn">split</span>(<span class="str">'.'</span>)[<span class="num">1</span>], <span class="num">10</span>));` },
+  { t: 'normal', c: `      <span class="kw">let</span> possibleDays = [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>, <span class="num">6</span>].<span class="fn">filter</span>((d) => !blockedDays.<span class="fn">includes</span>(d));` },
+  { t: 'normal', c: `      <span class="kw">if</span> (possibleDays.length === <span class="num">0</span>) possibleDays = [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>, <span class="num">6</span>];` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `      <span class="kw">const</span> sessionPrefs = [<span class="str">'morning'</span>, <span class="str">'afternoon'</span>, <span class="str">'evening'</span>].<span class="fn">filter</span>((s) => reqs.<span class="fn">includes</span>(s));` },
+  { t: 'normal', c: `      <span class="kw">let</span> possibleShifts = data.shifts;` },
+  { t: 'normal', c: `      <span class="kw">if</span> (sessionPrefs.length &gt; <span class="num">0</span>) {` },
+  { t: 'normal', c: `        <span class="kw">const</span> filtered = data.shifts.<span class="fn">filter</span>((s: <span class="tp">any</span>) => sessionPrefs.<span class="fn">includes</span>(s.sessionType));` },
+  { t: 'normal', c: `        <span class="kw">if</span> (filtered.length &gt; <span class="num">0</span>) possibleShifts = filtered;` },
+  { t: 'normal', c: `      }` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `      <span class="kw">const</span> validRooms = data.rooms.<span class="fn">filter</span>((r: <span class="tp">any</span>) => r.capacity &gt;= gene.maxNumberOfStudents);` },
+  { t: 'bug',    c: `      <span class="cm">// [BUG Fix 1] Bỏ [] wrapper — safeRooms phải là array of rooms, không phải array of array</span>` },
+  { t: 'bug',    c: `      <span class="kw">const</span> safeRooms = validRooms.length &gt; <span class="num">0</span> ? validRooms : data.rooms.<span class="fn">sort</span>((a: <span class="tp">any</span>, b: <span class="tp">any</span>) => b.capacity - a.capacity);` },
+  { t: 'normal', c: `      <span class="kw">const</span> newRoom = safeRooms[Math.<span class="fn">floor</span>(Math.<span class="fn">random</span>() * safeRooms.length)];` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `      <span class="kw">return</span> {` },
+  { t: 'normal', c: `        ...gene,` },
+  { t: 'normal', c: `        day: possibleDays[Math.<span class="fn">floor</span>(Math.<span class="fn">random</span>() * possibleDays.length)],` },
+  { t: 'normal', c: `        shiftId: possibleShifts[Math.<span class="fn">floor</span>(Math.<span class="fn">random</span>() * possibleShifts.length)]._id,` },
+  { t: 'normal', c: `        roomId: newRoom._id,` },
+  { t: 'normal', c: `        roomCapacity: newRoom.capacity,` },
+  { t: 'normal', c: `      };` },
+  { t: 'normal', c: `    });` },
+  { t: 'normal', c: `  }` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `  <span class="cm">// ═══════════════════════════════════════════</span>` },
+  { t: 'normal', c: `  <span class="cm">// BƯỚC CUỐI: Chạy GA</span>` },
+  { t: 'normal', c: `  <span class="cm">// ═══════════════════════════════════════════</span>` },
+  { t: 'normal', c: `  <span class="kw">async</span> <span class="fn">runGA</span>(creatorId: <span class="tp">string</span>) {` },
+  { t: 'normal', c: `    <span class="kw">const</span> data = <span class="kw">await</span> <span class="kw">this</span>.<span class="fn">prepareData</span>(creatorId);` },
+  { t: 'normal', c: `    <span class="kw">const</span> totalClass = data.enrichedRequests.length;` },
+  { t: 'keep',   c: `    console.<span class="fn">log</span>(<span class="str">'[GA] Running...'</span>);` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `    <span class="kw">const</span> POPULATION_SIZE = Math.<span class="fn">min</span>(<span class="num">600</span>, Math.<span class="fn">max</span>(<span class="num">50</span>, totalClass * <span class="num">20</span>));` },
+  { t: 'normal', c: `    <span class="kw">const</span> GENERATIONS = Math.<span class="fn">min</span>(<span class="num">600</span>, Math.<span class="fn">max</span>(<span class="num">30</span>, totalClass * <span class="num">15</span>));` },
+  { t: 'normal', c: `    <span class="kw">const</span> ELITE_SIZE = Math.<span class="fn">max</span>(<span class="num">3</span>, Math.<span class="fn">floor</span>(POPULATION_SIZE * <span class="num">0.03</span>));` },
+  { t: 'normal', c: `    <span class="kw">const</span> TOURNAMENT_K = totalClass &lt; <span class="num">10</span> ? <span class="num">3</span> : totalClass &lt; <span class="num">50</span> ? <span class="num">5</span> : <span class="num">7</span>;` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `    <span class="kw">let</span> population = Array.<span class="fn">from</span>({ length: POPULATION_SIZE }, () => <span class="kw">this</span>.<span class="fn">generateRandomChromosome</span>(data));` },
+  { t: 'normal', c: `    <span class="kw">let</span> scoredPop = population.<span class="fn">map</span>((chrom) => ({ chrom, score: <span class="kw">this</span>.<span class="fn">calculateFitness</span>(chrom, data) }));` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `    <span class="kw">let</span> bestOverallScore = -Infinity;` },
+  { t: 'normal', c: `    <span class="kw">let</span> stagnantGenerations = <span class="num">0</span>;` },
+  { t: 'normal', c: `    <span class="kw">let</span> MAX_STAGNANT_GENERATIONS = <span class="num">50</span>;` },
+  { t: 'normal', c: `    <span class="kw">if</span> (totalClass &lt; <span class="num">3</span>)  MAX_STAGNANT_GENERATIONS = <span class="num">3</span>;` },
+  { t: 'normal', c: `    <span class="kw">else if</span> (totalClass &lt; <span class="num">5</span>)  MAX_STAGNANT_GENERATIONS = <span class="num">5</span>;` },
+  { t: 'normal', c: `    <span class="kw">else if</span> (totalClass &lt; <span class="num">8</span>)  MAX_STAGNANT_GENERATIONS = <span class="num">10</span>;` },
+  { t: 'normal', c: `    <span class="kw">else if</span> (totalClass &lt; <span class="num">10</span>) MAX_STAGNANT_GENERATIONS = <span class="num">15</span>;` },
+  { t: 'normal', c: `    <span class="kw">else if</span> (totalClass &lt; <span class="num">15</span>) MAX_STAGNANT_GENERATIONS = <span class="num">20</span>;` },
+  { t: 'normal', c: `    <span class="kw">else if</span> (totalClass &lt; <span class="num">20</span>) MAX_STAGNANT_GENERATIONS = <span class="num">25</span>;` },
+  { t: 'normal', c: `    <span class="kw">else if</span> (totalClass &lt; <span class="num">30</span>) MAX_STAGNANT_GENERATIONS = <span class="num">30</span>;` },
+  { t: 'normal', c: `    <span class="kw">else if</span> (totalClass &lt; <span class="num">50</span>) MAX_STAGNANT_GENERATIONS = <span class="num">35</span>;` },
+  { t: 'normal', c: `    <span class="kw">else if</span> (totalClass &lt; <span class="num">80</span>) MAX_STAGNANT_GENERATIONS = <span class="num">40</span>;` },
+  { t: 'normal', c: `    <span class="kw">else if</span> (totalClass &lt; <span class="num">100</span>) MAX_STAGNANT_GENERATIONS = <span class="num">45</span>;` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `    <span class="kw">let</span> actualGenerations = <span class="num">0</span>;` },
+  { t: 'normal', c: `    <span class="kw">for</span> (<span class="kw">let</span> g = <span class="num">0</span>; g &lt; GENERATIONS; g++) {` },
+  { t: 'normal', c: `      scoredPop.<span class="fn">sort</span>((a, b) => b.score - a.score);` },
+  { t: 'normal', c: `      <span class="kw">const</span> currentBestScore = scoredPop[<span class="num">0</span>].score;` },
+  { t: 'perf',   c: `      <span class="cm">// [PERF Fix 5] Bỏ console.log mỗi thế hệ</span>` },
+  { t: 'normal', c: `      <span class="kw">if</span> (currentBestScore &gt; bestOverallScore) {` },
+  { t: 'normal', c: `        bestOverallScore = currentBestScore;` },
+  { t: 'normal', c: `        stagnantGenerations = <span class="num">0</span>;` },
+  { t: 'normal', c: `      } <span class="kw">else</span> {` },
+  { t: 'normal', c: `        stagnantGenerations++;` },
+  { t: 'normal', c: `      }` },
+  { t: 'normal', c: `      <span class="kw">if</span> (stagnantGenerations &gt;= MAX_STAGNANT_GENERATIONS) {` },
+  { t: 'keep',   c: `        console.<span class="fn">log</span>(<span class="str">\`[GA] 🛑 DỪNG SỚM tại thế hệ \${g + 1}! \${MAX_STAGNANT_GENERATIONS} thế hệ không tiến bộ.\`</span>);` },
+  { t: 'normal', c: `        <span class="kw">break</span>;` },
+  { t: 'normal', c: `      }` },
+  { t: 'normal', c: `      <span class="kw">const</span> newScoredPop = scoredPop.<span class="fn">slice</span>(<span class="num">0</span>, ELITE_SIZE);` },
+  { t: 'normal', c: `      <span class="kw">while</span> (newScoredPop.length &lt; POPULATION_SIZE) {` },
+  { t: 'normal', c: `        <span class="kw">const</span> t1 = <span class="kw">this</span>.<span class="fn">tournamentSelect</span>(scoredPop, TOURNAMENT_K);` },
+  { t: 'normal', c: `        <span class="kw">const</span> t2 = <span class="kw">this</span>.<span class="fn">tournamentSelect</span>(scoredPop, TOURNAMENT_K);` },
+  { t: 'normal', c: `        <span class="kw">let</span> child = <span class="kw">this</span>.<span class="fn">crossover</span>(t1.chrom, t2.chrom);` },
+  { t: 'normal', c: `        child = <span class="kw">this</span>.<span class="fn">mutate</span>(child, data);` },
+  { t: 'normal', c: `        newScoredPop.<span class="fn">push</span>({ chrom: child, score: <span class="kw">this</span>.<span class="fn">calculateFitness</span>(child, data) });` },
+  { t: 'normal', c: `      }` },
+  { t: 'normal', c: `      scoredPop = newScoredPop;` },
+  { t: 'normal', c: `      actualGenerations = g + <span class="num">1</span>;` },
+  { t: 'normal', c: `    }` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `    scoredPop.<span class="fn">sort</span>((a, b) => b.score - a.score);` },
+  { t: 'normal', c: `    <span class="kw">const</span> best = scoredPop[<span class="num">0</span>];` },
+  { t: 'keep',   c: `    console.<span class="fn">log</span>(<span class="str">\`[GA] Best fitness after \${actualGenerations} generations: \${best.score}\`</span>);` },
+  { t: 'normal', c: `` },
+  { t: 'perf',   c: `    <span class="cm">// [PERF Fix 1] Dùng shiftMap và requestMap đã có sẵn trong data</span>` },
+  { t: 'normal', c: `    <span class="kw">const</span> enrichedChromosome = best.chrom.<span class="fn">map</span>((gene: <span class="tp">any</span>) => {` },
+  { t: 'perf',   c: `      <span class="kw">const</span> shift = data.shiftMap.<span class="fn">get</span>(gene.shiftId.<span class="fn">toString</span>());` },
+  { t: 'perf',   c: `      <span class="kw">const</span> req = data.requestMap.<span class="fn">get</span>(gene.classRequestId.<span class="fn">toString</span>());` },
+  { t: 'normal', c: `      <span class="kw">const</span> reqs: <span class="tp">string</span>[] = req?.optionalRequirements || [];` },
+  { t: 'normal', c: `      <span class="kw">let</span> slotScore = <span class="num">0</span>;` },
+  { t: 'normal', c: `      <span class="kw">if</span> (reqs.<span class="fn">includes</span>(<span class="str">\`day.\${gene.day}\`</span>)) slotScore += <span class="num">300</span>;` },
+  { t: 'normal', c: `      <span class="kw">if</span> (shift &amp;&amp; reqs.<span class="fn">includes</span>(shift.sessionType)) slotScore += <span class="num">300</span>;` },
+  { t: 'normal', c: `      <span class="kw">if</span> (reqs.<span class="fn">includes</span>(<span class="str">'preferEarlyWeek'</span>) &amp;&amp; <span class="fn">isEarlyWeek</span>(gene.day)) slotScore += <span class="num">200</span>;` },
+  { t: 'normal', c: `      <span class="kw">return</span> { ...gene, classIdx: req?.classIdx ?? <span class="num">0</span>, shiftName: shift?.name ?? <span class="str">''</span>, slotScore };` },
+  { t: 'normal', c: `    });` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `    <span class="kw">await</span> <span class="kw">this</span>.<span class="fn">saveResults</span>(enrichedChromosome);` },
+  { t: 'normal', c: `    <span class="kw">return</span> enrichedChromosome;` },
+  { t: 'normal', c: `  }` },
+  { t: 'normal', c: `` },
+  { t: 'normal', c: `  <span class="cm">// ═══════════════════════════════════════════</span>` },
+  { t: 'normal', c: `  <span class="cm">// HELPER: Tournament Selection</span>` },
+  { t: 'normal', c: `  <span class="cm">// ═══════════════════════════════════════════</span>` },
+  { t: 'normal', c: `  <span class="kw">private</span> <span class="fn">tournamentSelect</span>(scoredPop: { chrom: <span class="tp">any</span>[]; score: <span class="tp">number</span> }[], k: <span class="tp">number</span>) {` },
+  { t: 'normal', c: `    <span class="kw">let</span> best = scoredPop[Math.<span class="fn">floor</span>(Math.<span class="fn">random</span>() * scoredPop.length)];` },
+  { t: 'normal', c: `    <span class="kw">for</span> (<span class="kw">let</span> i = <span class="num">1</span>; i &lt; k; i++) {` },
+  { t: 'normal', c: `      <span class="kw">const</span> candidate = scoredPop[Math.<span class="fn">floor</span>(Math.<span class="fn">random</span>() * scoredPop.length)];` },
+  { t: 'normal', c: `      <span class="kw">if</span> (candidate.score &gt; best.score) best = candidate;` },
+  { t: 'normal', c: `    }` },
+  { t: 'normal', c: `    <span class="kw">return</span> best;` },
+  { t: 'normal', c: `  }` },
+  { t: 'normal', c: `}` },
+];
+
+const pre = document.getElementById('code');
+let html = '';
+lines.forEach((line, i) => {
+  const num = i + 1;
+  html += `<div class="ln ${line.t}"><span class="ln-num">${num}</span><span class="ln-code">${line.c}</span></div>`;
+});
+pre.innerHTML = html;
+</script>
+</body>
+</html>

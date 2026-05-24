@@ -6,6 +6,7 @@
     "dev": "nodemon src/app.ts",
     "start": "node dist/app.js",
     "seed": "ts-node src/seed/seed.ts",
+    "seed:unscheduled": "ts-node src/seed/seedUnscheduledClasses.ts",
     "test:coverage": "dotenv -e .env.test -- vitest run --coverage",
     "test": "dotenv -e .env.test -- vitest run src/test --watch",
     "test:integration": "dotenv -e .env.test -- vitest run src/test/integration --watch",

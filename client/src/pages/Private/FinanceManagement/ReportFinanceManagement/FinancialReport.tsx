@@ -302,8 +302,9 @@ const TopTransactions = ({
               <div className="flex items-center gap-2.5 shrink-0">
                 <span className="text-xs font-bold text-gray-300 w-4 text-center">{idx + 1}</span>
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center ${item.type === 'IN' ? 'bg-emerald-50 text-emerald-500' : 'bg-orange-50 text-orange-500'
-                    }`}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                    item.type === 'IN' ? 'bg-emerald-50 text-emerald-500' : 'bg-orange-50 text-orange-500'
+                  }`}
                 >
                   {item.type === 'IN' ? <ArrowUpRight size={15} /> : <ArrowDownRight size={15} />}
                 </div>
@@ -326,8 +327,9 @@ const TopTransactions = ({
                 <p className="text-xs text-gray-400 truncate">{item.description || item.note}</p>
               </div>
               <span
-                className={`text-xs font-semibold px-2 py-0.5 rounded-full hidden sm:inline-flex ${PAYMENT_METHOD_BADGE[item.paymentMethod] || 'bg-blue-50 text-blue-600'
-                  }`}
+                className={`text-xs font-semibold px-2 py-0.5 rounded-full hidden sm:inline-flex ${
+                  PAYMENT_METHOD_BADGE[item.paymentMethod] || 'bg-blue-50 text-blue-600'
+                }`}
               >
                 {PAYMENT_METHOD_LABELS[item.paymentMethod] || item.paymentMethod || 'Chuyển khoản'}
               </span>
@@ -361,6 +363,8 @@ export default function FinancialReport() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
+  console.log(selectedMonth);
+
   const isDateRangeActive = !!(dateFrom || dateTo);
 
   const clearFilters = () => {
@@ -371,8 +375,8 @@ export default function FinancialReport() {
 
   const { summary: cashbookSummary, loading: cashbookLoading } = useFetch(
     cashbookService.getCashBook,
-    { month: selectedMonth },
-    [selectedMonth],
+    isDateRangeActive ? { startDate: dateFrom, endDate: dateTo } : { month: selectedMonth },
+    [selectedMonth, dateFrom, dateTo],
   );
 
   const { data: kpiData, loading: kpiDataLoading } = useFetch(
@@ -407,10 +411,11 @@ export default function FinancialReport() {
                   setDateFrom('');
                   setDateTo('');
                 }}
-                className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${selectedMonth === m.value && !isDateRangeActive
+                className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+                  selectedMonth === m.value && !isDateRangeActive
                     ? 'bg-blue-600 text-white shadow-sm'
                     : 'bg-gray-100 text-gray-500 hover:bg-blue-50 hover:text-blue-600'
-                  }`}
+                }`}
               >
                 {m.label}
               </button>
@@ -425,16 +430,18 @@ export default function FinancialReport() {
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className={`px-3 py-1.5 border rounded-lg text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors ${isDateRangeActive ? 'border-blue-400 bg-blue-50' : 'border-gray-200'
-                }`}
+              className={`px-3 py-1.5 border rounded-lg text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors ${
+                isDateRangeActive ? 'border-blue-400 bg-blue-50' : 'border-gray-200'
+              }`}
             />
             <span className="text-gray-400 text-sm">→</span>
             <input
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className={`px-3 py-1.5 border rounded-lg text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors ${isDateRangeActive ? 'border-blue-400 bg-blue-50' : 'border-gray-200'
-                }`}
+              className={`px-3 py-1.5 border rounded-lg text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors ${
+                isDateRangeActive ? 'border-blue-400 bg-blue-50' : 'border-gray-200'
+              }`}
             />
             {isDateRangeActive && (
               <button
@@ -462,7 +469,11 @@ export default function FinancialReport() {
         />
         <KpiCard
           title="Tổng Chi Phí"
-          value={cashbookLoading ? '—' : formatCurrency(cashbookSummary?.totalOut ?? 0)}
+          value={
+            cashbookLoading
+              ? '—'
+              : formatCurrency((cashbookSummary?.totalOut ?? 0) + (cashbookSummary?.totalRefund ?? 0))
+          }
           growth={cashbookSummary?.expenseGrowthPercent ?? null}
           subtitle="lương + vận hành"
           icon={<TrendingDown size={18} />}

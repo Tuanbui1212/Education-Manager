@@ -33,7 +33,11 @@ const formatMonthDisplay = (monthValue: string) => {
 };
 
 const PayrollManager = () => {
-  const [selectedMonth, setSelectedMonth] = useState('2026-03');
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  const year = now.getFullYear();
+
+  const [selectedMonth, setSelectedMonth] = useState(`${year}-${String(month).padStart(2, '0')}`);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');

@@ -107,7 +107,9 @@ const FinanceSummary = ({ stats, loading, onViewReport }: FinanceSummaryProps) =
           {loading ? (
             <Skeleton className="h-5 w-full bg-white/20" />
           ) : (
-            <p className="text-sm font-bold truncate">{formatCurrency(stats?.totalOut)}</p>
+            <p className="text-sm font-bold truncate">
+              {formatCurrency((stats.totalOut ?? 0) + (stats.totalRefund ?? 0))}
+            </p>
           )}
         </div>
 

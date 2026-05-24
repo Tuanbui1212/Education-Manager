@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(Get-ChildItem -Path \"D:\\\\A45043\\\\Project\\\\Education-Management-System\\\\client\\\\src\\\\pages\\\\Private\" -Recurse -Filter \"*.tsx\")",
+      "Bash(Select-Object -ExpandProperty FullName)"
+    ]
+  }
+}

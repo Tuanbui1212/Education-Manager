@@ -38,7 +38,7 @@ export default function SchedulingUI() {
     loading: ClassNoScheduleLoading,
     error: ClassNoScheduleError,
     refetch: ClassNoScheduleRefetch,
-  } = useFetch(classService.getClasses, { schedule: false });
+  } = useFetch(classService.getClasses, { schedule: false, limit: 1000 });
 
   const apiData: IClass[] = ClassNoSchedule || [];
 
@@ -222,10 +222,10 @@ export default function SchedulingUI() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8 animate-in fade-in duration-500">
+    <div className="min-h-screen bg-gray-50 px-6 py-6 animate-in fade-in duration-500">
       {loading && <LoadingOverlay />}
 
-      <div className="max-w-5xl mx-auto">
+      <div className="w-full">
         {/* Step Indicator */}
         <div className="flex items-center mb-8">
           {STEPS.map((label, i) => {
