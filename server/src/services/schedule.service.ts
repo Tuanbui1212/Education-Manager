@@ -7,6 +7,7 @@ import { UserModel } from '../models/user.model';
 import { GetSchedulesQuery, IGAClassInput, IGAGene, IGAChromosome } from '../types/schedule.type';
 import { Types } from 'mongoose';
 import mongoose from 'mongoose';
+import { ClassRequestModel } from '../models/classRequest.model';
 
 export class ScheduleService {
   async createSchedule(schedule: CreateScheduleType) {
@@ -75,7 +76,7 @@ export class ScheduleService {
     }
 
     try {
-      await ClassModel.findByIdAndUpdate(schedule.classId, { schedule: true })
+      await ClassModel.findByIdAndUpdate(schedule.classId, { schedule: true });
     } catch (error) {
       throw new Error('Không thể cập nhật trạng thái lớp học');
     }
@@ -775,5 +776,74 @@ export class ScheduleService {
         colorIdx: idx,
       };
     });
+  }
+
+  async createScheduleForAllClassRequest(creatorId: any) {
+    const listClassRequest = await ClassRequestModel.find({ creatorId });
+
+    if (!listClassRequest.length) {
+      throw new Error('Không có lớp học để xếp');
+    }
+
+    console.log(listClassRequest);
+
+    const allSchedules: {
+      classId: any;
+      teacherId: any;
+      roomId: any;
+      shiftId: any;
+      date: Date;
+    }[] = [];
+    const listClassTrue = [];
+    for (const classRequest of listClassRequest) {
+      if (classRequest.schedule.length !== classRequest.lessonsPerWeek) {
+        throw new Error(`Lớp ${classRequest.name} chưa tạo đủ lịch học (cần ${classRequest.lessonsPerWeek} slot/tuần)`);
+      }
+
+      const daySlotMap = new Map<number, Array<{ shiftId: any; roomId: any }>>();
+      for (const slot of classRequest.schedule) {
+        if (!daySlotMap.has(slot.day)) {
+          daySlotMap.set(slot.day, []);
+        }
+        daySlotMap.get(slot.day)!.push({ shiftId: slot.shiftId, roomId: slot.roomId });
+      }
+
+      const scheduledDays = Array.from(daySlotMap.keys()).sort((a, b) => a - b);
+
+      let count = 0;
+      const currentDate = new Date(classRequest.startDate as Date);
+      currentDate.setHours(0, 0, 0, 0);
+
+      while (count < classRequest.totalLessons) {
+        const jsDay = currentDate.getDay();
+        const isoDay = jsDay === 0 ? 7 : jsDay;
+
+        if (scheduledDays.includes(isoDay)) {
+          const slots = daySlotMap.get(isoDay)!;
+          for (const slot of slots) {
+            if (count >= classRequest.totalLessons) break;
+            allSchedules.push({
+              classId: classRequest._id,
+              teacherId: classRequest.teacherId,
+              roomId: slot.roomId,
+              shiftId: slot.shiftId,
+              date: new Date(currentDate),
+            });
+            count++;
+          }
+        }
+
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+
+      listClassTrue.push(classRequest._id);
+    }
+    await ClassRequestModel.deleteMany({ creatorId });
+    console.log('Đã xóa lớp học');
+    await ClassModel.updateMany({ _id: { $in: listClassTrue } }, { schedule: true });
+    console.log('Đã cập nhật trạng thái lớp học');
+
+    const result = await ScheduleModel.insertMany(allSchedules);
+    return result;
   }
 }

@@ -909,6 +909,58 @@ function shiftDuration(shift: any): number {
   return Math.max(0.5, (eh * 60 + em - sh * 60 - sm) / 60);
 }
 
+/**
+ * Sinh optionalRequirements tự nhiên cho lớp PENDING.
+ * ~40% không có yêu cầu, ~60% còn lại nhận tổ hợp phù hợp theo loại khóa học.
+ * days: 1=T2, 2=T3, 3=T4, 4=T5, 5=T6, 6=T7
+ */
+function generateOptionalRequirements(courseTitle: string, lessonsPerWeek: number): string[] {
+  if (faker.helpers.maybe(() => true, { probability: 0.4 })) return [];
+
+  const reqs: string[] = [];
+  const t = courseTitle.toLowerCase();
+
+  const isLanguage = t.includes('tiếng') || t.includes('ielts') || t.includes('toeic');
+  const isTech =
+    t.includes('lập trình') || t.includes('frontend') || t.includes('backend') ||
+    t.includes('python') || t.includes('java') || t.includes('flutter') ||
+    t.includes('devops') || t.includes('sql') || t.includes('web');
+  const isDesign = t.includes('thiết kế') || t.includes('ui/ux') || t.includes('photoshop') || t.includes('video');
+  // office / skills / accounting / marketing / excel
+
+  // 1. Ca học ưu tiên
+  let sessionPref: string | null = null;
+  if (isLanguage)      sessionPref = faker.helpers.weightedArrayElement([{ weight: 3, value: 'morning' }, { weight: 2, value: 'afternoon' }]);
+  else if (isTech)     sessionPref = faker.helpers.weightedArrayElement([{ weight: 2, value: 'morning' }, { weight: 2, value: 'afternoon' }, { weight: 3, value: 'evening' }]);
+  else if (isDesign)   sessionPref = faker.helpers.weightedArrayElement([{ weight: 3, value: 'afternoon' }, { weight: 2, value: 'evening' }]);
+  else                 sessionPref = faker.helpers.weightedArrayElement([{ weight: 3, value: 'morning' }, { weight: 2, value: 'afternoon' }]);
+
+  if (sessionPref && faker.helpers.maybe(() => true, { probability: 0.75 })) reqs.push(sessionPref);
+
+  // 2. Ưu tiên / chặn ngày
+  const dayPrefType = faker.helpers.weightedArrayElement([
+    { weight: 4, value: 'none' },
+    { weight: 2, value: 'preferEarlyWeek' },
+    { weight: 2, value: 'specificDay' },
+    { weight: 2, value: 'blockDay' },
+  ]);
+
+  if (dayPrefType === 'preferEarlyWeek') {
+    reqs.push('preferEarlyWeek');
+  } else if (dayPrefType === 'specificDay') {
+    reqs.push(`day.${faker.number.int({ min: 1, max: 6 })}`);
+  } else if (dayPrefType === 'blockDay') {
+    // Chặn T7 hoặc T2 — thường gặp nhất trong thực tế
+    reqs.push(`noDay.${faker.helpers.weightedArrayElement([{ weight: 3, value: 6 }, { weight: 1, value: 1 }])}`);
+  }
+
+  // 3. Ràng buộc phân bổ ngày (chỉ khi học ≥ 2 buổi/tuần)
+  if (lessonsPerWeek >= 2 && faker.helpers.maybe(() => true, { probability: 0.35 })) reqs.push('noSameDay');
+  if (lessonsPerWeek >= 3 && faker.helpers.maybe(() => true, { probability: 0.25 })) reqs.push('noConsec');
+
+  return reqs;
+}
+
 /** Tạo danh sách câu hỏi ngẫu nhiên từ pool */
 function generateExamQuestions(count: number) {
   const shuffled = faker.helpers.shuffle([...EXAM_QUESTION_POOL]);
@@ -1383,7 +1435,7 @@ async function runSeeder() {
         totalLessons: (course as any).totalLessons ?? faker.number.int({ min: MIN_SESSIONS, max: MAX_SESSIONS }),
         lessonsPerWeek,
         maxNumberOfStudents: faker.number.int({ min: 15, max: MAX_STUDENTS_PER_CLASS }),
-        optionalRequirements: [],
+        optionalRequirements: generateOptionalRequirements((course as any).title, lessonsPerWeek),
         status: ClassStatus.PENDING,
         schedule: false,
       });

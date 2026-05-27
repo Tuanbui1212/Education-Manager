@@ -395,7 +395,9 @@ export class GeneticAlgorithmService {
 
       // === 2. LOGIC KIỂM TRA DỪNG SỚM ===
       const currentBestScore = scoredPop[0].score;
-      console.log(`[GA] Thế hệ ${g + 1} - Best Score: ${currentBestScore}`);
+      console.log(
+        `[GA] Thế hệ ${g + 1} - Best Score: ${currentBestScore} - Stagnant Generations:${stagnantGenerations}`,
+      );
       if (currentBestScore > bestOverallScore) {
         bestOverallScore = currentBestScore;
         stagnantGenerations = 0;
@@ -403,7 +405,7 @@ export class GeneticAlgorithmService {
         stagnantGenerations++;
       }
 
-      if (stagnantGenerations >= MAX_STAGNANT_GENERATIONS) {
+      if (stagnantGenerations >= MAX_STAGNANT_GENERATIONS && bestOverallScore > 0) {
         console.log(
           `[GA] 🛑 DỪNG SỚM tại thế hệ ${g + 1}! Lý do: ${MAX_STAGNANT_GENERATIONS} thế hệ liên tiếp không tiến bộ.`,
         );

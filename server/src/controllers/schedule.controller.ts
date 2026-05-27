@@ -113,4 +113,20 @@ export class ScheduleController {
       return res.status(400).json({ success: false, message: error.message });
     }
   };
+
+  //[POST] /schedule/class/createScheduleForAllClassRequest
+  createScheduleForAllClassRequest = async (req: Request, res: Response) => {
+    try {
+      const creatorId = (req as any).user?._id || (req as any).user?.id;
+
+      const schedules = await this.scheduleService.createScheduleForAllClassRequest(creatorId);
+      return res.status(200).json({
+        success: true,
+        message: 'Tạo lịch học cho tất cả lớp thành công',
+        data: schedules,
+      });
+    } catch (error: any) {
+      return res.status(400).json({ success: false, message: error.message });
+    }
+  };
 }

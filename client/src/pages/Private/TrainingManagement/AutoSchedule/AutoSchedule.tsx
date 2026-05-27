@@ -12,6 +12,7 @@ import Page3 from './Page3';
 import LoadingOverlay from '../../../../components/LoadingOverlay';
 import { roomService } from '../../../../services/room.service';
 import { shiftService } from '../../../../services/shift.service';
+import { scheduleService } from '../../../../services/schedule.service';
 
 interface IBackendResult {
   finalSchedule: any[];
@@ -221,6 +222,23 @@ export default function SchedulingUI() {
     }
   };
 
+  const handleSuccec = async () => {
+    setLoading(true);
+    try {
+      await scheduleService.createScheduleForAllClassRequest();
+      localStorage.removeItem('schedule_page');
+    } catch (e) {
+      console.error('Lỗi khi dọn dẹp DB', e);
+    } finally {
+      setPage(1);
+      setSelectedIds([]);
+      setPrefs({});
+      setDraftClasses([]);
+      setResult(null);
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 px-6 py-6 animate-in fade-in duration-500">
       {loading && <LoadingOverlay />}
@@ -288,7 +306,7 @@ export default function SchedulingUI() {
             shifts={allShifts}
             onBack={() => setPage(2)}
             onRerun={handleRunAlgorithm}
-            onReset={handleReset}
+            onReset={handleSuccec}
           />
         )}
       </div>

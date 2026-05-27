@@ -85,4 +85,9 @@ export const scheduleService = {
     const response = await axios.post(`/scheduleRequests/execute/${requestId}`);
     return response.data;
   },
+
+  createScheduleForAllClassRequest: async (): Promise<{ success: boolean; message: string; data: any }> => {
+    const response = await axios.post(`/schedules/class/createScheduleForAllClassRequest`);
+    return response.data;
+  },
 };

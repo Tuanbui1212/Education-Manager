@@ -41,6 +41,12 @@ router.get(
   requirePermission(PERMISSIONS.SCHEDULE.VIEW),
   scheduleController.getStartDateClass,
 );
+router.post(
+  '/class/createScheduleForAllClassRequest',
+  verifyToken,
+  requirePermission(PERMISSIONS.SCHEDULE.CREATE),
+  scheduleController.createScheduleForAllClassRequest,
+);
 router.get(
   '/:id',
   verifyToken,
