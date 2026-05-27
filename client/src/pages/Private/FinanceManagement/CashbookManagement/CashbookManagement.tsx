@@ -5,6 +5,10 @@ import { formatCurrency, formatDate } from '../../../../utils/format.util';
 import Button from '../../../../components/Button';
 import PageHeader from '../../../../components/PageHeader';
 import TablePagination from '../../../../components/TablePagination';
+import SkeletonRow from '../../../../components/SkeletonRow';
+import EmptyState from '../../../../components/EmptyState';
+import ErrorState from '../../../../components/ErrorState';
+
 import CreateVoucherModal from './CreateVoucherModal';
 
 import { type TransactionType, type DateRangeType } from '../../../../hooks/useCashbook';
@@ -132,6 +136,7 @@ const CashbookManagement = () => {
   ]);
 
   const totalPages = Math.ceil(totalCount / queryParams.limit);
+  console.log('totalPages:', totalPages);
 
   const handleNavigate = (item: any) => {
     if (item.type === 'IN') {
@@ -244,32 +249,28 @@ const CashbookManagement = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead>
-              <tr className="bg-gray-50 text-gray-600 text-sm border-b border-gray-200">
-                <th className="p-4 font-semibold">Thời gian</th>
-                <th className="p-4 font-semibold">Mã Phiếu</th>
-                <th className="p-4 font-semibold">Loại</th>
-                <th className="p-4 font-semibold w-1/3">Nội dung</th>
-                <th className="p-4 font-semibold text-right">Số tiền (VNĐ)</th>
-                <th className="p-4 font-semibold text-center">Hình thức</th>
-                <th className="p-4 font-semibold text-center">Người lập</th>
+              <tr className="bg-primary text-white text-sm">
+                <th className="px-5 py-3.5 font-semibold">Thời gian</th>
+                <th className="px-5 py-3.5 font-semibold">Mã Phiếu</th>
+                <th className="px-5 py-3.5 font-semibold">Loại</th>
+                <th className="px-5 py-3.5 font-semibold w-1/3">Nội dung</th>
+                <th className="px-5 py-3.5 font-semibold text-right">Số tiền (VNĐ)</th>
+                <th className="px-5 py-3.5 font-semibold text-center">Hình thức</th>
+                <th className="px-5 py-3.5 font-semibold text-center">Người lập</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading ? (
-                <tr>
-                  <td colSpan={8} className="p-10 text-center text-gray-400">
-                    Đang tải dữ liệu...
-                  </td>
-                </tr>
+                Array.from({ length: limit }).map((_, i) => <SkeletonRow key={i} />)
               ) : error ? (
                 <tr>
-                  <td colSpan={8} className="p-10 text-center text-red-500">
-                    {error}
+                  <td colSpan={7}>
+                    <ErrorState msg={String(error)} onRetry={refetch} />
                   </td>
                 </tr>
               ) : data && data.length > 0 ? (
                 data?.map((item) => (
-                  <tr key={item._id} className="hover:bg-gray-50/80 transition-colors">
+                  <tr key={item._id} className="hover:bg-blue-50/30 transition-colors">
                     <td className="p-4 text-sm text-gray-600">
                       <div className="font-medium text-gray-800">{formatDate(item.createdAt)}</div>
                       <div className="text-xs text-gray-400">{item.createdAt.split('T')[1]?.substring(0, 5)}</div>
@@ -305,11 +306,17 @@ const CashbookManagement = () => {
                   </tr>
                 ))
               ) : (
-                <tr>
-                  <td colSpan={8} className="p-10 text-center text-gray-500 italic">
-                    Không tìm thấy dữ liệu giao dịch nào phù hợp.
-                  </td>
-                </tr>
+                <EmptyState
+                  isFiltered={!!(search || dateRange !== 'this_month')}
+                  onReset={() => {
+                    setSearch('');
+                    setDateRange('this_month');
+                    setPage(1);
+                  }}
+                  colSpan={7}
+                  emptyText="Chưa có giao dịch nào"
+                  filteredText="Không tìm thấy giao dịch phù hợp"
+                />
               )}
             </tbody>
           </table>

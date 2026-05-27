@@ -17,6 +17,10 @@ import { ShiftModel } from '../models/shift.model';
 import { AttendanceNotificationModel } from '../models/attendanceNotification.model';
 import { NotificationTemplateModel } from '../models/notificationTemplate.model';
 import FixedCostModel from '../models/fixedCost.model';
+import { ExamModel } from '../models/exam.model';
+import { ExamSubmissionModel } from '../models/examSubmission.model';
+import { ExpenditureModel } from '../models/expenditure.model';
+import PayrollModel from '../models/payroll.model';
 
 // ==========================================
 // ENUMS — căn đúng với model thực tế
@@ -77,6 +81,28 @@ enum FixedCostCycle {
   QUARTERLY = 'QUARTERLY',
   YEARLY = 'YEARLY',
 }
+enum ExamStatus {
+  DRAFT = 'DRAFT',
+  PUBLISHED = 'PUBLISHED',
+  CLOSED = 'CLOSED',
+}
+enum ExamSubmissionStatus {
+  IN_PROGRESS = 'IN_PROGRESS',
+  SUBMITTED = 'SUBMITTED',
+}
+enum ExpenditureType {
+  SALARY = 'SALARY',
+  OPERATION = 'OPERATION',
+}
+enum PayrollType {
+  STAFF = 'STAFF',
+  TEACHER_FULL_TIME = 'TEACHER_FULL_TIME',
+  TEACHER_PART_TIME = 'TEACHER_PART_TIME',
+}
+enum PayrollStatus {
+  PENDING = 'PENDING',
+  PAID = 'PAID',
+}
 
 // ==========================================
 // THÔNG SỐ
@@ -85,11 +111,12 @@ const MONGO_URI = process.env.MONGO_URI as string;
 
 const NUM_STUDENTS = 3000;
 const NUM_TEACHERS = 100;
-const NUM_CONSULTANTS = 50;
+const NUM_CONSULTANTS = 20;
 const NUM_ACCOUNTANTS = 10;
 const NUM_MANAGERS = 5;
 const NUM_ADMINS = 3;
 const NUM_CLASSES = 400;
+const NUM_PENDING_CLASSES = 60; // lớp chưa có lịch — dùng để test GA
 
 const MIN_SESSIONS = 24;
 const MAX_SESSIONS = 48;
@@ -161,93 +188,129 @@ const TEACHER_COMMENTS = [
 
 /** Danh sách khóa học thực tế */
 const COURSE_DATA = [
+  // ── LẬP TRÌNH & CÔNG NGHỆ ──────────────────────────────────────────────
   {
-    title: 'Tiếng Anh Giao Tiếp Cơ Bản',
-    basePrice: 3_000_000,
-    syllabus: 'Luyện phát âm chuẩn, giao tiếp các tình huống hàng ngày.',
+    title: 'Lập Trình Web Fullstack (Node.js + React)',
+    basePrice: 12_000_000,
+    totalLessons: 48,
+    syllabus: 'Xây dựng ứng dụng web hoàn chỉnh: REST API với Express, giao diện với ReactJS, triển khai lên cloud.',
   },
   {
-    title: 'Tiếng Anh Giao Tiếp Nâng Cao',
-    basePrice: 4_500_000,
-    syllabus: 'Kỹ năng thuyết trình, phỏng vấn và giao tiếp môi trường công sở.',
+    title: 'Frontend Developer (ReactJS)',
+    basePrice: 9_500_000,
+    totalLessons: 36,
+    syllabus: 'Component, hooks, state management với Redux Toolkit, React Query, tối ưu hiệu năng SPA.',
   },
   {
-    title: 'IELTS Foundation',
+    title: 'Python & Data Analysis',
+    basePrice: 10_000_000,
+    totalLessons: 40,
+    syllabus: 'Python cơ bản đến nâng cao, xử lý dữ liệu với Pandas/NumPy, trực quan hoá với Matplotlib.',
+  },
+  {
+    title: 'Java Backend (Spring Boot)',
+    basePrice: 11_000_000,
+    totalLessons: 44,
+    syllabus: 'Lập trình hướng đối tượng, Spring Boot REST API, JPA/Hibernate, bảo mật JWT, unit test.',
+  },
+  {
+    title: 'Lập Trình Mobile Flutter',
+    basePrice: 10_500_000,
+    totalLessons: 40,
+    syllabus: 'Dart cơ bản, UI/UX với Flutter Widget, kết nối API, publish app lên CH Play & App Store.',
+  },
+  {
+    title: 'DevOps & CI/CD Căn Bản',
+    basePrice: 8_500_000,
+    totalLessons: 30,
+    syllabus: 'Linux căn bản, Docker, Git workflow, GitHub Actions CI/CD, triển khai ứng dụng lên VPS.',
+  },
+  {
+    title: 'SQL & Database Design',
+    basePrice: 7_000_000,
+    totalLessons: 28,
+    syllabus: 'Thiết kế CSDL quan hệ, câu lệnh SQL nâng cao, tối ưu query, giới thiệu NoSQL (MongoDB).',
+  },
+  {
+    title: 'Lập Trình Web Cơ Bản (HTML/CSS/JS)',
     basePrice: 5_500_000,
-    syllabus: 'Củng cố nền tảng ngữ pháp, từ vựng và làm quen 4 kỹ năng IELTS.',
+    totalLessons: 24,
+    syllabus: 'Nền tảng HTML5, CSS3 responsive, JavaScript ES6+, DOM manipulation, fetch API.',
+  },
+  // ── NGOẠI NGỮ ──────────────────────────────────────────────────────────
+  {
+    title: 'Tiếng Anh Giao Tiếp Thực Chiến',
+    basePrice: 4_500_000,
+    totalLessons: 24,
+    syllabus: 'Luyện phản xạ nói, phát âm chuẩn, xử lý tình huống giao tiếp công sở và đời sống hàng ngày.',
   },
   {
     title: 'IELTS Master 6.5+',
-    basePrice: 8_500_000,
-    syllabus: 'Chiến thuật làm bài chuyên sâu, giải đề thi thực tế.',
-  },
-  {
-    title: 'IELTS Intensive 7.5+',
     basePrice: 10_500_000,
-    syllabus: 'Tối ưu hóa điểm Writing & Speaking, luyện phản xạ thi thật.',
+    totalLessons: 48,
+    syllabus: 'Chiến thuật làm bài 4 kỹ năng, giải đề Cambridge thực tế, Writing Task 2 và Speaking band 6.5+.',
   },
   {
-    title: 'TOEIC Starter 350+',
-    basePrice: 2_500_000,
-    syllabus: 'Ngữ pháp căn bản, làm quen format đề TOEIC Listening & Reading.',
-  },
-  { title: 'TOEIC Target 700+', basePrice: 4_000_000, syllabus: 'Mẹo tránh bẫy trong bài thi, tăng tốc độ đọc hiểu.' },
-  {
-    title: 'Tiếng Nhật N5',
-    basePrice: 3_500_000,
-    syllabus: 'Bảng chữ cái Hiragana/Katakana, ngữ pháp sơ cấp, giao tiếp cơ bản.',
-  },
-  {
-    title: 'Tiếng Nhật N4',
-    basePrice: 4_500_000,
-    syllabus: 'Từ vựng và ngữ pháp N4, luyện kỹ năng đọc hiểu và nghe hiểu.',
-  },
-  { title: 'Tiếng Hàn Sơ Cấp 1', basePrice: 3_000_000, syllabus: 'Bảng chữ cái tiếng Hàn (Hangul), chào hỏi, số đếm.' },
-  {
-    title: 'Tiếng Hàn Sơ Cấp 2',
-    basePrice: 3_500_000,
-    syllabus: 'Giao tiếp chủ đề mua sắm, sở thích, thời tiết, giao thông.',
-  },
-  {
-    title: 'Toán Tư Duy Tiểu Học',
-    basePrice: 4_000_000,
-    syllabus: 'Phát triển tư duy logic, phương pháp tính nhẩm siêu tốc.',
-  },
-  { title: 'Toán Nâng Cao THCS', basePrice: 5_000_000, syllabus: 'Chuyên đề bồi dưỡng học sinh giỏi, giải toán khó.' },
-  {
-    title: 'Ngữ Văn Bồi Dưỡng Lớp 9',
-    basePrice: 4_500_000,
-    syllabus: 'Tổng ôn kiến thức, rèn kỹ năng viết văn chuẩn bị thi vào lớp 10.',
-  },
-  {
-    title: 'Lập Trình Web Cơ Bản',
-    basePrice: 6_000_000,
-    syllabus: 'Nền tảng HTML, CSS, JavaScript xây dựng giao diện tĩnh.',
-  },
-  {
-    title: 'Lập Trình Frontend (ReactJS)',
-    basePrice: 8_000_000,
-    syllabus: 'Xây dựng ứng dụng SPA hiện đại với ReactJS và Redux.',
-  },
-  {
-    title: 'Python Cho Người Mới',
+    title: 'TOEIC 700+ (Listening & Reading)',
     basePrice: 5_000_000,
-    syllabus: 'Cú pháp cơ bản, cấu trúc dữ liệu, thuật toán tư duy.',
+    totalLessons: 32,
+    syllabus: 'Từ vựng theo chủ đề, luyện nghe Part 1–4, đọc hiểu Part 5–7, mẹo phá bẫy câu hỏi.',
   },
   {
-    title: 'Thiết Kế Đồ Họa Cơ Bản',
+    title: 'Tiếng Nhật N4–N3',
+    basePrice: 6_500_000,
+    totalLessons: 36,
+    syllabus: 'Từ vựng và ngữ pháp N4–N3, luyện đọc hiểu văn bản trung cấp, hội thoại tình huống thực tế.',
+  },
+  {
+    title: 'Tiếng Hàn Giao Tiếp (TOPIK I)',
+    basePrice: 5_000_000,
+    totalLessons: 30,
+    syllabus: 'Hangul, ngữ pháp sơ cấp đến trung cấp, luyện hội thoại và ôn thi TOPIK I.',
+  },
+  // ── THIẾT KẾ & SÁNG TẠO ────────────────────────────────────────────────
+  {
+    title: 'UI/UX Design (Figma)',
+    basePrice: 8_000_000,
+    totalLessons: 32,
+    syllabus: 'Tư duy thiết kế UX, wireframe, prototype trên Figma, design system, bàn giao cho lập trình viên.',
+  },
+  {
+    title: 'Thiết Kế Đồ Hoạ (Photoshop + Illustrator)',
+    basePrice: 7_000_000,
+    totalLessons: 30,
+    syllabus: 'Xử lý ảnh chuyên nghiệp với Photoshop, thiết kế vector với Illustrator, áp dụng thực tế làm banner, logo.',
+  },
+  {
+    title: 'Quay & Dựng Video (Premiere Pro)',
+    basePrice: 7_500_000,
+    totalLessons: 28,
+    syllabus: 'Kỹ thuật quay phim cơ bản, dựng phim với Premiere Pro, After Effects motion graphic, xuất video chuẩn.',
+  },
+  // ── KỸ NĂNG & VĂN PHÒNG ────────────────────────────────────────────────
+  {
+    title: 'Excel Nâng Cao & Power BI',
+    basePrice: 4_500_000,
+    totalLessons: 24,
+    syllabus: 'Hàm nâng cao, PivotTable, Power Query, xây dựng dashboard báo cáo với Power BI.',
+  },
+  {
+    title: 'Kỹ Năng Thuyết Trình & Public Speaking',
+    basePrice: 3_000_000,
+    totalLessons: 20,
+    syllabus: 'Cấu trúc bài nói logic, kỹ năng xử lý câu hỏi khó, ngôn ngữ cơ thể, thực hành thuyết trình thực tế.',
+  },
+  {
+    title: 'Marketing Online & SEO',
+    basePrice: 6_500_000,
+    totalLessons: 28,
+    syllabus: 'Xây dựng chiến lược digital marketing, SEO On-page & Off-page, Google Ads, Facebook Ads, đo lường ROI.',
+  },
+  {
+    title: 'Kế Toán Thực Hành (MISA)',
     basePrice: 5_500_000,
-    syllabus: 'Sử dụng công cụ Photoshop, Illustrator và tư duy thiết kế.',
-  },
-  {
-    title: 'Tin Học Văn Phòng (MOS)',
-    basePrice: 2_000_000,
-    syllabus: 'Làm chủ Word, Excel, PowerPoint theo chuẩn quốc tế.',
-  },
-  {
-    title: 'Kỹ Năng Thuyết Trình',
-    basePrice: 3_500_000,
-    syllabus: 'Vượt qua nỗi sợ đám đông, cấu trúc bài nói, ngôn ngữ cơ thể.',
+    totalLessons: 32,
+    syllabus: 'Nghiệp vụ kế toán thuế, lập báo cáo tài chính, thực hành phần mềm MISA SME theo quy trình doanh nghiệp.',
   },
 ];
 
@@ -412,6 +475,284 @@ const FIXED_COSTS_DATA = [
   },
 ];
 
+/** Ngân hàng câu hỏi trắc nghiệm cho các đề thi */
+const EXAM_QUESTION_POOL = [
+  // Tiếng Anh / Ngôn ngữ
+  {
+    content: 'Chọn đáp án đúng để điền vào chỗ trống: "She ___ to school every day."',
+    options: [
+      { content: 'go', isCorrect: false },
+      { content: 'goes', isCorrect: true },
+      { content: 'going', isCorrect: false },
+      { content: 'gone', isCorrect: false },
+    ],
+  },
+  {
+    content: 'Từ nào là TÍNH TỪ trong câu: "The beautiful flower smells nice"?',
+    options: [
+      { content: 'flower', isCorrect: false },
+      { content: 'smells', isCorrect: false },
+      { content: 'beautiful', isCorrect: true },
+      { content: 'nice', isCorrect: false },
+    ],
+  },
+  {
+    content: 'Chọn từ đồng nghĩa với "HAPPY":',
+    options: [
+      { content: 'Sad', isCorrect: false },
+      { content: 'Joyful', isCorrect: true },
+      { content: 'Angry', isCorrect: false },
+      { content: 'Tired', isCorrect: false },
+    ],
+  },
+  {
+    content: '"He has lived in Hanoi ___ 2010." — Điền giới từ thích hợp:',
+    options: [
+      { content: 'for', isCorrect: false },
+      { content: 'since', isCorrect: true },
+      { content: 'from', isCorrect: false },
+      { content: 'at', isCorrect: false },
+    ],
+  },
+  {
+    content: 'Dạng quá khứ đơn của động từ "write" là gì?',
+    options: [
+      { content: 'writed', isCorrect: false },
+      { content: 'written', isCorrect: false },
+      { content: 'wrote', isCorrect: true },
+      { content: 'writing', isCorrect: false },
+    ],
+  },
+  {
+    content: 'Câu nào SAI về mặt ngữ pháp?',
+    options: [
+      { content: 'She doesn\'t like coffee.', isCorrect: false },
+      { content: 'They are playing football now.', isCorrect: false },
+      { content: 'He don\'t go to school today.', isCorrect: true },
+      { content: 'I have never been to Paris.', isCorrect: false },
+    ],
+  },
+  {
+    content: 'Chọn nghĩa đúng của cụm từ "break a leg":',
+    options: [
+      { content: 'Bị gãy chân', isCorrect: false },
+      { content: 'Chúc may mắn', isCorrect: true },
+      { content: 'Làm điều gì đó nguy hiểm', isCorrect: false },
+      { content: 'Chạy thật nhanh', isCorrect: false },
+    ],
+  },
+  {
+    content: 'Thì nào được dùng để diễn tả hành động đang xảy ra tại thời điểm nói?',
+    options: [
+      { content: 'Present Simple', isCorrect: false },
+      { content: 'Past Simple', isCorrect: false },
+      { content: 'Present Continuous', isCorrect: true },
+      { content: 'Future Simple', isCorrect: false },
+    ],
+  },
+  {
+    content: '"Vocabulary" có nghĩa là gì trong tiếng Việt?',
+    options: [
+      { content: 'Ngữ pháp', isCorrect: false },
+      { content: 'Phát âm', isCorrect: false },
+      { content: 'Từ vựng', isCorrect: true },
+      { content: 'Đọc hiểu', isCorrect: false },
+    ],
+  },
+  {
+    content: 'Câu nào thể hiện đúng thì Hiện tại hoàn thành?',
+    options: [
+      { content: 'I eat breakfast this morning.', isCorrect: false },
+      { content: 'She has finished her homework.', isCorrect: true },
+      { content: 'They were playing tennis yesterday.', isCorrect: false },
+      { content: 'He will go to the gym tomorrow.', isCorrect: false },
+    ],
+  },
+  // Toán học
+  {
+    content: 'Giá trị của 15% × 200 bằng bao nhiêu?',
+    options: [
+      { content: '20', isCorrect: false },
+      { content: '25', isCorrect: false },
+      { content: '30', isCorrect: true },
+      { content: '35', isCorrect: false },
+    ],
+  },
+  {
+    content: 'Diện tích hình tròn có bán kính r = 7 cm là bao nhiêu? (π ≈ 3.14)',
+    options: [
+      { content: '43.96 cm²', isCorrect: false },
+      { content: '153.86 cm²', isCorrect: true },
+      { content: '21.98 cm²', isCorrect: false },
+      { content: '98 cm²', isCorrect: false },
+    ],
+  },
+  {
+    content: 'Nếu 3x + 6 = 18, thì x bằng bao nhiêu?',
+    options: [
+      { content: '2', isCorrect: false },
+      { content: '4', isCorrect: true },
+      { content: '6', isCorrect: false },
+      { content: '8', isCorrect: false },
+    ],
+  },
+  {
+    content: 'Tổng của tất cả các góc trong một tam giác bằng bao nhiêu độ?',
+    options: [
+      { content: '90°', isCorrect: false },
+      { content: '180°', isCorrect: true },
+      { content: '270°', isCorrect: false },
+      { content: '360°', isCorrect: false },
+    ],
+  },
+  {
+    content: 'Căn bậc hai của 144 là bao nhiêu?',
+    options: [
+      { content: '10', isCorrect: false },
+      { content: '11', isCorrect: false },
+      { content: '12', isCorrect: true },
+      { content: '14', isCorrect: false },
+    ],
+  },
+  {
+    content: 'Phân số nào bằng 0.75?',
+    options: [
+      { content: '3/5', isCorrect: false },
+      { content: '2/3', isCorrect: false },
+      { content: '3/4', isCorrect: true },
+      { content: '4/5', isCorrect: false },
+    ],
+  },
+  {
+    content: 'Chu vi hình chữ nhật có chiều dài 10 cm và chiều rộng 6 cm là bao nhiêu?',
+    options: [
+      { content: '32 cm', isCorrect: true },
+      { content: '60 cm', isCorrect: false },
+      { content: '16 cm', isCorrect: false },
+      { content: '20 cm', isCorrect: false },
+    ],
+  },
+  // Lập trình / CNTT
+  {
+    content: 'Kiểu dữ liệu nào dùng để lưu chuỗi văn bản trong JavaScript?',
+    options: [
+      { content: 'int', isCorrect: false },
+      { content: 'string', isCorrect: true },
+      { content: 'boolean', isCorrect: false },
+      { content: 'float', isCorrect: false },
+    ],
+  },
+  {
+    content: 'HTML là viết tắt của cụm từ nào?',
+    options: [
+      { content: 'Hyper Text Markup Language', isCorrect: true },
+      { content: 'High Tech Modern Language', isCorrect: false },
+      { content: 'Hyper Transfer Markup Language', isCorrect: false },
+      { content: 'Home Tool Markup Language', isCorrect: false },
+    ],
+  },
+  {
+    content: 'Trong CSS, thuộc tính nào dùng để thay đổi màu chữ?',
+    options: [
+      { content: 'background-color', isCorrect: false },
+      { content: 'font-size', isCorrect: false },
+      { content: 'color', isCorrect: true },
+      { content: 'text-style', isCorrect: false },
+    ],
+  },
+  {
+    content: 'Kết quả của 5 % 3 trong hầu hết các ngôn ngữ lập trình là bao nhiêu?',
+    options: [
+      { content: '1', isCorrect: false },
+      { content: '2', isCorrect: true },
+      { content: '3', isCorrect: false },
+      { content: '0', isCorrect: false },
+    ],
+  },
+  {
+    content: 'Hàm nào dùng để in ra màn hình trong Python?',
+    options: [
+      { content: 'console.log()', isCorrect: false },
+      { content: 'echo()', isCorrect: false },
+      { content: 'print()', isCorrect: true },
+      { content: 'write()', isCorrect: false },
+    ],
+  },
+  {
+    content: 'Git là công cụ dùng để làm gì?',
+    options: [
+      { content: 'Thiết kế giao diện', isCorrect: false },
+      { content: 'Quản lý phiên bản mã nguồn', isCorrect: true },
+      { content: 'Chạy máy chủ web', isCorrect: false },
+      { content: 'Quản lý cơ sở dữ liệu', isCorrect: false },
+    ],
+  },
+  // Kỹ năng / Kiến thức chung
+  {
+    content: 'Kỹ năng nào KHÔNG thuộc nhóm kỹ năng mềm (soft skills)?',
+    options: [
+      { content: 'Giao tiếp hiệu quả', isCorrect: false },
+      { content: 'Làm việc nhóm', isCorrect: false },
+      { content: 'Lập trình Python', isCorrect: true },
+      { content: 'Quản lý thời gian', isCorrect: false },
+    ],
+  },
+  {
+    content: 'Phương pháp học tập nào giúp ghi nhớ thông tin lâu nhất?',
+    options: [
+      { content: 'Đọc lại nhiều lần', isCorrect: false },
+      { content: 'Ghi chép thụ động', isCorrect: false },
+      { content: 'Dạy lại cho người khác', isCorrect: true },
+      { content: 'Nghe giảng một chiều', isCorrect: false },
+    ],
+  },
+  {
+    content: 'Trong thuyết trình, yếu tố nào ảnh hưởng nhiều nhất đến ấn tượng đầu tiên?',
+    options: [
+      { content: 'Nội dung slide', isCorrect: false },
+      { content: 'Ngôn ngữ cơ thể và giọng nói', isCorrect: true },
+      { content: 'Số lượng từ trong bài', isCorrect: false },
+      { content: 'Thời gian trình bày', isCorrect: false },
+    ],
+  },
+  {
+    content: 'Phần mềm Microsoft Excel thuộc nhóm ứng dụng nào?',
+    options: [
+      { content: 'Xử lý ảnh', isCorrect: false },
+      { content: 'Bảng tính', isCorrect: true },
+      { content: 'Trình chiếu', isCorrect: false },
+      { content: 'Soạn thảo văn bản', isCorrect: false },
+    ],
+  },
+  {
+    content: 'TOPIK là kỳ thi đánh giá năng lực ngôn ngữ nào?',
+    options: [
+      { content: 'Tiếng Nhật', isCorrect: false },
+      { content: 'Tiếng Trung', isCorrect: false },
+      { content: 'Tiếng Hàn', isCorrect: true },
+      { content: 'Tiếng Anh', isCorrect: false },
+    ],
+  },
+  {
+    content: 'JLPT N1 là cấp độ nào của kỳ thi năng lực tiếng Nhật?',
+    options: [
+      { content: 'Cơ bản nhất', isCorrect: false },
+      { content: 'Trung cấp', isCorrect: false },
+      { content: 'Cao nhất', isCorrect: true },
+      { content: 'Sơ cấp', isCorrect: false },
+    ],
+  },
+  {
+    content: 'Công cụ Photoshop được dùng chủ yếu để làm gì?',
+    options: [
+      { content: 'Lập trình web', isCorrect: false },
+      { content: 'Chỉnh sửa và thiết kế đồ họa', isCorrect: true },
+      { content: 'Quản lý cơ sở dữ liệu', isCorrect: false },
+      { content: 'Biên tập video', isCorrect: false },
+    ],
+  },
+];
+
 const SESSION_PAIRS = [
   { days: [2, 5], label: 'T2-T5' }, // Thứ 2 & Thứ 5
   { days: [3, 6], label: 'T3-T6' }, // Thứ 3 & Thứ 6
@@ -555,6 +896,72 @@ function buildAttendanceNotificationContent(
   return `${statusText} - \n                    ${homeworkText} \n                     ${markText}\n                    ${commentText}`;
 }
 
+/** Format tháng dạng "YYYY-MM" */
+function formatMonth(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+/** Số giờ của một ca học, tính từ startTime/endTime "HH:mm" */
+function shiftDuration(shift: any): number {
+  if (!shift?.startTime || !shift?.endTime) return 1.5;
+  const [sh, sm] = (shift.startTime as string).split(':').map(Number);
+  const [eh, em] = (shift.endTime as string).split(':').map(Number);
+  return Math.max(0.5, (eh * 60 + em - sh * 60 - sm) / 60);
+}
+
+/** Tạo danh sách câu hỏi ngẫu nhiên từ pool */
+function generateExamQuestions(count: number) {
+  const shuffled = faker.helpers.shuffle([...EXAM_QUESTION_POOL]);
+  return shuffled.slice(0, Math.min(count, shuffled.length)).map((q) => {
+    const questionId = new mongoose.Types.ObjectId();
+    return {
+      _id: questionId,
+      content: q.content,
+      points: faker.helpers.weightedArrayElement([
+        { weight: 5, value: 1 },
+        { weight: 3, value: 2 },
+        { weight: 2, value: 3 },
+      ]),
+      options: q.options.map((opt) => ({
+        _id: new mongoose.Types.ObjectId(),
+        content: opt.content,
+        isCorrect: opt.isCorrect,
+      })),
+    };
+  });
+}
+
+/** Tạo đáp án ngẫu nhiên cho học sinh — 70% chọn đúng */
+function generateStudentAnswers(questions: ReturnType<typeof generateExamQuestions>) {
+  return questions.map((q) => {
+    const correct = q.options.find((o) => o.isCorrect)!;
+    const wrong = q.options.filter((o) => !o.isCorrect);
+    const picksCorrect = Math.random() < 0.7;
+    const picked = picksCorrect ? correct : faker.helpers.arrayElement(wrong);
+    return {
+      questionId: q._id,
+      selectedOptionIds: [picked._id],
+    };
+  });
+}
+
+/** Tính điểm bài thi */
+function calculateExamScore(
+  questions: ReturnType<typeof generateExamQuestions>,
+  answers: ReturnType<typeof generateStudentAnswers>,
+): number {
+  let score = 0;
+  for (const ans of answers) {
+    const q = questions.find((x) => x._id.toString() === ans.questionId.toString());
+    if (!q) continue;
+    const correctId = q.options.find((o) => o.isCorrect)?._id.toString();
+    if (correctId && ans.selectedOptionIds.some((id) => id.toString() === correctId)) {
+      score += q.points;
+    }
+  }
+  return score;
+}
+
 // ==========================================
 // MAIN SEEDER
 // ==========================================
@@ -607,6 +1014,10 @@ async function runSeeder() {
       AttendanceNotificationModel.deleteMany({}),
       NotificationTemplateModel.deleteMany({}),
       FixedCostModel.deleteMany({}),
+      ExamModel.deleteMany({}),
+      ExamSubmissionModel.deleteMany({}),
+      ExpenditureModel.deleteMany({}),
+      PayrollModel.deleteMany({}),
     ]);
     console.log('✅ Dọn dẹp xong!\n');
 
@@ -626,7 +1037,7 @@ async function runSeeder() {
       startDate: new Date('2026-01-01'),
       endDate: null,
     }));
-    await FixedCostModel.insertMany(fixedCostsData);
+    const insertedFixedCosts = await FixedCostModel.insertMany(fixedCostsData);
     console.log(`✅ Đã tạo ${fixedCostsData.length} chi phí cố định.\n`);
 
     // ==========================================
@@ -780,7 +1191,7 @@ async function runSeeder() {
     // Student
     for (let i = 0; i < NUM_STUDENTS; i++) {
       usersData.push({
-        email: `student${i}}@edu.vn`,
+        email: `student${i}@edu.vn`,
         phone: faker.phone.number(),
         password: defaultPassword,
         fullName: faker.person.fullName(),
@@ -927,6 +1338,10 @@ async function runSeeder() {
         studentIds: classStudentMap.get(dc.index) ?? [],
         status: dc.status,
         startDate: dc.startDate,
+        totalLessons: (dc.course as any).totalLessons ?? faker.number.int({ min: MIN_SESSIONS, max: MAX_SESSIONS }),
+        lessonsPerWeek: dc.sessionPair.days.length,
+        maxNumberOfStudents: MAX_STUDENTS_PER_CLASS,
+        schedule: (classStudentMap.get(dc.index) ?? []).length > 0,
       };
     });
 
@@ -934,9 +1349,167 @@ async function runSeeder() {
     console.log(`✅ Đã tạo ${classes.length} lớp học không đụng lịch.\n`);
 
     // ==========================================
+    // LỚP CHƯA CÓ LỊCH (để test hiệu năng GA)
+    // ==========================================
+    console.log(`⏳ Tạo ${NUM_PENDING_CLASSES} lớp PENDING chưa có lịch...`);
+
+    const existingClassNames = new Set(classes.map((c) => c.name));
+    const pendingClassesData: any[] = [];
+    const activeTeachers = teachers.filter((t) => (t as any).status === 'ACTIVE');
+
+    for (let i = 0; i < NUM_PENDING_CLASSES; i++) {
+      const course = courses[i % courses.length];
+      const teacher = activeTeachers[i % activeTeachers.length];
+      const lessonsPerWeek = i % 3 === 0 ? 3 : 2;
+
+      // Tên dạng PEND-XXXX-001 — đảm bảo không trùng với lớp đã tồn tại
+      let name = `PEND-${abbreviate((course as any).title)}-${String(i + 1).padStart(3, '0')}`;
+      let suffix = i + 1;
+      while (existingClassNames.has(name)) {
+        suffix++;
+        name = `PEND-${abbreviate((course as any).title)}-${String(suffix).padStart(3, '0')}`;
+      }
+      existingClassNames.add(name);
+
+      pendingClassesData.push({
+        name,
+        courseId: (course as any)._id,
+        teacherId: teacher._id,
+        roomId: undefined,           // chưa xếp phòng — GA sẽ gán
+        documents: [],
+        studentIds: [],
+        startDate: faker.date.between({ from: new Date('2026-06-01'), to: new Date('2026-12-31') })
+          .toISOString().slice(0, 10),
+        totalLessons: (course as any).totalLessons ?? faker.number.int({ min: MIN_SESSIONS, max: MAX_SESSIONS }),
+        lessonsPerWeek,
+        maxNumberOfStudents: faker.number.int({ min: 15, max: MAX_STUDENTS_PER_CLASS }),
+        optionalRequirements: [],
+        status: ClassStatus.PENDING,
+        schedule: false,
+      });
+    }
+
+    await ClassModel.insertMany(pendingClassesData);
+    console.log(`✅ Đã tạo ${pendingClassesData.length} lớp PENDING (schedule=false, roomId=null).\n`);
+
+    // ==========================================
+    // EXAMS & SUBMISSIONS
+    // ==========================================
+    console.log('📝 Tạo Đề thi & Bài nộp...');
+    const examsData: any[] = [];
+    const submissionsData: any[] = [];
+
+    for (let i = 0; i < classes.length; i++) {
+      const cls = classes[i];
+      const draft = draftClasses[i];
+      const studentIds = classStudentMap.get(i) ?? [];
+      if (!studentIds.length) continue;
+
+      const numExams = faker.number.int({ min: 1, max: 3 });
+      const examTitles = ['Kiểm tra giữa kỳ', 'Kiểm tra cuối kỳ', 'Kiểm tra định kỳ'];
+
+      for (let e = 0; e < numExams; e++) {
+        let examStatus: ExamStatus;
+        if (draft.status === ClassStatus.COMPLETED) {
+          examStatus = faker.helpers.weightedArrayElement([
+            { weight: 7, value: ExamStatus.CLOSED },
+            { weight: 3, value: ExamStatus.PUBLISHED },
+          ]);
+        } else if (draft.status === ClassStatus.ACTIVE) {
+          examStatus = faker.helpers.weightedArrayElement([
+            { weight: 4, value: ExamStatus.PUBLISHED },
+            { weight: 3, value: ExamStatus.CLOSED },
+            { weight: 3, value: ExamStatus.DRAFT },
+          ]);
+        } else {
+          examStatus = faker.helpers.weightedArrayElement([
+            { weight: 6, value: ExamStatus.DRAFT },
+            { weight: 4, value: ExamStatus.PUBLISHED },
+          ]);
+        }
+
+        const duration = faker.helpers.arrayElement([45, 60, 90, 120]);
+
+        let examStart: Date;
+        if (draft.status === ClassStatus.COMPLETED || draft.status === ClassStatus.ACTIVE) {
+          examStart = safeBetween(draft.startDate, NOW);
+        } else {
+          examStart = safeBetween(NOW, new Date('2026-12-31'));
+        }
+        const examEnd = new Date(examStart.getTime() + duration * 60 * 1000);
+
+        const questionCount = faker.number.int({ min: 5, max: 10 });
+        const questions = generateExamQuestions(questionCount);
+
+        const examId = new mongoose.Types.ObjectId();
+        examsData.push({
+          _id: examId,
+          title: `${examTitles[e] ?? 'Kiểm tra'} - ${(cls as any).name}`,
+          description: `Bài ${examTitles[e] ?? 'kiểm tra'} dành cho lớp ${(cls as any).name}.`,
+          classId: cls._id,
+          teacherId: cls.teacherId,
+          startDate: examStart,
+          endDate: examEnd,
+          duration,
+          questions,
+          status: examStatus,
+        });
+
+        // Tạo bài nộp cho đề thi đã ĐÓNG
+        if (examStatus === ExamStatus.CLOSED) {
+          const seenStudents = new Set<string>();
+          for (const studentId of studentIds) {
+            const sid = studentId.toString();
+            if (seenStudents.has(sid)) continue;
+            seenStudents.add(sid);
+
+            const answers = generateStudentAnswers(questions);
+            const score = calculateExamScore(questions, answers);
+            const startedAt = new Date(examStart.getTime() + faker.number.int({ min: 0, max: 5 * 60_000 }));
+            const timeTaken = faker.number.int({ min: Math.floor(duration * 0.5), max: duration }) * 60;
+            const completedAt = new Date(startedAt.getTime() + timeTaken * 1000);
+
+            submissionsData.push({
+              examId,
+              studentId,
+              classId: cls._id,
+              answers,
+              score,
+              startedAt,
+              completedAt,
+              timeTaken,
+              status: ExamSubmissionStatus.SUBMITTED,
+            });
+          }
+        }
+      }
+    }
+
+    await batchInsert(ExamModel, examsData);
+    await batchInsert(ExamSubmissionModel, submissionsData);
+    console.log(`✅ Đã tạo ${examsData.length} đề thi và ${submissionsData.length} bài nộp.\n`);
+
+    // ==========================================
     // INVOICES & TRANSACTIONS
     // ==========================================
     console.log('💰 Tạo Hoá đơn & Giao dịch...');
+
+    // Bộ đếm mã phiếu thu theo năm: PT-YYYY-NNNN
+    const txCounters = new Map<number, number>();
+    const nextPT = (date: Date): string => {
+      const y = date.getFullYear();
+      const n = (txCounters.get(y) ?? 0) + 1;
+      txCounters.set(y, n);
+      return `PT-${y}-${String(n).padStart(4, '0')}`;
+    };
+
+    // Mô tả phương thức thanh toán dùng cho note
+    const PM_LABEL: Record<string, string> = {
+      CASH: 'Nộp tiền mặt tại quầy',
+      TRANSFER: 'Chuyển khoản ngân hàng',
+      CARD: 'Quẹt thẻ POS',
+      VNPAY: 'Thanh toán qua cổng VNPay',
+    };
     const invoicesData: any[] = [];
     const transactionsData: any[] = [];
 
@@ -946,7 +1519,7 @@ async function runSeeder() {
 
       for (const studentId of classStudentMap.get(i) ?? []) {
         const finalAmount = Math.round(
-          draft.course.basePrice * faker.number.float({ min: 0.75, max: 1.0, fractionDigits: 2 }),
+          draft.course.basePrice * faker.number.float({ min: 0.92, max: 1.05, fractionDigits: 2 }),
         );
 
         // Trạng thái hoá đơn theo trạng thái lớp
@@ -960,12 +1533,12 @@ async function runSeeder() {
           ]);
         } else {
           invoiceStatus = faker.helpers.weightedArrayElement([
-            { weight: 5, value: InvoiceStatus.PAID },
-            { weight: 2, value: InvoiceStatus.PARTIAL },
-            { weight: 1, value: InvoiceStatus.UNPAID },
-            { weight: 1, value: InvoiceStatus.OVERDUE },
-            { weight: 0.5, value: InvoiceStatus.REFUNDED },
-            { weight: 0.5, value: InvoiceStatus.CANCELLED },
+            { weight: 65, value: InvoiceStatus.PAID },
+            { weight: 15, value: InvoiceStatus.PARTIAL },
+            { weight: 8, value: InvoiceStatus.UNPAID },
+            { weight: 7, value: InvoiceStatus.OVERDUE },
+            { weight: 3, value: InvoiceStatus.REFUNDED },
+            { weight: 2, value: InvoiceStatus.CANCELLED },
           ]);
         }
 
@@ -1015,14 +1588,20 @@ async function runSeeder() {
         const txTo = txWindowTo > NOW ? NOW : txWindowTo;
 
         if (invoiceStatus === InvoiceStatus.PAID || invoiceStatus === InvoiceStatus.REFUNDED) {
+          const pm = faker.helpers.enumValue(PaymentMethod);
+          const txDate = safeBetween(txFrom, txTo);
+          const isRefund = invoiceStatus === InvoiceStatus.REFUNDED;
           transactionsData.push({
-            code: `TRX-${faker.string.alphanumeric(10).toUpperCase()}`,
+            code: nextPT(txDate),
             invoiceId,
             studentId,
             amount: finalAmount,
-            paymentMethod: faker.helpers.enumValue(PaymentMethod),
+            paymentMethod: pm,
+            note: isRefund
+              ? `${PM_LABEL[pm] ?? pm} — Hoàn học phí theo yêu cầu — ${draft.course.title}`
+              : `${PM_LABEL[pm] ?? pm} — Thanh toán đầy đủ học phí — ${draft.course.title}`,
             processedBy: faker.helpers.arrayElement(consultants)._id,
-            createdAt: safeBetween(txFrom, txTo),
+            createdAt: txDate,
           });
         } else if (invoiceStatus === InvoiceStatus.PARTIAL) {
           const paidAmount = finalAmount - debt;
@@ -1039,17 +1618,20 @@ async function runSeeder() {
             const secondFrom = new Date(txTo.getTime() + 14 * 86_400_000);
             const secondTo = new Date(txTo.getTime() + 42 * 86_400_000);
 
+            const pm = faker.helpers.enumValue(PaymentMethod);
+            const txDate =
+              p === 0
+                ? safeBetween(txFrom, txTo)
+                : safeBetween(secondFrom > NOW ? NOW : secondFrom, secondTo > NOW ? NOW : secondTo);
             transactionsData.push({
-              code: `TRX-${faker.string.alphanumeric(10).toUpperCase()}`,
+              code: nextPT(txDate),
               invoiceId,
               studentId,
               amount: partial,
-              paymentMethod: faker.helpers.enumValue(PaymentMethod),
+              paymentMethod: pm,
+              note: `${PM_LABEL[pm] ?? pm} — Học phí ${draft.course.title} (Đợt ${p + 1}/${numPayments})`,
               processedBy: faker.helpers.arrayElement(consultants)._id,
-              createdAt:
-                p === 0
-                  ? safeBetween(txFrom, txTo)
-                  : safeBetween(secondFrom > NOW ? NOW : secondFrom, secondTo > NOW ? NOW : secondTo),
+              createdAt: txDate,
             });
           }
         }
@@ -1074,6 +1656,9 @@ async function runSeeder() {
     let totalAttendances = 0;
     let totalNotifications = 0;
 
+    // Map tổng hợp số giờ dạy thực tế: teacherId → (YYYY-MM → hours)
+    const teacherMonthHours = new Map<string, Map<string, number>>();
+
     for (let i = 0; i < classes.length; i++) {
       const cls = classes[i];
       const draft = draftClasses[i];
@@ -1084,6 +1669,16 @@ async function runSeeder() {
 
       // Sử dụng draft.sessionPair đã lưu từ trước
       const sessionDates = generateSessionDates(draft.startDate, numSessions, draft.sessionPair);
+
+      // Tích lũy giờ dạy thực tế (chỉ buổi đã qua) cho payroll
+      const hoursPerSession = shiftDuration(draft.shift);
+      const tid = cls.teacherId.toString();
+      if (!teacherMonthHours.has(tid)) teacherMonthHours.set(tid, new Map());
+      const tMonthMap = teacherMonthHours.get(tid)!;
+      for (const d of sessionDates.filter((sd) => sd <= NOW)) {
+        const mk = formatMonth(d);
+        tMonthMap.set(mk, (tMonthMap.get(mk) ?? 0) + hoursPerSession);
+      }
 
       const schedulesData = sessionDates.map((date) => ({
         classId: cls._id,
@@ -1153,18 +1748,224 @@ async function runSeeder() {
     }
 
     // ==========================================
+    // PAYROLL (BẢNG LƯƠNG)
+    // ==========================================
+    console.log('💼 Tạo Bảng lương...');
+    const payrollsData: any[] = [];
+    const roleNameMap = new Map(roles.map((r) => [r._id.toString(), r.name as string]));
+
+    // Tháng cần tạo lương cho nhân viên văn phòng (2025-01 → tháng hiện tại)
+    const staffPayMonths: string[] = [];
+    {
+      const cur = new Date('2025-01-01');
+      const limit = new Date(NOW.getFullYear(), NOW.getMonth(), 1);
+      while (cur <= limit) {
+        staffPayMonths.push(formatMonth(cur));
+        cur.setMonth(cur.getMonth() + 1);
+      }
+    }
+
+    // 1. Lương giáo viên — dựa trên giờ dạy thực tế
+    for (const [tid, monthMap] of teacherMonthHours) {
+      const teacher = teachers.find((t) => t._id.toString() === tid);
+      if (!teacher) continue;
+
+      const isFullTime = (teacher as any).teacher_info?.type === TeacherType.FULL_TIME;
+      const payrollType = isFullTime ? PayrollType.TEACHER_FULL_TIME : PayrollType.TEACHER_PART_TIME;
+      const baseSalary = isFullTime ? ((teacher as any).baseSalary ?? 0) : 0;
+      const hourlyRate = (teacher as any).teacher_info?.hourlyRate ?? 0;
+
+      for (const [month, teachingHours] of monthMap) {
+        const monthDate = new Date(`${month}-01`);
+        const standardDays = isFullTime ? 22 : 0;
+        const actualDays = isFullTime ? faker.number.int({ min: 18, max: 22 }) : 0;
+        const standardHours = isFullTime ? standardDays * 8 : 0;
+        const allowance = faker.number.int({ min: 0, max: 500_000 });
+        const deduction = faker.number.int({ min: 0, max: 200_000 });
+
+        let salary: number;
+        if (isFullTime) {
+          // Lương cứng × (ngày thực tế / chuẩn) + giờ vượt định mức × hourlyRate
+          const overtimeHours = Math.max(0, teachingHours - 40);
+          salary = Math.round((baseSalary * actualDays) / standardDays + overtimeHours * hourlyRate);
+        } else {
+          salary = Math.round(teachingHours * hourlyRate);
+        }
+
+        const totalSalary = Math.max(0, salary + allowance - deduction);
+        const isPast = monthDate < new Date(NOW.getFullYear(), NOW.getMonth(), 1);
+        const status = isPast
+          ? faker.helpers.weightedArrayElement([
+              { weight: 7, value: PayrollStatus.PAID },
+              { weight: 3, value: PayrollStatus.PENDING },
+            ])
+          : PayrollStatus.PENDING;
+
+        const payrollId = new mongoose.Types.ObjectId();
+        payrollsData.push({
+          _id: payrollId,
+          userId: teacher._id,
+          month,
+          roleName: roleNameMap.get((teacher as any).roleId.toString()) ?? 'Giáo viên',
+          payrollType,
+          baseSalary,
+          hourlyRate,
+          metrics: { standardDays, actualDays, standardHours, teachingHours: Math.round(teachingHours * 10) / 10 },
+          allowance,
+          deduction,
+          totalSalary,
+          status,
+          isEmailSent: status === PayrollStatus.PAID,
+          emailSentAt: status === PayrollStatus.PAID ? new Date(`${month}-28`) : null,
+          bankInfo: (teacher as any).bankInfo ?? {},
+        });
+      }
+    }
+
+    // 2. Lương nhân viên văn phòng (Manager, Accountant, Consultant)
+    const officeStaff = insertedUsers.filter((u) => {
+      const rid = u.roleId.toString();
+      return (
+        (managerRole && rid === managerRole._id.toString()) ||
+        (accountantRole && rid === accountantRole._id.toString()) ||
+        (consultantRole && rid === consultantRole._id.toString())
+      );
+    });
+
+    for (const staff of officeStaff) {
+      const baseSalary = (staff as any).baseSalary ?? 0;
+      if (!baseSalary) continue;
+
+      for (const month of staffPayMonths) {
+        const monthDate = new Date(`${month}-01`);
+        const standardDays = 22;
+        const actualDays = faker.number.int({ min: 18, max: 22 });
+        const allowance = faker.number.int({ min: 200_000, max: 1_500_000 });
+        const deduction = faker.number.int({ min: 0, max: 300_000 });
+        const totalSalary = Math.max(0, Math.round((baseSalary * actualDays) / standardDays) + allowance - deduction);
+
+        const isPast = monthDate < new Date(NOW.getFullYear(), NOW.getMonth(), 1);
+        const status = isPast
+          ? faker.helpers.weightedArrayElement([
+              { weight: 8, value: PayrollStatus.PAID },
+              { weight: 2, value: PayrollStatus.PENDING },
+            ])
+          : PayrollStatus.PENDING;
+
+        const payrollId = new mongoose.Types.ObjectId();
+        payrollsData.push({
+          _id: payrollId,
+          userId: staff._id,
+          month,
+          roleName: roleNameMap.get((staff as any).roleId.toString()) ?? 'Nhân viên',
+          payrollType: PayrollType.STAFF,
+          baseSalary,
+          hourlyRate: 0,
+          metrics: { standardDays, actualDays, standardHours: standardDays * 8, teachingHours: 0 },
+          allowance,
+          deduction,
+          totalSalary,
+          status,
+          isEmailSent: status === PayrollStatus.PAID,
+          emailSentAt: status === PayrollStatus.PAID ? new Date(`${month}-28`) : null,
+          bankInfo: (staff as any).bankInfo ?? {},
+        });
+      }
+    }
+
+    await batchInsert(PayrollModel, payrollsData);
+    console.log(`✅ Đã tạo ${payrollsData.length.toLocaleString()} bảng lương.\n`);
+
+    // ==========================================
+    // EXPENDITURES (CHI TIÊU)
+    // ==========================================
+    console.log('🧾 Tạo Chi tiêu...');
+    const expendituresData: any[] = [];
+
+    // Bộ đếm mã phiếu chi theo năm: PC-YYYY-NNNN
+    const expCounters = new Map<number, number>();
+    const nextPC = (date: Date): string => {
+      const y = date.getFullYear();
+      const n = (expCounters.get(y) ?? 0) + 1;
+      expCounters.set(y, n);
+      return `PC-${y}-${String(n).padStart(4, '0')}`;
+    };
+
+    const accountantUsers = insertedUsers.filter(
+      (u) => accountantRole && u.roleId.toString() === accountantRole._id.toString(),
+    );
+    const adminUsers = insertedUsers.filter(
+      (u) => adminRole && u.roleId.toString() === adminRole._id.toString(),
+    );
+    const paidByPool = [...accountantUsers, ...adminUsers];
+    const fallbackPaidBy = paidByPool.length > 0 ? paidByPool : [insertedUsers[0]];
+
+    // SALARY: tạo 1 phiếu chi tương ứng cho mỗi bảng lương đã PAID — liên kết trực tiếp payrollId
+    for (const pr of payrollsData) {
+      if (pr.status !== PayrollStatus.PAID) continue;
+      // Ngày chi lương: cuối tháng (ngày 25)
+      const expDate = new Date(`${pr.month}-25`);
+      expendituresData.push({
+        code: nextPC(expDate),
+        expenditureType: ExpenditureType.SALARY,
+        amount: pr.totalSalary,
+        payrollId: pr._id,
+        receiverId: pr.userId,
+        paidBy: faker.helpers.arrayElement(fallbackPaidBy)._id,
+        description: `Chi lương tháng ${pr.month} — ${pr.roleName} (${pr.payrollType === PayrollType.TEACHER_PART_TIME ? 'Part-time' : pr.payrollType === PayrollType.TEACHER_FULL_TIME ? 'Full-time' : 'Nhân viên'})`,
+        date: expDate,
+      });
+    }
+
+    // OPERATION: chi phí vận hành — liên kết fixedCostId, trải đều các tháng từ 2025-01
+    for (const fc of insertedFixedCosts) {
+      const fcData = fc as any;
+      // Số lần thanh toán dựa theo chu kỳ
+      const paymentsPerYear = fcData.cycle === FixedCostCycle.MONTHLY ? 12 : fcData.cycle === FixedCostCycle.QUARTERLY ? 4 : 1;
+      const totalMonths = staffPayMonths.length;
+      const numPayments = Math.min(totalMonths, Math.round((totalMonths / 12) * paymentsPerYear));
+
+      for (let p = 0; p < numPayments; p++) {
+        // Trải đều các tháng
+        const monthIdx = Math.floor((p / numPayments) * totalMonths);
+        const monthStr = staffPayMonths[monthIdx] ?? staffPayMonths[staffPayMonths.length - 1];
+        const expDate = new Date(`${monthStr}-${String(fcData.payDay ?? 5).padStart(2, '0')}`);
+        const paidByUser = faker.helpers.arrayElement(fallbackPaidBy);
+        expendituresData.push({
+          code: nextPC(expDate),
+          expenditureType: ExpenditureType.OPERATION,
+          amount: Math.round(fcData.amount * faker.number.float({ min: 0.98, max: 1.02, fractionDigits: 3 })),
+          fixedCostId: fcData._id,
+          receiverId: paidByUser._id,
+          paidBy: paidByUser._id,
+          description: `Thanh toán ${fcData.name} — tháng ${monthStr}`,
+          date: expDate,
+        });
+      }
+    }
+
+    await batchInsert(ExpenditureModel, expendituresData);
+    const salaryExpCount = expendituresData.filter((e) => e.expenditureType === ExpenditureType.SALARY).length;
+    const opExpCount = expendituresData.filter((e) => e.expenditureType === ExpenditureType.OPERATION).length;
+    console.log(`✅ Đã tạo ${expendituresData.length.toLocaleString()} chi tiêu (${salaryExpCount} lương, ${opExpCount} vận hành).\n`);
+
+    // ==========================================
     // TỔNG KẾT
     // ==========================================
     console.log('\n🎉 ========== HOÀN TẤT ==========');
     console.log(`   👤 Users:            ${insertedUsers.length.toLocaleString()}`);
     console.log(`   📘 Courses:          ${courses.length}`);
     console.log(`   🏢 Rooms:            ${rooms.length}`);
-    console.log(`   🏛️  Classes:          ${classes.length}`);
+    console.log(`   🏛️  Classes:          ${classes.length} + ${NUM_PENDING_CLASSES} PENDING (chưa có lịch)`);
     console.log(`   📅 Schedules:        ${totalSchedules.toLocaleString()}`);
     console.log(`   ✅ Attendances:      ${totalAttendances.toLocaleString()}`);
     console.log(`   🔔 Notifications:    ${totalNotifications.toLocaleString()}`);
     console.log(`   💰 Invoices:         ${invoicesData.length.toLocaleString()}`);
     console.log(`   💳 Transactions:     ${transactionsData.length.toLocaleString()}`);
+    console.log(`   📝 Exams:            ${examsData.length.toLocaleString()}`);
+    console.log(`   📄 Submissions:      ${submissionsData.length.toLocaleString()}`);
+    console.log(`   💼 Payrolls:         ${payrollsData.length.toLocaleString()}`);
+    console.log(`   🧾 Expenditures:     ${expendituresData.length.toLocaleString()} (${expendituresData.filter(e=>e.expenditureType===ExpenditureType.SALARY).length} lương / ${expendituresData.filter(e=>e.expenditureType===ExpenditureType.OPERATION).length} vận hành)`);
     console.log(`   📧 Notif Templates:  ${NOTIFICATION_TEMPLATES.length}`);
     console.log(`   💸 Fixed Costs:      ${fixedCostsData.length}`);
     console.log('=================================\n');

@@ -1,11 +1,12 @@
 import { useState, useEffect, createContext, useContext, type PropsWithChildren } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { Clock, CheckCircle2, FileText, Send, ChevronLeft, Menu, X, ChevronRight } from 'lucide-react';
+import { Clock, Send, ChevronLeft, Menu, X } from 'lucide-react';
 import { examService } from '../../services/exam.service';
 import type { IExam, IExamSubmission } from '../../types/exam.type';
 import { PATHS } from '../../utils/constants';
 import { getDecodedToken } from '../../utils/auth';
+import ConfirmModal from '../../components/ConfirmModal';
 
 type ExamContextType = {
     exam: IExam | null;
@@ -37,6 +38,7 @@ export default function ExamLayout({ children }: PropsWithChildren) {
     const [answers, setAnswers] = useState<Record<string, string[]>>({});
     const [timeLeft, setTimeLeft] = useState<number | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
 
     useEffect(() => {
         if (!examId) return;
@@ -106,7 +108,6 @@ export default function ExamLayout({ children }: PropsWithChildren) {
 
     const handleSubmit = async (isAuto = false) => {
         if (!examId || !submission || submission.status === 'SUBMITTED') return;
-        if (!isAuto && !window.confirm('Bạn có chắc chắn muốn nộp bài?')) return;
 
         setSubmitting(true);
         try {
@@ -296,7 +297,7 @@ export default function ExamLayout({ children }: PropsWithChildren) {
                     {!isSubmitted && (
                         <div className="p-6 bg-slate-50 border-t border-gray-200 shrink-0">
                             <button
-                                onClick={() => handleSubmit(false)}
+                                onClick={() => setShowConfirmSubmit(true)}
                                 disabled={submitting}
                                 className="cursor-pointer w-full py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2"
                             >
@@ -318,7 +319,19 @@ export default function ExamLayout({ children }: PropsWithChildren) {
                         onClick={() => setSidebarOpen(false)}
                     ></div>
                 )}
+
             </div>
+            <ConfirmModal
+                isOpen={showConfirmSubmit}
+                onClose={() => setShowConfirmSubmit(false)}
+                onConfirm={() => {
+                    setShowConfirmSubmit(false);
+                    handleSubmit(false);
+                }}
+                title="Xác nhận nộp bài"
+                message="Bạn có chắc chắn muốn nộp bài? Thao tác này không thể hoàn tác."
+                type="info"
+            />
         </ExamContext.Provider>
     );
 }

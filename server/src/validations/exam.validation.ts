@@ -33,7 +33,7 @@ export const CreateExamSchema = z.object({
     endDate: z.coerce.date({ message: 'Ngày kết thúc không hợp lệ' }),
     duration: z
         .number({ message: 'Thời gian làm bài là bắt buộc' })
-        .positive('Thời gian làm bài phải lớn hơn 0'),
+        .positive('Thời gian làm bài phải lớn hơn 0').min(1, 'Thời gian làm bài tối thiểu 1 phút'),
     questions: z.array(QuestionSchema).optional().default([]),
     status: z.nativeEnum(ExamStatus, { message: 'Trạng thái không hợp lệ' }).default(ExamStatus.DRAFT),
 }).refine(data => data.endDate > data.startDate, {
@@ -47,9 +47,17 @@ export const UpdateExamSchema = z.object({
     classId: objectId('ID lớp học').optional(),
     startDate: z.coerce.date().optional(),
     endDate: z.coerce.date().optional(),
-    duration: z.number().positive().optional(),
+    duration: z.number().positive().min(1, 'Thời gian làm bài tối thiểu 1 phút').optional(),
     questions: z.array(QuestionSchema).optional(),
     status: z.nativeEnum(ExamStatus).optional(),
+}).refine(data => {
+    if (data.startDate && data.endDate) {
+        return data.endDate > data.startDate;
+    }
+    return true;
+}, {
+    message: 'Ngày kết thúc phải sau ngày bắt đầu',
+    path: ['endDate'],
 });
 
 export const ExamIdSchema = z.object({

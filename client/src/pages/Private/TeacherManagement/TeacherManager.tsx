@@ -27,6 +27,7 @@ import StatCard from '../../../components/StatCard';
 import SkeletonRow from '../../../components/SkeletonRow';
 import EmptyState from '../../../components/EmptyState';
 import ErrorState from '../../../components/ErrorState';
+import StatusBadge from '../../../components/StatusBadge';
 
 import useFetch from '../../../hooks/useFetch';
 import useDebounce from '../../../hooks/useDebounce';
@@ -37,30 +38,6 @@ import { TEACHER_STATUS_OPTIONS, PATHS } from '../../../utils/constants';
 import { STATUS_DOTS, getColor, getInitials } from '../../../utils/user.util';
 import RequirePermission from '../../../components/RequirePermission';
 import { PERMISSIONS } from '../../../utils/permission.constant';
-
-// ─── Status badge ─────────────────────────────────────────────────────────────
-const getTeacherStatusBadge = (status: string) => {
-  if (status === 'ACTIVE')
-    return (
-      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-600 border border-indigo-200">
-        <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />
-        Đang giảng dạy
-      </span>
-    );
-  if (status === 'INACTIVE')
-    return (
-      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-500 border border-gray-200">
-        <span className="w-1.5 h-1.5 rounded-full bg-gray-400 shrink-0" />
-        Đã nghỉ
-      </span>
-    );
-  return (
-    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-gray-50 text-gray-500 border border-gray-200">
-      <span className="w-1.5 h-1.5 rounded-full bg-gray-300 shrink-0" />
-      Không rõ
-    </span>
-  );
-};
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 const TeacherManager = () => {
@@ -225,8 +202,8 @@ const TeacherManager = () => {
           icon={<BookOpen size={20} />}
           label="Đang giảng dạy"
           value={countActive ?? '—'}
-          gradient="bg-gradient-to-br from-indigo-500 to-violet-600"
-          textColor="text-indigo-600"
+          gradient="bg-gradient-to-br from-emerald-500 to-teal-600"
+          textColor="text-emerald-600"
           active={statusFilter === 'ACTIVE'}
           onClick={() => {
             setStatusFilter('ACTIVE');
@@ -312,14 +289,14 @@ const TeacherManager = () => {
                       px-4 py-2.5 cursor-pointer text-sm transition-colors flex items-center gap-3
                       ${
                         statusFilter === opt.value
-                          ? 'bg-indigo-50 text-indigo-600 font-semibold'
+                          ? 'bg-blue-50 text-blue-600 font-semibold'
                           : 'text-gray-700 hover:bg-gray-50'
                       }
                     `}
                   >
                     <span className={`w-2 h-2 rounded-full shrink-0 ${STATUS_DOTS[opt.value] ?? 'bg-gray-400'}`} />
                     {opt.label}
-                    {statusFilter === opt.value && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600" />}
+                    {statusFilter === opt.value && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-600" />}
                   </div>
                 ))}
               </div>
@@ -349,13 +326,13 @@ const TeacherManager = () => {
               </span>{' '}
               trong <span className="font-semibold text-gray-700">{totalCount}</span> giáo viên
               {isFiltered && (
-                <button onClick={handleReset} className="ml-2 text-indigo-500 hover:underline">
+                <button onClick={handleReset} className="ml-2 text-blue-500 hover:underline">
                   xóa bộ lọc
                 </button>
               )}
             </p>
             {isFiltered && (
-              <span className="text-xs px-2.5 py-1 bg-indigo-50 text-indigo-600 font-medium rounded-full">
+              <span className="text-xs px-2.5 py-1 bg-blue-50 text-blue-600 font-medium rounded-full">
                 Đang lọc: {activeLabel}
               </span>
             )}
@@ -385,7 +362,7 @@ const TeacherManager = () => {
                 teachers.map((teacher: any, index: number) => {
                   const color = getColor(teacher.fullName);
                   return (
-                    <tr key={teacher._id} className="group hover:bg-indigo-50/30 transition-colors">
+                    <tr key={teacher._id} className="group hover:bg-blue-50/30 transition-colors">
                       {/* STT */}
                       <td className="px-5 py-4 text-gray-400 text-sm text-center font-medium">
                         {index + 1 + (page - 1) * limit}
@@ -467,8 +444,12 @@ const TeacherManager = () => {
                       </td>
 
                       {/* Trạng thái */}
-                      <td className="px-5 py-4">{getTeacherStatusBadge(teacher.status)}</td>
-
+                      <td className="px-5 py-4">
+                        <StatusBadge
+                          status={teacher.status}
+                          label={teacher.status === 'ACTIVE' ? 'Đang giảng dạy' : 'Đã nghỉ'}
+                        />
+                      </td>
                       {/* Action menu (giữ nguyên MoreVertical) */}
                       <RequirePermission required={[PERMISSIONS.TEACHER.EDIT, PERMISSIONS.TEACHER.DELETE]}>
                         <td className="px-5 py-4 text-center">

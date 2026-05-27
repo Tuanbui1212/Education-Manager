@@ -26,7 +26,7 @@ export class CourseController {
             const { courses, total } = await this.courseService.getAllCourses(req.query);
             res.status(200).json({ data: courses, totalCount: total, success: true });
         } catch (error) {
-            res.status(500).json({ message: "Lỗi Server", success: false });
+            res.status(400).json({ message: (error as Error).message, success: false });
         }
     };
 
@@ -39,7 +39,7 @@ export class CourseController {
                 return res.status(404).json({ message: "Không tìm thấy khóa học", success: false });
             res.status(200).json({ data: course, success: true });
         } catch (error) {
-            res.status(500).json({ message: "Lỗi Server", success: false });
+            res.status(400).json({ message: (error as Error).message, success: false });
         }
     };
 
@@ -68,7 +68,7 @@ export class CourseController {
                 return res.status(404).json({ message: "Không tìm thấy khóa học để xóa", success: false });
             res.status(200).json({ message: "Xóa khóa học thành công", success: true });
         } catch (error) {
-            res.status(500).json({ message: "Lỗi Server", success: false });
+            res.status(400).json({ message: (error as Error).message || "Lỗi Server", success: false });
         }
     };
 }

@@ -124,23 +124,25 @@ export class ExamService {
         const exam = await ExamModel.create(data);
         const classes = await ClassModel.findById(data.classId);
         if (!classes) throw new Error('Không tìm thấy lớp học');
-        const notifications = classes.studentIds.map(studentId => {
-            return ({
-                userId: studentId,
-                title: `Lớp ${classes.name} có bài kiểm tra mới`,
-                content: `${exam.title} ${exam.description ? `- ${exam.description}` : ''}`,
-                examId: exam._id,
-                isRead: false
+        if (data.status === ExamStatus.PUBLISHED) {
+            const notifications = classes.studentIds.map(studentId => {
+                return ({
+                    userId: studentId,
+                    title: `Lớp ${classes.name} có bài kiểm tra mới`,
+                    content: `${exam.title} ${exam.description ? `- ${exam.description}` : ''}`,
+                    examId: exam._id,
+                    isRead: false
+                })
             })
-        })
-        const savedNotifs = await AttendanceNotificationModel.insertMany(notifications);
-        const io = getIO();
-        savedNotifs.forEach(notif => {
-            const socketId = userSocketMap.get(notif.userId.toString());
-            if (socketId) {
-                io.to(socketId).emit('new_notification', notif.toObject());
-            }
-        });
+            const savedNotifs = await AttendanceNotificationModel.insertMany(notifications);
+            const io = getIO();
+            savedNotifs.forEach(notif => {
+                const socketId = userSocketMap.get(notif.userId.toString());
+                if (socketId) {
+                    io.to(socketId).emit('new_notification', notif.toObject());
+                }
+            });
+        }
         return exam;
     }
     async updateExam(id: string, data: UpdateExamType) {
@@ -178,10 +180,12 @@ export class ExamService {
 
     async deleteExam(id: string) {
         try {
-            await ExamSubmissionModel.deleteMany({ examId: id });
+            const existSubmissions = await ExamSubmissionModel.find({ examId: id });
+            if (existSubmissions.some(sub => sub.status === 'IN_PROGRESS')) throw new Error('Không thể xóa bài kiểm tra vì đang có học viên làm bài');
+            await AttendanceNotificationModel.deleteMany({ examId: id });
             return ExamModel.findByIdAndDelete(id).lean();
-        } catch (error) {
-            throw new Error('Không thể xóa bài kiểm tra');
+        } catch (error: any) {
+            throw new Error(error.message || 'Không thể xóa bài kiểm tra');
         }
     }
 

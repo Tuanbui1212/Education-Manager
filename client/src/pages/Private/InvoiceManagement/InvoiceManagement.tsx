@@ -23,8 +23,12 @@ import useDebounce from '../../../hooks/useDebounce';
 import { invoiceService } from '../../../services/invoice.service';
 
 import PaymentWizardModal from './PaymentWizardModal';
+
 import TablePagination from '../../../components/TablePagination';
 import ConfirmModal from '../../../components/ConfirmModal';
+import SkeletonRow from '../../../components/SkeletonRow';
+import EmptyState from '../../../components/EmptyState';
+import StatusBadge from '../../../components/StatusBadge';
 
 import type { IInvoice, InvoiceStatus, InvoiceConfig } from '../../../types/invoice.type';
 
@@ -190,49 +194,6 @@ const InvoiceManagement = () => {
           : inv,
       ),
     );
-  };
-
-  const renderStatus = (status: InvoiceStatus) => {
-    switch (status) {
-      case 'PAID':
-        return (
-          <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold whitespace-nowrap">
-            Đã thanh toán
-          </span>
-        );
-      case 'PARTIAL':
-        return (
-          <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-bold whitespace-nowrap">
-            Đang trả góp
-          </span>
-        );
-      case 'UNPAID':
-        return (
-          <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold whitespace-nowrap">
-            Chờ thu phí
-          </span>
-        );
-      case 'OVERDUE':
-        return (
-          <span className="px-3 py-1 bg-rose-100 text-rose-700 rounded-full text-xs font-bold whitespace-nowrap animate-pulse">
-            Quá hạn
-          </span>
-        );
-      case 'CANCELLED':
-        return (
-          <span className="px-3 py-1 bg-gray-100 text-gray-500 rounded-full text-xs font-bold whitespace-nowrap">
-            Đã hủy
-          </span>
-        );
-      case 'REFUNDED':
-        return (
-          <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold whitespace-nowrap">
-            Hoàn tiền
-          </span>
-        );
-      default:
-        return null;
-    }
   };
 
   const renderNotificationBadge = (inv: IInvoice) => {
@@ -411,23 +372,19 @@ const InvoiceManagement = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[900px] xl:text-[13.5px] 2xl:text-sm">
               <thead>
-                <tr className="bg-gray-50 text-gray-500 text-xs xl:text-[11px] 2xl:text-xs uppercase tracking-wider border-b border-gray-100">
-                  <th className="p-4 xl:p-5 font-semibold">Hóa Đơn / Hạn Chót</th>
-                  <th className="p-4 xl:p-5 font-semibold">Học Viên / Khóa</th>
-                  <th className="p-4 xl:p-5 font-semibold text-right">Tổng Tiền</th>
-                  <th className="p-4 xl:p-5 font-semibold text-right">Đã Thu</th>
-                  <th className="p-4 xl:p-5 font-semibold text-right text-red-600">Còn Nợ</th>
-                  <th className="p-4 xl:p-5 font-semibold text-center">Trạng Thái</th>
-                  <th className="p-4 xl:p-5 font-semibold text-right">Hành Động</th>
+                <tr className="bg-primary text-white text-sm">
+                  <th className="px-5 py-3.5 font-semibold">Hóa Đơn / Hạn Chót</th>
+                  <th className="px-5 py-3.5 font-semibold">Học Viên / Khóa</th>
+                  <th className="px-5 py-3.5 font-semibold text-right">Tổng Tiền</th>
+                  <th className="px-5 py-3.5 font-semibold text-right">Đã Thu</th>
+                  <th className="px-5 py-3.5 font-semibold text-right text-red-600">Còn Nợ</th>
+                  <th className="px-5 py-3.5 font-semibold text-center">Trạng Thái</th>
+                  <th className="px-5 py-3.5 font-semibold text-right">Hành Động</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {loading ? (
-                  <tr>
-                    <td colSpan={7} className="p-8 text-center text-blue-500 animate-pulse font-medium">
-                      Đang tải dữ liệu công nợ...
-                    </td>
-                  </tr>
+                  Array.from({ length: 8 }).map((_, i) => <SkeletonRow key={i} />)
                 ) : invoices.length > 0 ? (
                   invoices.map((inv) => {
                     if (!inv) return null;
@@ -461,7 +418,23 @@ const InvoiceManagement = () => {
                           {formatCurrency(inv?.debt || 0)}
                         </td>
                         <td className="p-4 xl:p-5 text-center">
-                          {renderStatus(inv?.status)}
+                          <StatusBadge
+                            status={inv.status}
+                            label={
+                              inv.status === 'PAID'
+                                ? 'Đã thanh toán'
+                                : inv.status === 'PARTIAL'
+                                  ? 'Đang trả góp'
+                                  : inv.status === 'UNPAID'
+                                    ? 'Chờ thu phí'
+                                    : inv.status === 'OVERDUE'
+                                      ? 'Quá hạn'
+                                      : inv.status === 'REFUNDED'
+                                        ? 'Hoàn tiền'
+                                        : 'Đã hủy'
+                            }
+                            pulse={inv.status === 'OVERDUE'}
+                          />
                           {renderNotificationBadge(inv)}
                         </td>
                         <td className="p-4 xl:p-5 text-right">

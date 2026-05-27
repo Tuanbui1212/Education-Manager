@@ -1,12 +1,12 @@
 import { z } from "zod";
 
 export const CreateCourseSchema = z.object({
-    title: z.string({ message: 'Tiêu đề khóa học là bắt buộc' })
+    title: z.string({ message: 'Tiêu đề khóa học là bắt buộc' }).trim()
         .min(2, "Tiêu đề phải có ít nhất 2 ký tự")
         .max(150, "Tiêu đề không được quá 150 ký tự"),
     basePrice: z.number({ message: 'Giá khóa học là bắt buộc' })
         .min(1, "Giá khóa học phải lớn hơn 0"),
-    syllabus: z.string({ message: 'Nội dung (syllabus) là bắt buộc' })
+    syllabus: z.string({ message: 'Nội dung (syllabus) là bắt buộc' }).trim()
         .min(1, "Nội dung không được để trống"),
     totalLessons: z.number({ message: 'Số lượng bài học là bắt buộc' })
         .int("Số lượng bài học phải là số nguyên")

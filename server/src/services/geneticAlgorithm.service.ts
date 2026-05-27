@@ -154,7 +154,8 @@ export class GeneticAlgorithmService {
       }
 
       const validRooms = rooms.filter((r: any) => r.capacity >= req.maxNumberOfStudents);
-      const safeRooms = validRooms.length > 0 ? validRooms : [rooms.sort((a: any, b: any) => b.capacity - a.capacity)];
+      //const safeRooms = validRooms.length > 0 ? validRooms : [rooms.sort((a: any, b: any) => b.capacity - a.capacity)];
+      const safeRooms = validRooms.length > 0 ? validRooms : rooms.sort((a: any, b: any) => b.capacity - a.capacity);
 
       let availableDaysForThisClass = [...possibleDays];
 
@@ -350,14 +351,19 @@ export class GeneticAlgorithmService {
   // ═══════════════════════════════════════════
   async runGA(creatorId: string) {
     const data = await this.prepareData(creatorId);
+    const totalClass = data.enrichedRequests.length;
 
     console.log('[GA] Running...');
-    console.log('Dữ liệu đầu vào: ', data.enrichedRequests);
+    //console.log('Dữ liệu đầu vào: ', data.enrichedRequests);
 
-    const POPULATION_SIZE = 600;
-    const GENERATIONS = 600;
-    const ELITE_SIZE = 15;
-    const TOURNAMENT_K = 5;
+    // const POPULATION_SIZE = 600;
+    // const GENERATIONS = 600;
+    // const ELITE_SIZE = 15;
+    // const TOURNAMENT_K = 5;
+    const POPULATION_SIZE = Math.min(600, Math.max(50, totalClass * 20));
+    const GENERATIONS = Math.min(600, Math.max(30, totalClass * 15));
+    const ELITE_SIZE = Math.max(3, Math.floor(POPULATION_SIZE * 0.03));
+    const TOURNAMENT_K = totalClass < 10 ? 3 : totalClass < 50 ? 5 : 7;
 
     let population = Array.from({ length: POPULATION_SIZE }, () => this.generateRandomChromosome(data));
 
@@ -369,8 +375,20 @@ export class GeneticAlgorithmService {
     // === 1. KHAI BÁO BIẾN DỪNG SỚM (TRƯỚC VÒNG LẶP FOR) ===
     let bestOverallScore = -Infinity;
     let stagnantGenerations = 0;
-    const MAX_STAGNANT_GENERATIONS = 50;
+    let MAX_STAGNANT_GENERATIONS = 50;
 
+    if (totalClass < 3) MAX_STAGNANT_GENERATIONS = 3;
+    else if (totalClass < 5) MAX_STAGNANT_GENERATIONS = 5;
+    else if (totalClass < 8) MAX_STAGNANT_GENERATIONS = 10;
+    else if (totalClass < 10) MAX_STAGNANT_GENERATIONS = 15;
+    else if (totalClass < 15) MAX_STAGNANT_GENERATIONS = 20;
+    else if (totalClass < 20) MAX_STAGNANT_GENERATIONS = 25;
+    else if (totalClass < 30) MAX_STAGNANT_GENERATIONS = 30;
+    else if (totalClass < 50) MAX_STAGNANT_GENERATIONS = 35;
+    else if (totalClass < 80) MAX_STAGNANT_GENERATIONS = 40;
+    else if (totalClass < 100) MAX_STAGNANT_GENERATIONS = 45;
+
+    let actualGenerations = 0;
     for (let g = 0; g < GENERATIONS; g++) {
       scoredPop.sort((a, b) => b.score - a.score);
       // console.log(`[GA] Thế hệ ${g + 1} - Best Score: ${scoredPop[0].score}`);
@@ -386,7 +404,9 @@ export class GeneticAlgorithmService {
       }
 
       if (stagnantGenerations >= MAX_STAGNANT_GENERATIONS) {
-        console.log(`[GA] 🛑 DỪNG SỚM tại thế hệ ${g + 1}! Lý do: 50 thế hệ liên tiếp không tiến bộ.`);
+        console.log(
+          `[GA] 🛑 DỪNG SỚM tại thế hệ ${g + 1}! Lý do: ${MAX_STAGNANT_GENERATIONS} thế hệ liên tiếp không tiến bộ.`,
+        );
         break;
       }
 
@@ -402,12 +422,13 @@ export class GeneticAlgorithmService {
       }
 
       scoredPop = newScoredPop;
+      actualGenerations = g + 1;
     }
 
     scoredPop.sort((a, b) => b.score - a.score);
     const best = scoredPop[0];
 
-    console.log(`[GA] Best fitness after ${GENERATIONS} generations: ${best.score}`);
+    console.log(`[GA] Best fitness after ${actualGenerations} generations: ${best.score}`);
 
     // Enrich kết quả: gắn thêm tên ca, index lớp, slotScore
     const shiftMap = new Map<string, any>();

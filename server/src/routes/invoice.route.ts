@@ -21,7 +21,7 @@ router.post('/refundInvoice', verifyToken, invoiceController.refundInvoice);
 router.get(
   '/student/:studentId',
   verifyToken,
-  requirePermission(PERMISSIONS.INVOICE.VIEW),
+  requirePermission(PERMISSIONS.INVOICE.MY_VIEW, PERMISSIONS.INVOICE.VIEW),
   invoiceController.getByStudentId,
 );
 router.get('/:id', verifyToken, requirePermission(PERMISSIONS.INVOICE.VIEW), invoiceController.getOne);
@@ -32,7 +32,7 @@ router.patch(
   validate(updateInvoiceSchema),
   invoiceController.update,
 );
-// Dùng INVOICE.EDIT vì PERMISSIONS.INVOICE chưa có DELETE
+
 router.delete(
   '/:id',
   verifyToken,

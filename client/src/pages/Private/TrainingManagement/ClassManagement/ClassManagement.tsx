@@ -47,7 +47,7 @@ const ClassManagement = () => {
     title: '',
     message: '',
     type: 'success' as 'success' | 'danger' | 'warning' | 'info',
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   const queryParams = {
@@ -64,8 +64,6 @@ const ClassManagement = () => {
     totalCount,
     refetch: fetchClasses,
   } = useFetch(classService.getClasses, queryParams, [page, debouncedSearch, limit, statusFilter]);
-
-  console.log('classes', classes);
 
   const handleCreateClass = async (formData: Partial<IClass>) => {
     try {
@@ -158,7 +156,6 @@ const ClassManagement = () => {
   const openEditModal = (e: React.MouseEvent, classData: IClass) => {
     e.stopPropagation();
     setSelectedClass(classData);
-    console.log(classData);
     setShowClassModal(true);
   };
 

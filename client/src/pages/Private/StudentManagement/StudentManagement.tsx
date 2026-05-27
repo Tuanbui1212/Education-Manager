@@ -10,11 +10,10 @@ import {
   BookOpen,
   UserCheck,
   Users,
-  RefreshCw,
   X,
   ChevronDown,
 } from 'lucide-react';
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import Button from '../../../components/Button';
@@ -27,12 +26,12 @@ import SkeletonRow from '../../../components/SkeletonRow';
 import EmptyState from '../../../components/EmptyState';
 import ErrorState from '../../../components/ErrorState';
 import RequirePermission from '../../../components/RequirePermission';
+import StatusBadge from '../../../components/StatusBadge';
 
 import useFetch from '../../../hooks/useFetch';
 import useDebounce from '../../../hooks/useDebounce';
 
 import { userService } from '../../../services/user.service';
-import { roleService } from '../../../services/role.service';
 
 import type { IUser } from '../../../types/user.type';
 
@@ -351,7 +350,7 @@ const StudentManager = () => {
                   const consultant = student.student_info?.consultantId?.fullName;
 
                   return (
-                    <tr key={student._id} className="group hover:bg-slate-50/80 transition-colors">
+                    <tr key={student._id} className="group hover:bg-blue-50/30 transition-colors">
                       {/* STT */}
                       <td className="px-5 py-4 text-gray-400 text-sm text-center font-medium">
                         {index + 1 + (page - 1) * limit}
@@ -418,11 +417,11 @@ const StudentManager = () => {
 
                       {/* Trạng thái */}
                       <td className="px-5 py-4">
-                        <span className={getStatusUserStyles(student.status as string)}>
-                          {STATUS_OPTIONS.find((o) => o.value === student.status)?.label}
-                        </span>
+                        <StatusBadge
+                          status={student.status as string}
+                          label={STATUS_OPTIONS.find((o) => o.value === student.status)?.label}
+                        />
                       </td>
-
                       {/* Actions */}
                       <RequirePermission required={[PERMISSIONS.STUDENT.EDIT, PERMISSIONS.STUDENT.DELETE]}>
                         <td className="px-5 py-4">

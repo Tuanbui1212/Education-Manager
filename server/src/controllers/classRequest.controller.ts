@@ -74,7 +74,7 @@ export class ClassRequestController {
 
       const gaResult = await this.geneticAlgorithmService.runGA(creatorId);
 
-      console.log('GA Response sample:', JSON.stringify(gaResult, null, 2));
+      // console.log('GA Response sample:', JSON.stringify(gaResult, null, 2));
       console.log('Total genes:', gaResult.length);
 
       res.status(200).json({ success: true, data: gaResult, message: 'Tạo lịch thành công' });
