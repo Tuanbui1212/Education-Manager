@@ -57,24 +57,6 @@ cd client && npm install
 Tạo file `server/.env` dựa trên mẫu:
 
 ```env
-PORT=5000
-MONGO_URI=mongodb://root:password@localhost:27018/education-manager?authSource=admin
-JWT_SECRET=your_jwt_secret
-JWT_REFRESH_SECRET=your_refresh_secret
-
-# Email (Nodemailer)
-MAIL_HOST=smtp.example.com
-MAIL_PORT=587
-MAIL_USER=your@email.com
-MAIL_PASS=your_password
-
-# VNPay
-VNPAY_TMN_CODE=
-VNPAY_HASH_SECRET=
-VNPAY_URL=
-VNPAY_RETURN_URL=
-
-CLIENT_URL=http://localhost:5173
 ```
 
 ### 4. Seed dữ liệu mẫu
