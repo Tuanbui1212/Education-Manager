@@ -13,3 +13,6 @@ build
 Thumbs.db
 .agent
 coverage
+
+# Claude Code local config
+.claude
