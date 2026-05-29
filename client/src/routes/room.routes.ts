@@ -1,6 +1,6 @@
 import { PATHS } from '../utils/constants';
-import ListRoom from '../pages/Private/RoomManagement/ListRoom';
-import RoomDetail from '../pages/Private/RoomManagement/RoomDetail';
+import ListRoom from '../pages/Private/Configuration/RoomManagement/ListRoom';
+import RoomDetail from '../pages/Private/Configuration/RoomManagement/RoomDetail';
 import DashboardLayout from '../layouts/DashboardLayout';
 
 export const roomRoutes = [

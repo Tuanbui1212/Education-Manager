@@ -8,8 +8,6 @@ const ResetPasswordPage = () => {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
 
-  console.log(token);
-
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -141,11 +139,10 @@ const ResetPasswordPage = () => {
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Nhập lại mật khẩu mới"
                       disabled={isLoading}
-                      className={`w-full pl-11 pr-12 py-3 bg-gray-50 border rounded-xl text-gray-800 text-sm focus:outline-none focus:ring-2 focus:bg-white transition-all disabled:opacity-50 ${
-                        confirmPassword && password !== confirmPassword
+                      className={`w-full pl-11 pr-12 py-3 bg-gray-50 border rounded-xl text-gray-800 text-sm focus:outline-none focus:ring-2 focus:bg-white transition-all disabled:opacity-50 ${confirmPassword && password !== confirmPassword
                           ? 'border-red-300 focus:ring-red-500/20 focus:border-red-500'
                           : 'border-gray-200 focus:ring-blue-500/20 focus:border-blue-500'
-                      }`}
+                        }`}
                     />
                     <button
                       type="button"

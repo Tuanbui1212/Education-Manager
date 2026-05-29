@@ -634,7 +634,6 @@ const ClassDetail = () => {
                             <button
                               className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left font-medium"
                               onClick={() => {
-                                console.log('👉 XEM HÓA ĐƠN CỦA:', student._id);
                                 setOpenDropdownId(null);
                               }}
                             >

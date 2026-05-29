@@ -72,7 +72,7 @@ const PayrollManager = () => {
     type: 'info' as 'success' | 'danger' | 'warning' | 'info',
     confirmText: 'Xác nhận',
     cancelText: 'Hủy',
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   const closeConfirm = () => setConfirmConfig((prev) => ({ ...prev, isOpen: false }));
@@ -367,8 +367,6 @@ const PayrollManager = () => {
   const recalculatePayrollForSelected = async () => {
     setActionText('Đang tính lại lương, vui lòng chờ...');
     setIsActioning(true);
-    console.log('selectedRowIds:', selectedRowIds);
-    console.log('selectedMonth:', selectedMonth);
     try {
       const result = await payrollService.generatePayrollForUsers(selectedRowIds, selectedMonth);
 
@@ -723,11 +721,10 @@ const PayrollManager = () => {
             variant="outline"
             icon={<RefreshCw size={18} />}
             onClick={handleRecalculatePayroll}
-            className={`transition-all ${
-              selectedRowIds.length > 0
+            className={`transition-all ${selectedRowIds.length > 0
                 ? 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100 shadow-sm'
                 : 'text-gray-400 border-gray-200'
-            }`}
+              }`}
           >
             Tính lại lương {selectedRowIds.length > 0 ? `(${selectedRowIds.length})` : ''}
           </Button>
@@ -785,9 +782,8 @@ const PayrollManager = () => {
                 return (
                   <tr
                     key={item._id}
-                    className={`transition-colors ${
-                      isPaid ? 'bg-gray-50/60 opacity-75' : isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'
-                    }`}
+                    className={`transition-colors ${isPaid ? 'bg-gray-50/60 opacity-75' : isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'
+                      }`}
                   >
                     <td className="p-4 text-center">
                       {isPaid ? (
@@ -953,10 +949,10 @@ const PayrollManager = () => {
                 <span className="text-xl font-bold text-gray-900">
                   {formatCurrency(
                     editModal.payload.totalSalary -
-                      editModal.payload.allowance +
-                      editModal.payload.deduction +
-                      editModal.tempAllowance -
-                      editModal.tempDeduction,
+                    editModal.payload.allowance +
+                    editModal.payload.deduction +
+                    editModal.tempAllowance -
+                    editModal.tempDeduction,
                   )}
                 </span>
               </div>

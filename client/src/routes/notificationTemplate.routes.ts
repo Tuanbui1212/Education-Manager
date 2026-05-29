@@ -1,5 +1,5 @@
 import { PATHS } from "../utils/constants";
-import ListNotificationTemplate from "../pages/Private/NotificationTemplateManagement/ListNotificationTemplate";
+import ListNotificationTemplate from "../pages/Private/Configuration/NotificationTemplateManagement/ListNotificationTemplate";
 import DashboardLayout from "../layouts/DashboardLayout";
 
 export const notificationTemplateRoutes = [

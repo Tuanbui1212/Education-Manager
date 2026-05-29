@@ -84,7 +84,6 @@ const CreateVoucherModal: React.FC<CreateVoucherModalProps> = ({ isOpen, onClose
     setLoading(true);
     try {
       if (form.type === 'IN') {
-        console.log('form:', form);
         await transactionService.createTransactionTest({
           amount,
           note: form.description,
@@ -138,18 +137,16 @@ const CreateVoucherModal: React.FC<CreateVoucherModalProps> = ({ isOpen, onClose
           <div className="flex gap-4 p-1 bg-gray-100 rounded-xl">
             <button
               type="button"
-              className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
-                form.type === 'IN' ? 'bg-white text-emerald-600 shadow-sm' : 'text-gray-500'
-              }`}
+              className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${form.type === 'IN' ? 'bg-white text-emerald-600 shadow-sm' : 'text-gray-500'
+                }`}
               onClick={() => handleTypeChange('IN')}
             >
               <ArrowUpRight size={16} /> Tạo Phiếu Thu
             </button>
             <button
               type="button"
-              className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
-                form.type === 'OUT' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500'
-              }`}
+              className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${form.type === 'OUT' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500'
+                }`}
               onClick={() => handleTypeChange('OUT')}
             >
               <ArrowDownRight size={16} /> Tạo Phiếu Chi

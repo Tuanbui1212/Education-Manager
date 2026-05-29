@@ -115,8 +115,6 @@ const CashbookManagement = () => {
     [page, limit],
   );
 
-  console.log('cashBook:', cashBook);
-
   const filteredData = useMemo(() => {
     return mockData.filter((item) => {
       const matchSearch =
@@ -178,8 +176,6 @@ const CashbookManagement = () => {
 
   const handleCreateVoucher = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Tạo phiếu mới:', newVoucher);
-    // TODO: Gọi API tạo expenditure hoặc transaction tùy theo type
     setIsModalOpen(false);
     setNewVoucher({ type: 'OUT', category: '', amount: '', description: '', paymentMethod: 'CASH' });
   };
@@ -252,11 +248,10 @@ const CashbookManagement = () => {
                   setActiveTab(tab);
                   setPage(1);
                 }}
-                className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${
-                  activeTab === tab
+                className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === tab
                     ? 'bg-white text-blue-600 shadow-sm border border-gray-200/50'
                     : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'
-                }`}
+                  }`}
               >
                 {tab === 'ALL' ? 'Tất cả Giao dịch' : tab === 'IN' ? 'Phiếu Thu' : 'Phiếu Chi'}
               </button>

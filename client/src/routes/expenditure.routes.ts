@@ -1,7 +1,7 @@
 import { PATHS } from '../utils/constants';
 
 import DashboardLayout from '../layouts/DashboardLayout';
-import ExpenditureManagement from '../pages/Private/ExpenditureManagement/ExpenditureManagement';
+import ExpenditureManagement from '../pages/Private/FinanceManagement/ExpenditureManagement/ExpenditureManagement';
 import CashbookDetail from '../pages/Private/FinanceManagement/CashbookManagement/CashbookDetail';
 
 export const expenditureRoutes = [

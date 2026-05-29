@@ -23,7 +23,7 @@ router.post(
 router.get(
   '/',
   verifyToken,
-  requirePermission(PERMISSIONS.SCHEDULE.VIEW),
+  requirePermission(PERMISSIONS.SCHEDULE.VIEW, PERMISSIONS.CLASS.VIEW, PERMISSIONS.ROOM.VIEW),
   validate(GetSchedulesSchema, 'query'),
   scheduleController.getAll,
 );

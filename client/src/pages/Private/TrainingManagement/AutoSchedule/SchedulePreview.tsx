@@ -7,7 +7,6 @@ const DAY_LABELS = ['Chủ Nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 
 
 const SchedulePreview = ({ data, onBack }: { data: any[]; onBack: () => void }) => {
   const { data: rooms } = useFetch(roomService.getRooms, { limit: 1000 });
-  console.log('Rooms from API:', rooms);
 
   return (
     <div className="space-y-4 animate-in fade-in duration-300">
@@ -59,7 +58,7 @@ const SchedulePreview = ({ data, onBack }: { data: any[]; onBack: () => void }) 
         <Button variant="outline" icon={<ArrowLeft size={15} />} onClick={onBack}>
           Quay lại sửa yêu cầu
         </Button>
-        <Button variant="primary" icon={<CheckCircle2 size={15} />} onClick={() => {}}>
+        <Button variant="primary" icon={<CheckCircle2 size={15} />} onClick={() => { }}>
           Xác nhận & Lưu lịch chính thức
         </Button>
       </div>

@@ -184,13 +184,13 @@ const InvoiceManagement = () => {
       invoices.map((inv) =>
         inv?._id === id
           ? ({
-              ...inv,
-              debt: newDebt,
-              status: newStatus,
-              ...(newConfig && { installmentConfig: newConfig }),
-              ...(newRemindCount !== undefined && { remindCount: newRemindCount }),
-              ...(newLastRemindedAt !== undefined && { lastRemindedAt: newLastRemindedAt as any }),
-            } as unknown as IInvoice)
+            ...inv,
+            debt: newDebt,
+            status: newStatus,
+            ...(newConfig && { installmentConfig: newConfig }),
+            ...(newRemindCount !== undefined && { remindCount: newRemindCount }),
+            ...(newLastRemindedAt !== undefined && { lastRemindedAt: newLastRemindedAt as any }),
+          } as unknown as IInvoice)
           : inv,
       ),
     );
@@ -251,9 +251,8 @@ const InvoiceManagement = () => {
           <div className="flex gap-2 w-full sm:w-auto">
             <button
               onClick={() => setShowFilter(!showFilter)}
-              className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${
-                isFiltering ? 'bg-blue-600 text-white border-blue-600' : 'bg-white border-gray-200 hover:bg-gray-50'
-              }`}
+              className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${isFiltering ? 'bg-blue-600 text-white border-blue-600' : 'bg-white border-gray-200 hover:bg-gray-50'
+                }`}
             >
               <Filter size={16} />
               Lọc{' '}
@@ -377,7 +376,7 @@ const InvoiceManagement = () => {
                   <th className="px-5 py-3.5 font-semibold">Học Viên / Khóa</th>
                   <th className="px-5 py-3.5 font-semibold text-right">Tổng Tiền</th>
                   <th className="px-5 py-3.5 font-semibold text-right">Đã Thu</th>
-                  <th className="px-5 py-3.5 font-semibold text-right text-red-600">Còn Nợ</th>
+                  <th className="px-5 py-3.5 font-semibold text-right">Còn Nợ</th>
                   <th className="px-5 py-3.5 font-semibold text-center">Trạng Thái</th>
                   <th className="px-5 py-3.5 font-semibold text-right">Hành Động</th>
                 </tr>
@@ -528,10 +527,10 @@ const InvoiceManagement = () => {
           onConfirm={
             actionError || actionSuccess
               ? () => {
-                  setConfirmModal({ isOpen: false, type: null, invoice: null });
-                  setActionError(null);
-                  setActionSuccess(null);
-                }
+                setConfirmModal({ isOpen: false, type: null, invoice: null });
+                setActionError(null);
+                setActionSuccess(null);
+              }
               : confirmModal.type === 'refund'
                 ? handleRefund
                 : handleCancel

@@ -16,7 +16,7 @@ router.post(
   validate(CreateShiftSchema),
   shiftController.create,
 );
-router.get('/', verifyToken, requirePermission(PERMISSIONS.SHIFT.VIEW), shiftController.getAll);
+router.get('/', verifyToken, requirePermission(PERMISSIONS.SHIFT.VIEW, PERMISSIONS.CLASS.VIEW), shiftController.getAll);
 
 router.put(
   '/:id',

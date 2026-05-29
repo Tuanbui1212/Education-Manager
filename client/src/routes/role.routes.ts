@@ -1,6 +1,6 @@
 import { PATHS } from '../utils/constants';
-import RoleManager from '../pages/Private/RoleManagement/RoleManager';
-import RoleDetail from '../pages/Private/RoleManagement/RoleDetail';
+import RoleManager from '../pages/Private/AccountManagement/RoleManagement/RoleManager';
+import RoleDetail from '../pages/Private/AccountManagement/RoleManagement/RoleDetail';
 import DashboardLayout from '../layouts/DashboardLayout';
 
 export const roleRoutes = [

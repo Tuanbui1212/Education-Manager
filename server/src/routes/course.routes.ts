@@ -16,7 +16,7 @@ router.post(
   validate(CreateCourseSchema),
   courseController.create,
 );
-router.get('/', verifyToken, requirePermission(PERMISSIONS.COURSE.VIEW), courseController.getAll);
+router.get('/', verifyToken, requirePermission(PERMISSIONS.COURSE.VIEW, PERMISSIONS.CLASS.CREATE), courseController.getAll);
 router.get(
   '/:id',
   verifyToken,

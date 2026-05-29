@@ -15,7 +15,7 @@ router.post(
   validate(CreateRoomSchema),
   roomController.create,
 );
-router.get('/', verifyToken, requirePermission(PERMISSIONS.ROOM.VIEW), roomController.getAll);
+router.get('/', verifyToken, requirePermission(PERMISSIONS.ROOM.VIEW, PERMISSIONS.CLASS.CREATE), roomController.getAll);
 router.get(
   '/:id',
   verifyToken,

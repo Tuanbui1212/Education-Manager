@@ -16,8 +16,17 @@ router.post(
   validate(createRoleSchema),
   roleController.create,
 );
-router.get('/', verifyToken, requirePermission(PERMISSIONS.ROLE.VIEW), roleController.getAll);
-router.get('/:id', verifyToken, requirePermission(PERMISSIONS.ROLE.VIEW), roleController.getById);
+router.get('/', verifyToken, requirePermission(PERMISSIONS.ROLE.VIEW, PERMISSIONS.USER.CREATE, PERMISSIONS.USER.EDIT,
+  PERMISSIONS.TEACHER.CREATE, PERMISSIONS.TEACHER.EDIT,
+  PERMISSIONS.STAFF.CREATE, PERMISSIONS.STAFF.EDIT,
+  PERMISSIONS.STUDENT.CREATE, PERMISSIONS.STUDENT.EDIT,
+  PERMISSIONS.CLASS.CREATE, PERMISSIONS.CLASS.EDIT,
+), roleController.getAll);
+router.get('/:id', verifyToken, requirePermission(PERMISSIONS.ROLE.VIEW, PERMISSIONS.USER.CREATE, PERMISSIONS.USER.EDIT,
+  PERMISSIONS.TEACHER.CREATE, PERMISSIONS.TEACHER.EDIT,
+  PERMISSIONS.STAFF.CREATE, PERMISSIONS.STAFF.EDIT,
+  PERMISSIONS.STUDENT.CREATE, PERMISSIONS.STUDENT.EDIT,
+), roleController.getById);
 router.put(
   '/:id',
   verifyToken,

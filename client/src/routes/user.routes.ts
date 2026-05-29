@@ -1,28 +1,28 @@
 import { PATHS } from '../utils/constants';
 
-import ListUser from '../pages/Private/Users/ListUser';
-import UserForm from '../pages/Private/Users/UserForm';
+import ListUser from '../pages/Private/AccountManagement/Users/ListUser';
+import UserForm from '../pages/Private/AccountManagement/Users/UserForm';
 import AccountLogs from '../pages/Private/AccountManagement/ActivityLog/ActivityLog';
 
-import StudentManager from '../pages/Private/StudentManagement/StudentManagement';
-import StudentDetail from '../pages/Private/StudentManagement/StudentDetail';
+import StudentManager from '../pages/Private/TrainingManagement/StudentManagement/StudentManagement';
+import StudentDetail from '../pages/Private/TrainingManagement/StudentManagement/StudentDetail';
 
-import TeacherManager from '../pages/Private/TeacherManagement/TeacherManager';
-import TeacherDetail from '../pages/Private/TeacherManagement/TeacherDetail';
-import TeacherForm from '../pages/Private/TeacherManagement/TeacherForm';
+import TeacherManager from '../pages/Private/HRManagement/TeacherManagement/TeacherManager';
+import TeacherDetail from '../pages/Private/HRManagement/TeacherManagement/TeacherDetail';
+import TeacherForm from '../pages/Private/HRManagement/TeacherManagement/TeacherForm';
 
-import StaffForm from '../pages/Private/StaffManagement/StaffForm';
+import StaffForm from '../pages/Private/HRManagement/StaffManagement/StaffForm';
 
 import UserProfile from '../pages/Private/MyManagement/UserProfile';
 
-import StaffManager from '../pages/Private/StaffManagement/StaffManager';
-import StaffDetail from '../pages/Private/StaffManagement/StaffDetail';
+import StaffManager from '../pages/Private/HRManagement/StaffManagement/StaffManager';
+import StaffDetail from '../pages/Private/HRManagement/StaffManagement/StaffDetail';
 
 import UserProfileForm from '../pages/Private/MyManagement/UserProfileForm';
 
 import DashboardLayout from '../layouts/DashboardLayout';
 import { Fragment } from 'react/jsx-runtime';
-import StudentForm from '../pages/Private/StudentManagement/StudentForm';
+import StudentForm from '../pages/Private/TrainingManagement/StudentManagement/StudentForm';
 
 export const userRoutes = [
   { path: PATHS.USER, component: ListUser, layout: DashboardLayout },

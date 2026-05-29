@@ -119,7 +119,7 @@ const StudentInvoiceCard = ({ student, invoice }: { student: any; invoice: any }
           <InfoRow
             icon={AlertCircle}
             label="Còn nợ"
-            value={<span className="text-rose-600">{formatCurrency(invoice.debt)}</span>}
+            value={<span className="text-gray-500">{formatCurrency(invoice.debt)}</span>}
           />
           <InfoRow icon={Calendar} label="Hạn thanh toán" value={formatDate(invoice.dueDate)} />
           <div className="flex items-start gap-3">
@@ -212,8 +212,6 @@ const CashbookDetail = () => {
   const table = searchParams.get('table');
 
   const { data } = useFetch(cashbookService.getCashBookById, { id, type, table }, [id, type, table]);
-  console.log(data);
-
   const isIN = data?.type === 'IN';
   const accentColor = isIN ? 'from-emerald-500 to-teal-600' : 'from-orange-500 to-amber-600';
 

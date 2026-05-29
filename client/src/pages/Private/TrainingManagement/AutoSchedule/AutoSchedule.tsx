@@ -106,7 +106,6 @@ export default function SchedulingUI() {
     try {
       const response = await classRequestService.runGeneticAlgorithm();
       const endTime = performance.now();
-      console.log(`⏱️ Thuật toán chạy thành công trong: ${((endTime - startTime) / 1000).toFixed(2)} giây`);
       if (!response.success) throw new Error('Thuật toán chạy thất bại');
       if (page === 3) await loadSavedSchedule();
       setPage(3);
@@ -254,12 +253,11 @@ export default function SchedulingUI() {
               <div key={step} className="flex items-center">
                 <div
                   className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium transition-all duration-200
-                    ${
-                      active
-                        ? 'bg-primary text-white shadow-md shadow-primary/30'
-                        : done
-                          ? 'bg-primary/10 text-primary'
-                          : 'bg-white border border-gray-200 text-gray-400'
+                    ${active
+                      ? 'bg-primary text-white shadow-md shadow-primary/30'
+                      : done
+                        ? 'bg-primary/10 text-primary'
+                        : 'bg-white border border-gray-200 text-gray-400'
                     }`}
                 >
                   <span

@@ -24,8 +24,6 @@ const EnrollStudentModal: React.FC<EnrollStudentModalProps> = ({ isOpen, onClose
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedStudentInfo, setSelectedStudentInfo] = useState<any>(null);
 
-  console.log(selectedStudentInfo);
-
   const { data: rolesData } = useFetch(roleService.getRoles, {}, []);
   const roles = Array.isArray(rolesData) ? rolesData : (rolesData as any)?.data || [];
 
